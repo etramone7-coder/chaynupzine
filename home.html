@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ChaynupZine – レコードレビュー</title>
+<style>
+:root{
+  --bg:#F6D44A; --ink:#111; --rule:#C8332B; --link:#2E66CC;
+  --punk-bg:#C44731; --punk-fg:#fff;
+  --reggae-bg:#1E8C4D; --reggae-fg:#fff;
+  --metal-bg:#222; --metal-fg:#fff;
+  --rock-bg:#2E66CC; --rock-fg:#fff;
+  --hardrock-bg:#8B0000; --hardrock-fg:#fff;
+  --pubrock-bg:#A0522D; --pubrock-fg:#fff;
+  --powerpop-bg:#FF9900; --powerpop-fg:#fff;
+  --other-bg:#888; --other-fg:#fff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans JP","Hiragino Sans",sans-serif;line-height:1.75}
+.wrap{max-width:980px;margin:0 auto;padding:24px 16px}
+.toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.date{font-size:14px;color:#222}
+.kicker{font-size:28px;font-weight:900;letter-spacing:.1em}
+.huge{font-size:56px;font-weight:900;letter-spacing:.05em;margin:4px 0 10px}
+.rule{height:6px;background:var(--rule);border-radius:3px;margin:8px 0 18px}
+.area{display:grid;grid-template-columns:320px 1fr;gap:24px}
+.cover{width:100%;aspect-ratio:1/1;object-fit:cover;background:#ddd;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+.title{font-size:28px;font-weight:900;margin:0 0 6px}
+.badge{display:inline-block;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:800;margin:2px 0 10px}
+.badge.punk{background:var(--punk-bg);color:var(--punk-fg)}
+.badge.reggae{background:var(--reggae-bg);color:var(--reggae-fg)}
+.badge.metal{background:var(--metal-bg);color:var(--metal-fg)}
+.badge.rock{background:var(--rock-bg);color:var(--rock-fg)}
+.badge.hardrock{background:var(--hardrock-bg);color:var(--hardrock-fg)}
+.badge.pubrock{background:var(--pubrock-bg);color:var(--pubrock-fg)}
+.badge.powerpop{background:var(--powerpop-bg);color:var(--powerpop-fg)}
+.badge.other{background:var(--other-bg);color:var(--other-fg)}
+.meta{color:#333;font-size:14px;margin-bottom:8px}
+.desc{font-size:16px}
+.embed{margin-top:14px;border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+a{color:var(--link)}
+@media (max-width:800px){
+  .huge{font-size:40px}
+  .area{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <!-- JSで描画 -->
+</div>
+
+<script>
+const API = "https://script.google.com/macros/s/AKfycbxxdvTjvU4orTpxzOnnFy-wGOJAWM67D6-W3T6XPwlCJypsJk1fyNygKL-IJGrpVzaLrA/exec";
+
+const params = new URLSearchParams(location.search);
+const qid = params.get("id");
+
+const genreClass = g => {
+  const key = (g||"").toLowerCase();
+  if(key.includes("パンク")||key.includes("punk")) return "punk";
+  if(key.includes("レゲエ")||key.includes("reggae")) return "reggae";
+  if(key.includes("メタル")||key.includes("metal")) return "metal";
+  if(key.includes("ハードロック")) return "hardrock";
+  if(key.includes("パブロック")) return "pubrock";
+  if(key.includes("パワーポップ")||key.includes("power")) return "powerpop";
+  if(key.includes("ロック")||key.includes("rock")) return "rock";
+  return "other";
+};
+
+const fmtDate = iso => {
+  try{
+    const d = iso ? new Date(iso) : new Date();
+    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+  }catch(e){ return ""; }
+};
+
+const ytId = url => {
+  if(!url) return "";
+  const m1 = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{6,})/);
+  return m1 ? m1[1] : "";
+};
+
+const app = document.getElementById("app");
+
+fetch(API).then(r=>r.json()).then(rows=>{
+  const idx = Number.isFinite(+qid) ? +qid : 0;
+  const row = rows[idx] || rows[0] || {};
+  const gClass = genreClass(row.genre);
+  const band = row.band || "Unknown Artist";
+  const dateStr = fmtDate(row.date);
+  const cover = row.image || "https://placehold.co/800x800?text=No+Image";
+  const you = ytId(row.youtube);
+  const html = `
+    <div class="toprow">
+      <div class="kicker">レコードレビュー</div>
+      <div class="date">${dateStr}</div>
+    </div>
+    <div class="huge">${(row.headline || "パンク天国")}</div>
+    <div class="rule"></div>
+    <div class="area">
+      <img class="cover" src="${cover}" alt="">
+      <div>
+        <h2 class="title">${band}</h2>
+        <span class="badge ${gClass}">${row.genre || "その他"}</span>
+        <div class="meta">${row.country || ""}</div>
+        <div class="desc">
+          ${ (row.desc || "紹介文は未入力です。") }
+        </div>
+        ${ you ? `
+          <div class="embed">
+            <iframe width="100%" height="315"
+              src="https://www.youtube.com/embed/${you}"
+              title="YouTube video player" frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen></iframe>
+          </div>` : "" }
+        <p class="meta"><a href="index.html">← 一覧へ戻る</a></p>
+      </div>
+    </div>
+  `;
+  app.innerHTML = html;
+}).catch(err=>{
+  app.innerHTML = `<p>読み込みに失敗しました。${String(err)}</p><p><a href="index.html">一覧へ戻る</a></p>`;
+});
+</script>
+</body>
+</html>

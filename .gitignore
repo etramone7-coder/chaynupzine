@@ -1,2 +1,9 @@
 node_modules/
 .clasprc.json
+# OS / エディタのゴミ
+.DS_Store
+Thumbs.db
+
+# ログ・キャッシュ
+npm-debug.log*
+yarn-error.log*

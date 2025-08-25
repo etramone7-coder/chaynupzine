@@ -1,15 +1,19 @@
 /***** PROJECT CONFIG ****************************************************/
+var PROP = PropertiesService.getScriptProperties();
 var CONFIG = {
-  SPREADSHEET_ID       : '1-lBO2HC-CqD2h4HUHyTxgfggISh2TRqx06fmzMz03yA',
+  // ← ここは Script Properties から読む
+  SPREADSHEET_ID       : PROP.getProperty('SPREADSHEET_ID'),
+  UPLOAD_FOLDER_ID     : PROP.getProperty('UPLOAD_FOLDER_ID'),
+  ADMIN_TOKEN          : PROP.getProperty('ADMIN_TOKEN') || '',
+
+  // ↓ ここは公開されてもOKな定数
   SHEET_RECORDS        : 'Records',
   SHEET_LIVES          : 'Lives',
   SHEET_FEATURES       : 'Features',
   SHEET_REPORTS        : 'Reports',
-  UPLOAD_FOLDER_ID     : '1HBxSyBZCIKUvRy0HmGFrfSh4TvM0OwzL',
   REPORT_WINDOW_DAYS   : 7,
   REPORT_HIDE_THRESHOLD: 5,
   RATE_LIMIT_MINUTES   : 5,
-  ADMIN_TOKEN          : '',
   NG_TERMS             : [
     'kill','die','rape','suicide','terror','bomb',
     'fuck','cunt','asshole',

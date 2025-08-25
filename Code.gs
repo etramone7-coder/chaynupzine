@@ -427,32 +427,46 @@ function submitReport(payload) {
     var clientId  = String(payload.client_id|| '').trim();
     if (!sheetName || !rowIndex || !reason) throw new Error('bad request');
 
-    var ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    var ss  = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     var rep = ss.getSheetByName(CONFIG.SHEET_REPORTS) || ss.insertSheet(CONFIG.SHEET_REPORTS);
     ensureCoreHeaders_(rep, REPORTS_HEADERS);
 
-    var RH = buildHeaderIndex_(rep);
-    var rrow = rep.getLastRow() + 1;
-    rep.getRange(rrow, RH['timestamp']).setValue(new Date());
-    rep.getRange(rrow, RH['sheet']).setValue(sheetName);
-    rep.getRange(rrow, RH['row_index']).setValue(rowIndex);
-    rep.getRange(rrow, RH['reason']).setValue(reason);
-    rep.getRange(rrow, RH['client_id']).setValue(clientId);
-
+    var RH   = buildHeaderIndex_(rep);
+    var last = rep.getLastRow();
     var since = new Date(Date.now() - CONFIG.REPORT_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-    var allR = rep.getRange(2, 1, Math.max(0, rep.getLastRow() - 1), Math.max(1, rep.getLastColumn())).getValues();
-    var cnt = 0;
+
+    // 直近7日以内の既存データを取得
+    var allR = last >= 2 ? rep.getRange(2, 1, last - 1, Math.max(1, rep.getLastColumn())).getValues() : [];
+    var already = false;
+    var countSame = 0;
+
     for (var i = 0; i < allR.length; i++) {
-      var item = allR[i], map = {};
-      for (var k in RH) map[k] = RH[k] ? item[RH[k] - 1] : '';
+      var row = allR[i], map = {};
+      for (var k in RH) map[k] = RH[k] ? row[RH[k]-1] : '';
       if (String(map.sheet) === sheetName && Number(map.row_index) === rowIndex) {
         var ts = map.timestamp instanceof Date ? map.timestamp : new Date(map.timestamp);
-        if (ts >= since) cnt++;
+        if (ts >= since) {
+          countSame++;
+          if (String(map.client_id) === clientId) already = true; // 同一クライアント重複
+        }
       }
     }
-    rep.getRange(rrow, RH['count_7d']).setValue(cnt);
 
-    if (cnt >= CONFIG.REPORT_HIDE_THRESHOLD) {
+    if (!already) {
+      // 新規通報として記録
+      var rrow = rep.getLastRow() + 1;
+      rep.getRange(rrow, RH['timestamp']).setValue(new Date());
+      rep.getRange(rrow, RH['sheet']).setValue(sheetName);
+      rep.getRange(rrow, RH['row_index']).setValue(rowIndex);
+      rep.getRange(rrow, RH['reason']).setValue(reason);
+      rep.getRange(rrow, RH['client_id']).setValue(clientId);
+      // count_7d は参考値なのでここでは更新不要（必要なら下行を有効化）
+      // rep.getRange(rrow, RH['count_7d']).setValue(countSame + 1);
+      countSame++;
+    }
+
+    // 閾値判定（自動非表示）
+    if (countSame >= CONFIG.REPORT_HIDE_THRESHOLD) {
       var sh = ss.getSheetByName(sheetName);
       if (sh) {
         var H = buildHeaderIndex_(sh);
@@ -460,9 +474,10 @@ function submitReport(payload) {
         else if (H['is_hidden']) sh.getRange(rowIndex, H['is_hidden']).setValue(true);
         if (H['updated_at']) sh.getRange(rowIndex, H['updated_at']).setValue(new Date());
       }
-      return { ok: true, autoHidden: true, count: cnt };
+      return { ok: true, autoHidden: true, count: countSame, dedup: already };
     }
-    return { ok: true, autoHidden: false, count: cnt };
+
+    return { ok: true, autoHidden: false, count: countSame, dedup: already };
   } catch (err) {
     return { ok: false, error: String(err) };
   }

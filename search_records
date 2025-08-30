@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CHAYNUPZINE — Records search</title>
+<meta name="color-scheme" content="light dark">
+<style>
+  :root{
+    --ink:#111; --muted:#666; --chip:#eef1f5; --accent:#111; --paper:rgba(255,255,255,.92);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Helvetica Neue",Segoe UI,Roboto,Arial,sans-serif}
+  /* 背景 */
+  .bg{position:fixed; inset:0; background:url(./assets/bg/bg_records_search.webp) center/cover no-repeat; z-index:-2; filter:brightness(.92)}
+  .scrim{position:fixed; inset:0; background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.45)); z-index:-1}
+  /* 1画面レイアウト */
+  .frame{height:100vh; display:grid; grid-template-rows:auto auto 1fr; gap:10px; padding:10px}
+  .panel{background:var(--paper); backdrop-filter:saturate(120%) blur(8px); border-radius:14px; box-shadow:0 10px 26px rgba(0,0,0,.18); border:1px solid rgba(0,0,0,.06)}
+  header{display:flex; justify-content:space-between; align-items:center; padding:10px 12px}
+  .brand{display:flex; align-items:center; gap:10px}
+  .logo{background:#111;color:#fff;border-radius:10px;padding:8px 12px;font-weight:900;letter-spacing:.4px}
+  .sub{font-size:12px;color:#dbe1ea}
+  /* コントロール */
+  .controls{padding:10px 12px; display:grid; grid-template-columns:1fr; gap:10px}
+  .row{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .label{font-size:12px; color:#6b7280; margin-right:6px}
+  .chips{display:flex; flex-wrap:wrap; gap:8px}
+  .chip{padding:10px 14px; border-radius:999px; background:var(--chip); font-weight:800; cursor:pointer; user-select:none}
+  .chip.active{background:#111;color:#fff}
+  .initials{display:grid; grid-template-columns:repeat(13,1fr); gap:6px}
+  .dot{display:flex; align-items:center; justify-content:center; height:34px; border-radius:999px; background:var(--chip); font-weight:800; cursor:pointer}
+  .dot.active{background:#111;color:#fff}
+  .actions{display:flex; gap:8px; justify-content:flex-end}
+  .btn{border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer}
+  .btn.ghost{background:#fff;border:1px solid #ddd}
+  .btn.primary{background:#111;color:#fff}
+  /* 結果枠（1画面内スクロール） */
+  .results{padding:10px; overflow:auto}
+  .grid{display:grid; grid-template-columns:1fr; gap:10px}
+  @media(min-width:860px){ .grid{grid-template-columns:1fr 1fr}}
+  .card{background:#fff;border:1px solid #eee;border-radius:12px;padding:10px;display:flex;gap:8px}
+  .thumb{width:92px;height:92px;border-radius:8px;object-fit:cover;background:#f2f3f5}
+  .meta{font-size:12px;color:#6b7280}
+  .title{font-weight:900}
+  .desc{font-size:13px;color:#333; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical}
+  .right{margin-left:auto; text-align:right}
+  .link{font-size:12px; color:#2E66CC; text-decoration:none}
+  .alert{margin:6px 10px 0; padding:8px 10px; background:#ffe9e9;color:#a33;border:1px solid #f6bcbc;border-radius:10px;display:none}
+  .alert.show{display:block}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="scrim"></div>
+
+<div class="frame">
+  <!-- ヘッダ（薄め） -->
+  <header class="panel" style="padding:8px 12px">
+    <div class="brand">
+      <div class="logo">CHAYNUPZINE</div>
+      <div class="sub">Records — search</div>
+    </div>
+    <div style="font-size:12px;color:#cbd5e1">1-screen UI</div>
+  </header>
+
+  <!-- コントロール -->
+  <section class="panel controls">
+    <div class="row">
+      <span class="label">Genre:</span>
+      <div id="chips-genre" class="chips"></div>
+    </div>
+    <div class="row">
+      <span class="label">Country:</span>
+      <div id="chips-country" class="chips"></div>
+    </div>
+    <div class="row">
+      <span class="label">Era:</span>
+      <div id="chips-era" class="chips"></div>
+      <span id="sel-era" class="label" style="margin-left:auto">年代: 指定なし</span>
+    </div>
+    <div class="row" style="align-items:flex-start">
+      <span class="label" style="padding-top:6px">Initial:</span>
+      <div id="initials" class="initials" style="flex:1"></div>
+      <div class="actions">
+        <button id="btn-reset" class="btn ghost" type="button">条件リセット</button>
+        <button id="btn-submit" class="btn ghost" type="button">投稿フォームへ</button>
+        <button id="btn-search" class="btn primary" type="button">検索</button>
+      </div>
+    </div>
+    <div id="alert" class="alert"></div>
+  </section>
+
+  <!-- 結果 -->
+  <section class="panel results">
+    <div id="resultBox" class="grid"></div>
+  </section>
+</div>
+
+<script>
+/* ========= 設定（GitHub運用時のみ編集） ===============================
+ * GitHubで開いたとき自動でGASに遷移させるためのWebアプリURL。
+ * 例: https://script.google.com/macros/s/xxxxxxxxxxxxxxxx/exec
+ * 空のままでも動きます（遷移せず注意を出す）。
+ */
+var GAS_EXEC_URL = ""; // ←必要なら入れる
+/* ==================================================================== */
+
+(function oneScreenSizing(){
+  // 1画面固定のため、結果枠の初期文言をセット
+  document.getElementById('resultBox').innerHTML =
+    '<div class="card"><div>条件を選んで <b>検索</b> を押してください。</div></div>';
+})();
+
+/* ---- データ候補 ---- */
+var GENRES   = ['punk','hardcore','garage','metal','indie','ska','other'];
+var COUNTRIES= ['Japan','US','UK','Germany','France','Italy','Spain','Australia','Canada','Sweden','Norway','Netherlands','Belgium','Brazil','Mexico','Other'];
+var ERAS     = ['1950s','1960s','1970s','1980s','1990s','2000s','2010s','2020s'];
+var state = { genre:'', country:'', era:'', initial:'' };
+
+/* ---- UI作成 ---- */
+function chip(label, active, onClick){
+  var d = document.createElement('div');
+  d.className = 'chip' + (active?' active':'');
+  d.textContent = label; d.onclick = onClick; return d;
+}
+function drawChips(){
+  var g = document.getElementById('chips-genre'); g.innerHTML='';
+  GENRES.forEach(function(x){
+    g.appendChild(chip(x, state.genre===x, function(){ state.genre = (state.genre===x?'':x); drawChips(); }));
+  });
+  var c = document.getElementById('chips-country'); c.innerHTML='';
+  COUNTRIES.forEach(function(x){
+    c.appendChild(chip(x, state.country===x, function(){ state.country=(state.country===x?'':x); drawChips(); }));
+  });
+  var e = document.getElementById('chips-era'); e.innerHTML='';
+  ERAS.forEach(function(x){
+    e.appendChild(chip(x, state.era===x, function(){ state.era=(state.era===x?'':x); drawChips(); }));
+  });
+  document.getElementById('sel-era').textContent = '年代: ' + (state.era||'指定なし');
+
+  var iniBox = document.getElementById('initials'); iniBox.innerHTML='';
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('').forEach(function(ch){
+    var b = document.createElement('div'); b.className='dot'+(state.initial===ch?' active':'');
+    b.textContent=ch; b.onclick=function(){ state.initial=(state.initial===ch?'':ch); drawChips(); };
+    iniBox.appendChild(b);
+  });
+}
+drawChips();
+
+/* ---- ボタン ---- */
+document.getElementById('btn-reset').onclick = function(){
+  state = { genre:'', country:'', era:'', initial:'' }; drawChips();
+  document.getElementById('resultBox').innerHTML = '<div class="card"><div>条件を選んで <b>検索</b> を押してください。</div></div>';
+  showAlert('');
+};
+document.getElementById('btn-submit').onclick = function(){
+  // GAS環境ならサーバー側フォーム、GitHubならローカルの submit.html
+  if(window.google && google.script){ location.href = '<?= EXEC_URL ?>?page=submit'; }
+  else                              { location.href = './submit.html'; }
+};
+document.getElementById('btn-search').onclick = function(){
+  // GAS内：google.script.runで取得
+  if(window.google && google.script){
+    searchViaGAS();
+    return;
+  }
+  // GitHub内：GASページへ自動遷移（URL設定済みなら）
+  if(GAS_EXEC_URL){
+    var q = new URLSearchParams({page:'search_records'}).toString();
+    location.href = GAS_EXEC_URL + '?' + q;
+  }else{
+    showAlert('GitHub上では検索にサーバー処理が必要です。GASのWebアプリURL（GAS_EXEC_URL）をスクリプト先頭に設定してください。');
+  }
+};
+
+/* ---- GAS検索 ---- */
+function searchViaGAS(){
+  var box = document.getElementById('resultBox');
+  box.innerHTML = '<div class="card"><div>検索中…</div></div>';
+  showAlert('');
+  var params = {
+    genre  : state.genre,
+    country: state.country,
+    era    : state.era,
+    initial: state.initial,
+    limit  : 40, offset: 0
+  };
+  google.script.run
+    .withSuccessHandler(function(res){
+      try{
+        if(!res || !res.ok) throw new Error('listRecords failed');
+        var items = res.items || [];
+        if(!items.length){
+          box.innerHTML = '<div class="card"><div>該当なしでした。</div></div>';
+          return;
+        }
+        box.innerHTML = '';
+        items.forEach(function(it){
+          var card = document.createElement('div'); card.className='card';
+          var img  = document.createElement('img'); img.className='thumb'; img.src = it.image_url || '';
+          var main = document.createElement('div'); main.style.flex='1';
+          var ttl  = document.createElement('div'); ttl.className='title';
+          ttl.textContent = (it.band||'') + (it.track ? ' — ' + it.track : '');
+          var meta = document.createElement('div'); meta.className='meta';
+          meta.textContent = [it.genre, it.country, it.release_year].filter(Boolean).join(' • ');
+          var desc = document.createElement('div'); desc.className='desc'; desc.textContent = it.description || '';
+          main.appendChild(ttl); main.appendChild(meta); main.appendChild(desc);
+          var right = document.createElement('div'); right.className='right';
+          var a = document.createElement('a'); a.className='link'; a.textContent='個別表示';
+          a.href = '<?= EXEC_URL ?>?page=records_browse&row=' + it.rowIndex;
+          right.appendChild(a);
+          card.appendChild(img); card.appendChild(main); card.appendChild(right);
+          box.appendChild(card);
+        });
+      }catch(e){
+        showAlert('Error: '+e.message); box.innerHTML='';
+      }
+    })
+    .withFailureHandler(function(err){
+      showAlert('Error: '+(err && err.message ? err.message : String(err)));
+      box.innerHTML='';
+    })
+    .listRecords(params);
+}
+
+/* ---- 共通 ---- */
+function showAlert(msg){
+  var a = document.getElementById('alert');
+  if(msg){ a.textContent = msg; a.className='alert show'; }
+  else   { a.textContent=''; a.className='alert'; }
+}
+</script>
+</body>
+</html>

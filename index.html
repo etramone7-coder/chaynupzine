@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CHAYNUPZINE</title>
+<meta name="color-scheme" content="dark light" />
+<style>
+  :root{
+    --bg:#0f1115; --ink:#e7e9ee; --muted:#98a2b3; --panel:rgba(16,20,28,.78);
+    --card:#121725; --line:#232a3a; --accent:#1e90ff; --accent-ink:#fff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN",Meiryo,system-ui,sans-serif}
+  .bg{position:fixed; inset:0; background:#000 center/cover no-repeat; filter:brightness(.9) saturate(110%);
+    z-index:-1}
+  .scrim{position:fixed; inset:0; background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.6)); z-index:-1}
+  .wrap{max-width:1100px; margin:36px auto; padding:0 16px}
+  header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px}
+  .brand{display:flex; align-items:baseline; gap:12px}
+  .logo{font-weight:900; letter-spacing:.05em; background:#111827; color:#fff; border:1px solid #2b3346;
+    border-radius:12px; padding:8px 12px; font-size:18px}
+  .tag{font-size:13px; color:#cbd5e1}
+  .lang{display:flex; gap:8px}
+  .lang button{border:1px solid #2b3346; background:#0b0f18; color:#dbe3f4; border-radius:10px;
+    padding:8px 12px; cursor:pointer; font-weight:800}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:18px}
+  .lead{font-size:18px; color:#cbd5e1; margin:6px 0 4px}
+  .grid{display:grid; grid-template-columns:1fr; gap:16px; margin-top:14px}
+  @media(min-width:900px){ .grid{grid-template-columns:1fr 1fr 1fr} }
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px; min-height:200px}
+  .card h3{margin:2px 0 0; font-size:18px}
+  .meta{font-size:12px; color:var(--muted)}
+  .links{margin-top:auto; display:flex; gap:10px; flex-wrap:wrap}
+  .btn{display:inline-block; text-decoration:none; border-radius:10px; padding:10px 12px; font-weight:800; border:1px solid #2b3346}
+  .btn.primary{background:var(--accent); color:var(--accent-ink); border-color:transparent}
+  .btn.ghost{background:transparent; color:#dbe3f4}
+  footer{margin:18px 0; text-align:center; color:#9aa3af; font-size:12px}
+  .hint{font-size:12px; color:#cbd5e1; margin-top:8px}
+</style>
+</head>
+<body>
+<div id="bg" class="bg"></div>
+<div class="scrim"></div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">CHAYNUPZINE</div>
+      <div class="tag" id="tagline">音源紹介・ライブ情報・特集コラム</div>
+    </div>
+    <div class="lang">
+      <button id="btn-lang" type="button">EN / 日本語</button>
+    </div>
+  </header>
+
+  <div class="panel">
+    <p class="lead" id="lead">コンテンツを選んで閲覧 / 投稿できます。</p>
+
+    <div class="grid">
+      <!-- Records -->
+      <section class="card">
+        <h3 id="h-rec">Records（音源紹介）</h3>
+        <div class="meta" id="m-rec">バンド／国／年代などで探す・投稿する</div>
+        <div class="links">
+          <a class="btn primary" href="./search_records.html" id="lk-rec-search">検索へ</a>
+          <a class="btn ghost" href="./submit.html" id="lk-rec-submit">投稿する</a>
+          <a class="btn ghost" href="./records_browse.html" id="lk-rec-browse">個別表示（行番号指定）</a>
+        </div>
+      </section>
+
+      <!-- Lives -->
+      <section class="card">
+        <h3 id="h-live">Lives（ライブ情報）</h3>
+        <div class="meta" id="m-live">都道府県／地域／日付／アーティストで探す・投稿する</div>
+        <div class="links">
+          <a class="btn primary" href="./search_lives.html" id="lk-live-search">検索へ</a>
+          <a class="btn ghost" href="./submit_live.html" id="lk-live-submit">投稿する</a>
+          <a class="btn ghost" href="./lives_browse.html" id="lk-live-browse">個別表示（行番号 or パラメータ）</a>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section class="card">
+        <h3 id="h-feat">Features（特集コラム）</h3>
+        <div class="meta" id="m-feat">ジャンル／年代／地域で特集を一覧・投稿する</div>
+        <div class="links">
+          <a class="btn primary" href="./search_features.html" id="lk-feat-search">検索へ</a>
+          <a class="btn ghost" href="./features_browse.html" id="lk-feat-browse">個別表示（スラッグ/行番号）</a>
+          <a class="btn ghost" href="./submit_feature.html" id="lk-feat-submit">投稿する</a>
+        </div>
+      </section>
+    </div>
+
+    <div class="hint" id="hint">
+      ※ 検索／閲覧ページの一部は Google Apps Script（Webアプリ）を呼び出します。GitHub Pages で表示する場合は、
+      スプレッドシートと連携済みのコードを同名HTMLとして配置してください。
+    </div>
+  </div>
+
+  <footer>
+    © CHAYNUPZINE
+  </footer>
+</div>
+
+<script>
+  // 背景（GitHubに置いた画像を使用）
+  (function(){
+    var bg = document.getElementById('bg');
+    bg.style.backgroundImage = 'url(./assets/bg/bg_features.webp)';
+  })();
+
+  // 多言語
+  var lang = localStorage.getItem('cz_lang') || 'ja';
+  var I18N = {
+    ja: {
+      tagline: '音源紹介・ライブ情報・特集コラム',
+      lead: 'コンテンツを選んで閲覧 / 投稿できます。',
+      hRec: 'Records（音源紹介）',
+      mRec: 'バンド／国／年代などで探す・投稿する',
+      recSearch: '検索へ', recSubmit: '投稿する', recBrowse: '個別表示（行番号指定）',
+      hLive: 'Lives（ライブ情報）',
+      mLive: '都道府県／地域／日付／アーティストで探す・投稿する',
+      liveSearch: '検索へ', liveSubmit: '投稿する', liveBrowse: '個別表示（行番号 or パラメータ）',
+      hFeat: 'Features（特集コラム）',
+      mFeat: 'ジャンル／年代／地域で特集を一覧・投稿する',
+      featSearch: '検索へ', featBrowse: '個別表示（スラッグ/行番号）', featSubmit: '投稿する',
+      hint: '※ 検索／閲覧ページの一部は Google Apps Script（Webアプリ）を呼び出します。GitHub Pages で表示する場合は、スプレッドシートと連携済みのコードを同名HTMLとして配置してください。'
+    },
+    en: {
+      tagline: 'Records · Lives · Features',
+      lead: 'Pick a section to browse or submit.',
+      hRec: 'Records',
+      mRec: 'Search by band / country / era, or submit.',
+      recSearch: 'Browse', recSubmit: 'Submit', recBrowse: 'Detail (row param)',
+      hLive: 'Lives',
+      mLive: 'Search by prefecture / region / date / artist, or submit.',
+      liveSearch: 'Browse', liveSubmit: 'Submit', liveBrowse: 'Detail (row or params)',
+      hFeat: 'Features',
+      mFeat: 'List features by genre / era / region, or submit.',
+      featSearch: 'Browse', featBrowse: 'Detail (slug/row)', featSubmit: 'Submit',
+      hint: 'Note: Some pages call Google Apps Script web app. On GitHub Pages, host the corresponding HTML that connects to your spreadsheet.'
+    }
+  };
+
+  function applyLang(){
+    var dict = I18N[lang] || I18N.ja;
+    document.getElementById('tagline').textContent = dict.tagline;
+    document.getElementById('lead').textContent = dict.lead;
+
+    document.getElementById('h-rec').textContent  = dict.hRec;
+    document.getElementById('m-rec').textContent  = dict.mRec;
+    document.getElementById('lk-rec-search').textContent = dict.recSearch;
+    document.getElementById('lk-rec-submit').textContent = dict.recSubmit;
+    document.getElementById('lk-rec-browse').textContent = dict.recBrowse;
+
+    document.getElementById('h-live').textContent  = dict.hLive;
+    document.getElementById('m-live').textContent  = dict.mLive;
+    document.getElementById('lk-live-search').textContent = dict.liveSearch;
+    document.getElementById('lk-live-submit').textContent = dict.liveSubmit;
+    document.getElementById('lk-live-browse').textContent = dict.liveBrowse;
+
+    document.getElementById('h-feat').textContent  = dict.hFeat;
+    document.getElementById('m-feat').textContent  = dict.mFeat;
+    document.getElementById('lk-feat-search').textContent = dict.featSearch;
+    document.getElementById('lk-feat-browse').textContent = dict.featBrowse;
+    document.getElementById('lk-feat-submit').textContent = dict.featSubmit;
+
+    document.getElementById('hint').textContent = dict.hint;
+  }
+  document.getElementById('btn-lang').addEventListener('click', function(){
+    lang = (lang === 'ja' ? 'en' : 'ja');
+    localStorage.setItem('cz_lang', lang);
+    applyLang();
+  });
+  applyLang();
+</script>
+</body>
+</html>

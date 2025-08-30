@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CHAYNUPZINE</title>
+<meta name="color-scheme" content="light dark" />
+<style>
+  :root{ --ink:#000; --paper:#efdfc2; }
+  *{ box-sizing:border-box }
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family: Impact,"Arial Black",system-ui,-apple-system,
+                 "Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+  }
+  header{ text-align:center; padding:28px 12px 10px }
+  .logo{ display:inline-block; padding:12px 22px; background:#000; color:#fff;
+         font-weight:900; letter-spacing:.03em; transform:skewX(-10deg); font-size:46px; }
+  .sub{ font-size:14px; letter-spacing:.04em; margin-top:6px; color:#2a1f10 }
+
+  /* ===== Poster with transparent hotspots ===== */
+  .hero{
+    position:relative; width:min(96vw, 920px); margin:14px auto 22px;
+    aspect-ratio:3/4;
+    background:url(./assets/bg/chaynupzine_poster.webp?v=1) center/cover no-repeat;
+    border-radius:8px; box-shadow:0 10px 28px rgba(0,0,0,.25); overflow:hidden;
+  }
+  .hotspot{ position:absolute; display:block; text-decoration:none; cursor:pointer; outline:none; }
+  .hotspot:focus-visible{ outline:3px dashed rgba(0,0,0,.85); outline-offset:2px }
+
+  /* 透明ボタンの当たり（文字の位置に合わせてあります。微調整は%を変更） */
+  /* レコード / Records（左～中段左） */
+  .hs-records  { left:6%;  top:20%; width:50%; height:22%; }
+  /* 特集 / Features（中央やや右） */
+  .hs-features { left:45%; top:45%; width:42%; height:18%; }
+  /* ライブ情報 / Live info（右下の斜め帯） */
+  .hs-lives    { left:34%; top:70%; width:56%; height:22%; }
+
+  .links{ text-align:center; padding:0 12px 30px; font-size:14px; color:#3a2c1a; }
+  .links a{ display:inline-block; margin:6px 8px; padding:10px 14px;
+            border:3px solid #000; text-decoration:none; color:#000; background:#fff;
+            font-weight:800; transform:skewX(-6deg); }
+  .links a:hover{ background:#000; color:#fff }
+
+  @media (max-width:420px){ .logo{font-size:40px} .hero{width:94vw} }
+</style>
+</head>
+<body>
+  <header>
+    <div class="logo">CHAYNUPZINE</div>
+    <div class="sub">independent punk culture archive / since 2025</div>
+  </header>
+
+  <!-- 背景ポスター & 透明ボタン -->
+  <div class="hero" role="img" aria-label="ChaynupZine poster navigation">
+    <a class="hotspot hs-records"  href="./search_records.html"   aria-label="Records（レコード）へ"></a>
+    <a class="hotspot hs-features" href="./search_features.html"  aria-label="Features（特集）へ"></a>
+    <a class="hotspot hs-lives"    href="./search_lives.html"     aria-label="Lives（ライブ情報）へ"></a>
+  </div>
+
+  <!-- 補助テキストリンク（任意） -->
+  <div class="links">
+    <a href="./search_records.html">Records</a>
+    <a href="./search_features.html">Features</a>
+    <a href="./search_lives.html">Live info</a>
+  </div>
+
+  <script>
+    // SafariのBFCache復帰で描画が止まるのを回避
+    addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
+  </script>
+</body>
+</html>

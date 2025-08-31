@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CHAYNUPZINE ライブ投稿</title>
+<style>
+  :root{--bg:#0f1115;--panel:#151922;--ink:#e7e9ee;--muted:#9aa3af;--accent:#1e90ff;--accent-ink:#fff;--danger:#e25555;--line:#2b3240}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN",Meiryo,system-ui,sans-serif}
+  .wrap{max-width:1100px;margin:32px auto;padding:0 14px}
+  .title{font-weight:800;letter-spacing:.4px;color:var(--accent);font-size:26px;text-shadow:0 0 18px rgba(30,144,255,.15)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:880px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .label{font-size:12px;color:var(--muted);margin:14px 0 6px}
+  .label b{color:var(--ink);font-size:13px;margin-right:6px}
+  input[type=text],input[type=date],input[type=time],textarea,select{width:100%;background:#0e121a;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:10px 12px;outline:none;appearance:none}
+  textarea{min-height:120px;resize:vertical}
+  input[type=file]{width:100%}
+  .help{color:var(--muted);font-size:12px;margin-top:6px}
+  .warn{color:#f59e0b;font-size:12px;margin-top:6px}
+  .btn{display:inline-block;width:100%;padding:12px 14px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:700;letter-spacing:.08em;cursor:pointer}
+  .btn:disabled{opacity:.6;cursor:default}
+  .msg{margin-top:10px;font-size:13px}
+  .msg.ok{color:#5dd39e}.msg.err{color:var(--danger)}
+  .card{background:#0e121a;border:1px dashed #3a4254;border-radius:12px;overflow:hidden}
+  .ph{aspect-ratio:16/9;background:#0b0e14;display:flex;align-items:center;justify-content:center;color:#30384a}
+  .cover{width:100%;height:auto;display:block;object-fit:cover}
+  .pad{padding:12px}
+  .chips{display:flex;gap:6px;margin:4px 0 8px;flex-wrap:wrap}
+  .chip{font-size:11px;padding:2px 8px;border:1px solid #3a4254;border-radius:999px;color:#c6d0e1}
+  .titleLive{font-weight:800}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .yt{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden;margin-top:10px}
+  .yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  details{margin-top:14px}
+  summary{cursor:pointer;color:#cbd5e1}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="title">CHAYNUPZINE ライブ投稿</h1>
+
+    <!-- 免責・注意 -->
+    <div class="panel" style="margin-bottom:16px">
+      <div class="help">
+        本サービスは投稿内容について一切の責任を負いません。誹謗中傷・差別・違法行為の助長は禁止です。<br>
+        <b>※NGワード検知を行います（アーティスト名/公演タイトル/会場名は対象外）。該当する場合、投稿はできません。</b><br>
+        画像は<b>目安：1枚 10MB以下 / 長辺 3000px以下</b>を推奨。超える場合、プレビューは表示されません（投稿は可能）。
+      </div>
+      <div style="margin-top:10px">
+        <input id="agree" type="checkbox">
+        <label for="agree" style="font-size:13px;color:#ccc">
+          免責事項と禁止事項に同意します
+        </label>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Left: form -->
+      <div class="panel">
+        <!-- ❷ ARTIST(S) 最大6件 -->
+        <label class="label"><b>ARTISTS</b>（必須：1〜6件）</label>
+        <input id="artist1" type="text" placeholder="アーティスト1（必須）">
+        <input id="artist2" type="text" placeholder="アーティスト2（任意）" style="margin-top:6px">
+        <input id="artist3" type="text" placeholder="アーティスト3（任意）" style="margin-top:6px">
+        <input id="artist4" type="text" placeholder="アーティスト4（任意）" style="margin-top:6px">
+        <input id="artist5" type="text" placeholder="アーティスト5（任意）" style="margin-top:6px">
+        <input id="artist6" type="text" placeholder="アーティスト6（任意）" style="margin-top:6px">
+        <div class="help">複数入力した場合は「 / 」で結合して保存されます。</div>
+
+        <label class="label"><b>TITLE</b>（任意）</label>
+        <input id="title" type="text" placeholder="公演タイトル（20文字超は表示時に自動省略）">
+
+        <!-- ★追加: GENRE（Lives用） -->
+        <label class="label"><b>GENRE</b>（任意）</label>
+        <select id="genre">
+          <option value="">選択しない</option>
+          <option>Punk</option><option>Hardcore</option><option>PowerPop</option>
+          <option>Indie</option><option>Garage</option><option>Mods</option>
+          <option>NeoMods</option><option>Metal</option><option>HardRock</option>
+          <option>Reggae</option><option>Rock</option><option>Pop</option>
+          <option>Melodicore</option><option>Rockabilly</option><option>Other</option>
+        </select>
+        <!-- ★追加ここまで -->
+
+        <div class="row2">
+          <div>
+            <label class="label"><b>DATE</b>（必須）</label>
+            <input id="date" type="date">
+          </div>
+          <div>
+            <label class="label"><b>STATUS</b>（状態）</label>
+            <!-- ▼▼ 修正：ステータス値を scheduled / canceled / done に統一 -->
+            <select id="status">
+              <option value="scheduled" selected>開催予定</option>
+              <option value="canceled">中止</option>
+              <option value="done">終了</option>
+            </select>
+            <!-- ▲▲ 修正ここまで -->
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label class="label"><b>OPEN</b>（任意）</label>
+            <input id="open_time" type="time" placeholder="18:30">
+          </div>
+          <div>
+            <label class="label"><b>START</b>（任意）</label>
+            <input id="start_time" type="time" placeholder="19:00">
+          </div>
+        </div>
+
+        <label class="label"><b>VENUE</b>（会場・必須）</label>
+        <input id="venue" type="text" placeholder="会場名（20文字超は表示時に自動省略）">
+
+        <!-- ❶ 地方→県 連動 -->
+        <div class="row2" style="margin-top:6px">
+          <div>
+            <label class="label"><b>REGION</b>（任意）</label>
+            <select id="region"></select>
+            <div class="help">地方のみ選択でも投稿可</div>
+          </div>
+          <div>
+            <label class="label"><b>PREFECTURE</b>（道府県・任意）</label>
+            <select id="prefecture"></select>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div>
+            <label class="label"><b>PRICE</b>（任意）</label>
+            <input id="price" type="text" placeholder="ADV ¥3,000 / DOOR ¥3,500 (+1D)">
+          </div>
+          <div>
+            <label class="label"><b>REFERENCE URL</b>（参考URL・任意）</label>
+            <input id="reference_url" type="text" placeholder="公式/イベントページなどのURL">
+          </div>
+        </div>
+
+        <label class="label"><b>DESCRIPTION</b>（任意）</label>
+        <textarea id="description" placeholder="イベント概要など"></textarea>
+
+        <label class="label"><b>FLYER IMAGE URL</b>（任意）</label>
+        <input id="imageUrl" type="text" placeholder="https://drive.google.com/... or https://example.com/...">
+        <div class="help">Drive 共有URL or 画像直リンク。アップロードを使う場合は空でOK。</div>
+
+        <label class="label"><b>UPLOAD FLYER</b>（jpg/png/webp 任意）</label>
+        <input id="file" type="file" accept="image/*">
+        <div id="imgWarn" class="warn" style="display:none"></div>
+
+        <label class="label"><b>YOUTUBE URL</b>（任意）</label>
+        <input id="youtube" type="text" placeholder="https://youtu.be/xxxx または https://www.youtube.com/watch?v=xxxx">
+
+        <label class="label"><b>AUTHOR</b>（投稿者）</label>
+        <input id="author" type="text" placeholder="your name">
+
+        <label class="label"><b>EDIT KEY</b>（編集キー・必須）</label>
+        <input id="edit_key" type="text" placeholder="半角英数のみ。後から編集/削除に必要" inputmode="latin" pattern="[A-Za-z0-9]+">
+
+        <button id="submitBtn" class="btn" type="button">投稿</button>
+        <div id="msg" class="msg"></div>
+
+        <!-- 投稿ガイド（元のまま） -->
+        <details>
+          <summary>投稿ガイド / FAQ</summary>
+          <div class="help" style="margin-top:8px">
+            <b>■ 投稿ガイド</b><br>
+            ・画像は 10MB以下 / 長辺3000px以下を推奨。超えるとプレビューは表示されません（投稿は可）。<br>
+            ・編集や削除をするには<b>編集キー</b>が必要です。<br>
+            ・NGワードに該当する表現は投稿不可（アーティスト/タイトル/会場は対象外、表示は20文字で自動省略）。<br>
+            ・連投制限：同一端末から概ね5分に1回まで。<br>
+            <br>
+            <b>■ よくある質問</b><br>
+            Q. 編集/削除の方法は？<br>
+            A. 閲覧ページの「投稿を編集/削除」→ 行番号またはリンクのIDと編集キーを入力してください。<br><br>
+            Q. 画像が表示されません。<br>
+            A. サイズ上限を満たしているか、Driveの共有設定（リンク可視）をご確認ください。<br><br>
+            Q. YouTubeは埋め込みですか？<br>
+            A. プレビューは埋め込み、保存はURL連携です。<br>
+          </div>
+        </details>
+      </div>
+
+      <!-- Right: preview（元のまま） -->
+      <div class="panel">
+        <div class="card">
+          <div id="ph" class="ph">no image</div>
+          <img id="previewImg" class="cover" style="display:none" alt="cover">
+          <div class="pad">
+            <div class="chips">
+              <span id="chipRegion" class="chip" style="display:none"></span>
+              <span id="chipPref" class="chip" style="display:none"></span>
+              <span id="chipStatus" class="chip" style="display:none"></span>
+            </div>
+            <div id="pvArtist" class="titleLive">—</div>
+            <div id="pvTitle" style="opacity:.9">—</div>
+            <div id="pvMeta" style="opacity:.8;margin-top:6px">—</div>
+            <div id="pvPrice" style="opacity:.85;margin-top:4px">—</div>
+            <div id="pvDesc" style="opacity:.8;margin-top:6px">—</div>
+            <div id="ytWrap" class="yt" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  // --- util ---
+  function $(q){ return document.querySelector(q); }
+  function el(tag, attrs){ var e=document.createElement(tag); if(attrs) Object.assign(e, attrs); return e; }
+
+  // --- state ---
+  var lastVals = {};
+  var els = null;
+
+  // 画像プレビュー上限
+  var MAX_BYTES = 10*1024*1024; // 10MB
+  var MAX_EDGE  = 3000;         // 長辺3000px
+
+  // NGワード（簡易フロント検知：artist/title/venue は対象外）
+  var NG_TERMS = ["kill","die","rape","suicide","terror","bomb","fuck","cunt","asshole","nazi","kkk","white power","retard","spic","chink","gook","fag"];
+
+  // client_id を localStorage に保存（連投制限用）
+  function getClientId(){
+    try{
+      var k='chaynupzine_cid';
+      var id=localStorage.getItem(k);
+      if(!id){
+        id = 'cid_'+Math.random().toString(36).slice(2)+Date.now().toString(36);
+        localStorage.setItem(k,id);
+      }
+      return id;
+    }catch(_){ return ''; }
+  }
+
+  // --- prefectures / regions ---
+  var PREFS = ["","北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
+  var REGION_MAP = {
+    '北海道・東北':['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県'],
+    '関東':['茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県'],
+    '中部':['新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県'],
+    '近畿':['三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県'],
+    '中国':['鳥取県','島根県','岡山県','広島県','山口県'],
+    '四国':['徳島県','香川県','愛媛県','高知県'],
+    '九州・沖縄':['福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県']
+  };
+  function prefectureToRegion(pref){
+    if(!pref) return '';
+    for (var r in REGION_MAP){ if (REGION_MAP[r].indexOf(pref) >= 0) return r; }
+    return '';
+  }
+  // ★修正: 新ステータスに対応
+  function statusJp(v){
+    return v==='canceled' ? '中止'
+         : v==='done'     ? '終了'
+         : '開催予定';
+  }
+
+  // --- cache DOM refs ---
+  function bindEls(){
+    els = {
+      // artists x6
+      artist1:$('#artist1'), artist2:$('#artist2'), artist3:$('#artist3'),
+      artist4:$('#artist4'), artist5:$('#artist5'), artist6:$('#artist6'),
+      title:$('#title'),
+      genre:$('#genre'), // ★追加
+      date:$('#date'),
+      open_time:$('#open_time'), start_time:$('#start_time'),
+      venue:$('#venue'),
+      region:$('#region'), prefecture:$('#prefecture'),
+      price:$('#price'), reference_url:$('#reference_url'),
+      description:$('#description'), imageUrl:$('#imageUrl'), file:$('#file'),
+      youtube:$('#youtube'), author:$('#author'), status:$('#status'),
+      edit_key:$('#edit_key'),
+      btn:$('#submitBtn'), msg:$('#msg'),
+      ph:$('#ph'), img:$('#previewImg'),
+      chipRegion:$('#chipRegion'), chipPref:$('#chipPref'), chipStatus:$('#chipStatus'),
+      pvArtist:$('#pvArtist'), pvTitle:$('#pvTitle'), pvMeta:$('#pvMeta'),
+      pvPrice:$('#pvPrice'), pvDesc:$('#pvDesc'), ytWrap:$('#ytWrap'),
+      imgWarn:$('#imgWarn')
+    };
+  }
+
+  // artists helpers
+  function getArtistsArray(){
+    return [els.artist1.value,els.artist2.value,els.artist3.value,els.artist4.value,els.artist5.value,els.artist6.value]
+            .map(function(s){return (s||'').trim();})
+            .filter(function(s){return !!s;});
+  }
+  function getArtistsJoined(){
+    var arr=getArtistsArray();
+    return arr.join(' / ');
+  }
+
+  // --- helpers ---
+  function clearMsg(){
+    if(!els || !els.msg) return;
+    els.msg.textContent = '';
+    els.msg.className = 'msg';
+  }
+  function setCover(src){
+    if(src){ els.img.src=src; els.img.style.display=''; els.ph.style.display='none'; }
+    else { els.img.removeAttribute('src'); els.img.style.display='none'; els.ph.style.display=''; }
+  }
+  function normalizeDriveUrl(url){
+    try{
+      if(!url) return '';
+      var m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
+      m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);       if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
+      return url;
+    }catch(e){ return url; }
+  }
+  function fileToDataURL(file){
+    return new Promise(function(resolve,reject){
+      if(!file){ resolve(''); return; }
+      var fr=new FileReader();
+      fr.onload=function(e){ resolve(e.target.result); };
+      fr.onerror=function(){ reject(new Error('file read error')); };
+      fr.readAsDataURL(file);
+    });
+  }
+  async function checkImageLimits(file){
+    if(!file) return {ok:true};
+    if(file.size > MAX_BYTES) return {ok:false, reason:'ファイルサイズが大きすぎます（10MB超）'};
+    try{
+      var data = await fileToDataURL(file);
+      var img = new Image();
+      await new Promise(function(res,rej){
+        img.onload=function(){
+          var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+          if(Math.max(w,h)>MAX_EDGE) rej(new Error('長辺が大きすぎます（3000px超）'));
+          else res();
+        };
+        img.onerror=function(){ rej(new Error('画像の読み込みに失敗しました')); };
+        img.src=data;
+      });
+      return {ok:true, dataUrl:data};
+    }catch(e){ return {ok:false, reason:String(e.message||e)}; }
+  }
+  async function showFilePreview(file){
+    try{
+      var chk = await checkImageLimits(file);
+      els.imgWarn.style.display='none'; els.imgWarn.textContent='';
+      if(!chk.ok){ setCover(''); els.imgWarn.textContent='プレビュー不可：'+chk.reason; els.imgWarn.style.display=''; }
+      else{ setCover(chk.dataUrl||''); }
+    }catch(_){ setCover(''); }
+  }
+  function parseYouTubeId(url){
+    if(!url) return '';
+    var m=url.match(/youtu\.be\/([\w-]{6,})/); if(m) return m[1];
+    m=url.match(/[?&]v=([\w-]{6,})/); if(m) return m[1];
+    return '';
+  }
+  function setYouTube(url){
+    try{
+      var id=parseYouTubeId(url);
+      els.ytWrap.innerHTML='';
+      if(!id){ els.ytWrap.style.display='none'; return; }
+      var ifr=document.createElement('iframe');
+      ifr.src='https://www.youtube.com/embed/'+id;
+      ifr.setAttribute('allow','accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+      ifr.setAttribute('allowfullscreen','');
+      els.ytWrap.appendChild(ifr);
+      els.ytWrap.style.display='';
+    }catch(_){ els.ytWrap.style.display='none'; }
+  }
+  function truncate20(s){
+    if(!s) return '—';
+    var t = String(s);
+    return t.length>20 ? (t.slice(0,20)+'…') : t;
+  }
+
+  // 地方/県 セレクトの中身
+  function fillRegionSelect(){
+    var opts = ['<option value="">選択しない（地方なし）</option>'];
+    Object.keys(REGION_MAP).forEach(function(r){ opts.push('<option>'+r+'</option>'); });
+    els.region.innerHTML = opts.join('');
+  }
+  function fillPrefSelectForRegion(region){
+    if(!region){
+      // 全県＋先頭「選択してください」
+      els.prefecture.innerHTML = PREFS.map(function(v,i){
+        return i===0 ? '<option value="" selected>選択してください</option>' : '<option>'+v+'</option>';
+      }).join('');
+      return;
+    }
+    var list = REGION_MAP[region] || [];
+    var opts = ['<option value="" selected>選択してください</option>'];
+    list.forEach(function(p){ opts.push('<option>'+p+'</option>'); });
+    els.prefecture.innerHTML = opts.join('');
+  }
+
+  // --- preview ---
+  async function updatePreview(){
+    if(!els) return;
+    try{
+      // artists
+      var artistsJoined = getArtistsJoined();
+      els.pvArtist.textContent = truncate20(artistsJoined || '');
+
+      var pref = els.prefecture.value||'';
+      var region = els.region.value || prefectureToRegion(pref) || '';
+
+      els.chipRegion.style.display = region ? '' : 'none';
+      els.chipRegion.textContent = region;
+      els.chipPref.style.display = pref ? '' : 'none';
+      els.chipPref.textContent = pref;
+
+      var st = els.status.value||'scheduled';
+      els.chipStatus.style.display = '';
+      els.chipStatus.textContent = statusJp(st);
+
+      els.pvTitle.textContent  = truncate20(els.title.value || '');
+
+      var dt = (els.date.value||'').replace(/^(\d{4})-(\d{2})-(\d{2})$/,'$1/$2/$3');
+      var meta = [];
+      if(dt) meta.push(dt);
+      if(els.open_time.value)  meta.push('OPEN '+els.open_time.value);
+      if(els.start_time.value) meta.push('START '+els.start_time.value);
+      if(els.venue.value) meta.push('@ '+truncate20(els.venue.value));
+      els.pvMeta.textContent = meta.length ? meta.join('  ') : '—';
+
+      els.pvPrice.textContent = els.price.value || '—';
+      els.pvDesc.textContent  = els.description.value || '—';
+
+      var url=(els.imageUrl.value||'').trim();
+      if(url){ setCover(normalizeDriveUrl(url)); els.imgWarn.style.display='none'; els.imgWarn.textContent=''; }
+      else if(els.file.files && els.file.files[0]){ await showFilePreview(els.file.files[0]); }
+      else { setCover(''); els.imgWarn.style.display='none'; els.imgWarn.textContent=''; }
+
+      setYouTube((els.youtube.value||'').trim());
+    }catch(_){}
+  }
+
+  // フロント簡易NGチェック（artist/title/venue は除外）
+  function clientNgCheck(){
+    try{
+      var exclude = [getArtistsJoined(), (els.title.value||''), (els.venue.value||'')].join('\n').toLowerCase();
+      var text = [
+        els.price.value, els.reference_url.value, els.description.value, els.author.value
+      ].join('\n').toLowerCase();
+      exclude.split('\n').forEach(function(s){ if(s) text = text.replace(s,''); });
+      for(var i=0;i<NG_TERMS.length;i++){
+        var w=NG_TERMS[i];
+        if(text.indexOf(w)>=0) return 'NGワードに該当する表現が含まれています。表現を言い換えてください。';
+      }
+      return '';
+    }catch(_){ return ''; }
+  }
+
+  // --- bind events (iOS対策含む) ---
+  function bindAll(){
+    var ids = [
+      'artist1','artist2','artist3','artist4','artist5','artist6',
+      'title','genre','date','open_time','start_time','venue',  // ★genre 追加
+      'region','prefecture','price','reference_url','description','imageUrl',
+      'youtube','status','author','edit_key'
+    ];
+    ids.forEach(function(id){
+      var el = $('#'+id);
+      if(!el) return;
+      ['input','change','keyup','paste','blur'].forEach(function(ev){
+        el.addEventListener(ev, updatePreview, false);
+        el.addEventListener(ev, clearMsg, false);
+      });
+    });
+
+    // 画像ファイル
+    var f = $('#file');
+    if(f){
+      f.addEventListener('change', updatePreview, false);
+      f.addEventListener('change', clearMsg, false);
+    }
+
+    // 地方→県 連動
+    els.region.addEventListener('change', function(){
+      fillPrefSelectForRegion(els.region.value || '');
+      updatePreview();
+    }, false);
+
+    // document 全体のフォールバック
+    ['input','change','keyup','paste'].forEach(function(ev){
+      document.addEventListener(ev, updatePreview, true);
+      document.addEventListener(ev, clearMsg, true);
+    });
+
+    // 値の変化監視（イベント取りこぼし対策）
+    setInterval(function(){
+      try{
+        var now = {
+          artists:getArtistsJoined(),
+          title:els.title.value, date:els.date.value,
+          open_time:els.open_time.value, start_time:els.start_time.value,
+          venue:els.venue.value, region:els.region.value, prefecture:els.prefecture.value,
+          price:els.price.value, reference_url:els.reference_url.value,
+          description:els.description.value, imageUrl:els.imageUrl.value,
+          youtube:els.youtube.value, status:els.status.value, author:els.author.value,
+          edit_key:els.edit_key.value, genre: els.genre ? els.genre.value : '' // ★genre 追加
+        };
+        var changed = JSON.stringify(now) !== JSON.stringify(lastVals);
+        if(changed){ lastVals = now; updatePreview(); }
+      }catch(_){}
+    }, 600);
+  }
+
+  /* === 追加：GAS/外部 両対応 呼び出しラッパー（最小差分） === */
+  async function callSubmitLive(payload, onOK, onNG){
+    // GAS（HtmlService）内：従来どおり
+    if (window.google && google.script && google.script.run){
+      google.script.run
+        .withSuccessHandler(onOK)
+        .withFailureHandler(onNG)
+        .submitLive(payload);
+      return;
+    }
+    // 外部（GitHub Pages 等）：WebApp に POST
+    try{
+      const res = await fetch(EXEC_URL, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ fn:'submitLive', payload })
+      });
+      const json = await res.json();
+      onOK(json);
+    }catch(err){
+      onNG(err);
+    }
+  }
+  /* === 追加ここまで === */
+
+  // --- submit ---
+  function bindSubmit(){
+    function toDataURL(file){
+      return new Promise(function(resolve){
+        if(!file){ resolve(''); return; }
+        var fr=new FileReader();
+        fr.onload=function(e){ resolve(e.target.result); };
+        fr.readAsDataURL(file);
+      });
+    }
+
+    els.btn.addEventListener('click', function(){
+      if(els.btn.disabled) return;
+      clearMsg();
+      els.btn.disabled=true;
+
+      (async function(){
+        try{
+          // 同意チェック
+          if(!document.getElementById('agree').checked){
+            throw new Error('免責事項に同意してください');
+          }
+
+          // 必須: ARTISTS(いずれか) / DATE / VENUE
+          var artistsJoined = getArtistsJoined();
+          if(!artistsJoined){
+            throw new Error('必須: ARTISTS（最低1件）');
+          }
+          if(!(els.date.value||'').trim() || !(els.venue.value||'').trim()){
+            throw new Error('必須: DATE / VENUE');
+          }
+
+          // 編集キー
+          var ek = (els.edit_key.value||'').trim();
+          if(!/^[A-Za-z0-9]+$/.test(ek)){
+            throw new Error('編集キーは半角英数のみで入力してください');
+          }
+
+          // NGチェック
+          var ng = clientNgCheck();
+          if(ng){ throw new Error(ng); }
+
+          // ▼▼ 修正：artists を分割して artist, artist2..artist6 として送信
+          var arr = getArtistsArray();               // 例: ["A","B","C"...]
+          var payload = {
+            artist : arr[0] || '',
+            artist2: arr[1] || '',
+            artist3: arr[2] || '',
+            artist4: arr[3] || '',
+            artist5: arr[4] || '',
+            artist6: arr[5] || '',
+
+            // ★追加: ジャンル送信
+            genre: (els.genre ? (els.genre.value||'').trim() : ''),
+
+            title:(els.title.value||'').trim(),
+            date:(els.date.value||'').trim(),
+            open_time:(els.open_time.value||'').trim(),
+            start_time:(els.start_time.value||'').trim(),
+            venue:(els.venue.value||'').trim(),
+            prefecture:(els.prefecture.value||'').trim(),  // 地方のみ選択でもOK（空で可）
+            price:(els.price.value||'').trim(),
+            reference_url:(els.reference_url.value||'').trim(),
+            description:(els.description.value||'').trim(),
+            image_url:(els.imageUrl.value||'').trim(),
+            youtube_url:(els.youtube.value||'').trim(),
+            author:(els.author.value||'').trim(),
+            status:(els.status.value||'scheduled').trim(),
+            edit_key: ek,
+            client_id: (function(){ try{ var k='chaynupzine_cid'; return localStorage.getItem(k)||''; }catch(_){ return ''; } })(),
+            image_data:''
+          };
+          // ▲▲ 修正ここまで
+
+          if(!payload.image_url && els.file.files && els.file.files[0]){
+            payload.image_data = await toDataURL(els.file.files[0]);
+          }
+
+          /* ▼▼ 置換：二重化ラッパー経由で送信 */
+          callSubmitLive(
+            payload,
+            function(res){
+              if(res && res.ok){
+                els.msg.className='msg ok';
+                els.msg.textContent='Posted!';
+                var keepRegion=els.region.value;
+                // 入力リセット（編集キーは保持）
+                ['artist1','artist2','artist3','artist4','artist5','artist6'].forEach(function(id){ els[id].value=''; });
+                els.title.value=''; els.date.value='';
+                els.open_time.value=''; els.start_time.value='';
+                els.venue.value=''; els.price.value='';
+                els.reference_url.value=''; els.description.value='';
+                els.imageUrl.value=''; els.youtube.value=''; els.author.value='';
+                els.file.value=''; els.status.value='scheduled';
+                if(els.genre) els.genre.value=''; // ★追加: ジャンル初期化
+                els.region.value=keepRegion||''; fillPrefSelectForRegion(els.region.value||''); els.prefecture.value='';
+                setCover(''); setYouTube('');
+                updatePreview();
+              }else{
+                throw new Error(res && res.error ? res.error : 'server error');
+              }
+              els.btn.disabled=false;
+            },
+            function(err){
+              els.msg.className='msg err';
+              els.msg.textContent='Error: '+(err && err.message ? err.message : String(err));
+              els.btn.disabled=false;
+            }
+          );
+          /* ▲▲ 置換ここまで */
+
+        }catch(e){
+          els.msg.className='msg err';
+          els.msg.textContent='Error: '+e.message;
+          els.btn.disabled=false;
+        }
+      })(); /* ★修正: タイプミス修正（})!; → })();） */
+    });
+  }
+
+  // --- init (run once) ---
+  var __LIVE_INITED = false;
+  function initOnce(){
+    if(__LIVE_INITED) return;
+    __LIVE_INITED = true;
+
+    bindEls();
+
+    // 地方/県 初期化
+    fillRegionSelect();
+    fillPrefSelectForRegion('');
+
+    bindAll();
+    bindSubmit();
+    updatePreview();
+  }
+
+  document.addEventListener('DOMContentLoaded', initOnce, false);
+  window.addEventListener('load', initOnce, false);
+})();
+</script>
+</body>
+</html>

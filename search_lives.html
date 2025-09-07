@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHAYNUPZINE — Lives search</title>
+<style>
+  :root{ --card-bg: rgba(255,255,255,.92); --chip:#eef1f5; --txt:#222; }
+  html,body{
+    height:100%; margin:0; background:transparent; color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:20px;
+  }
+
+  /* 背景（GitHub Pagesの画像を固定） */
+  .bg{
+    position:fixed; inset:0;
+    background-color:#f3f5f7;
+    background-image:url("https://etramone7-coder.github.io/chaynupzine/assets/bg_lives_search.webp");
+    background-size:cover; background-position:center;
+    filter:brightness(.88);
+    z-index:0;
+  }
+
+  .wrap{max-width:980px; margin:28px auto; padding:0 16px; position:relative; z-index:1}
+  .panel{
+    background:var(--card-bg); backdrop-filter:saturate(120%) blur(10px);
+    border-radius:16px; box-shadow:0 10px 28px rgba(0,0,0,.16);
+    padding:20px 20px 12px; min-height:860px; position:relative
+  }
+  h1{font-size:24px; margin:0 0 10px; display:flex; align-items:center; gap:12px}
+  .brand{display:inline-block; background:#111; color:#fff; border-radius:8px; padding:7px 12px; font-weight:800; letter-spacing:.4px}
+  .sub{font-size:16px; color:#555}
+
+  /* 言語ボタンを上下に */
+  .lang{margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:8px}
+  .lang button{padding:6px 12px; font-size:14px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer}
+  .lang button.active{background:#111; color:#fff; border-color:#111}
+
+  .chips{display:flex; flex-wrap:wrap; gap:12px; margin:12px 0 8px}
+  .chip{padding:12px 16px; border-radius:999px; background:var(--chip); cursor:pointer; font-size:18px; font-weight:700; user-select:none; line-height:1}
+  .chip.active{background:#111; color:#fff}
+  .row{margin:14px 0 20px; border-top:1px dashed #ddd; padding-top:12px}
+  .sel{font-size:15px; color:#666; margin-top:7px}
+
+  .actions{display:flex; justify-content:flex-end; gap:12px; margin:12px 0; align-items:center; flex-wrap:wrap}
+  .btn{border:0; border-radius:14px; padding:12px 16px; background:#111; color:#fff; font-weight:800; cursor:pointer; font-size:18px}
+  .btn.ghost{background:#fff; color:#111; border:1px solid #ddd}
+  .btn[disabled]{opacity:.5; cursor:not-allowed}
+  .btn-link{display:inline-block; text-decoration:none}
+
+  .list-compact{display:grid; grid-template-columns:repeat(1,1fr); gap:14px; margin-top:12px}
+  .resultbox{padding:12px; background:#fff; border:1px solid #eee; border-radius:12px; color:#333}
+
+  .alert{margin:12px 0; padding:12px; border-radius:14px; background:#ffe9e9; color:#a33; border:1px solid #f6bcbc; font-size:16px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="bg" class="bg"></div>
+
+<div class="wrap">
+  <div class="panel">
+    <h1>
+      <span class="brand">CHAYNUPZINE</span>
+      <span class="sub" id="title-sub">Lives — search & listing</span>
+      <!-- 言語ボタン（縦） -->
+      <span class="lang">
+        <button id="lang-ja" type="button">JP</button>
+        <button id="lang-en" type="button">EN</button>
+      </span>
+    </h1>
+    <p class="sub" id="subtitle">ジャンル / 地方・県 / 月 / バンド頭文字 で絞り込みできます（複数可）。</p>
+
+    <!-- ジャンル -->
+    <div class="row">
+      <div class="chips" id="chips-genre"></div>
+      <div class="sel" id="sel-genre"></div>
+    </div>
+
+    <!-- 地方 -->
+    <div class="row">
+      <div class="chips" id="chips-region"></div>
+      <div class="sel" id="sel-region"></div>
+    </div>
+
+    <!-- 県 -->
+    <div class="row" id="pref-row" style="display:none">
+      <div class="chips" id="chips-pref"></div>
+      <div class="sel" id="sel-pref"></div>
+    </div>
+
+    <!-- 月 -->
+    <div class="row">
+      <div class="chips" id="chips-month"></div>
+      <div class="sel" id="sel-month"></div>
+    </div>
+
+    <!-- バンド頭文字 -->
+    <div class="row">
+      <div class="chips" id="chips-initial"></div>
+      <div class="sel" id="sel-initial"></div>
+    </div>
+
+    <div class="actions">
+      <!-- トップへ戻る & 投稿フォームへ -->
+      <a class="btn ghost btn-link" id="btn-top"  href="https://etramone7-coder.github.io/chaynupzine/" target="_top" rel="noopener noreferrer">トップへ戻る</a>
+      <a class="btn ghost btn-link" id="btn-form" href="https://etramone7-coder.github.io/chaynupzine/submit_live.html" target="_top" rel="noopener noreferrer">ライブ投稿フォームへ</a>
+
+      <button class="btn ghost" id="btn-reset" type="button">条件リセット</button>
+      <button class="btn" id="btn-search" type="button" disabled>検索</button>
+    </div>
+
+    <div id="result-alert" class="alert hidden"></div>
+    <div id="results" class="list-compact"></div>
+    <div class="sel" id="foot-sel"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* 言語の初期値はローカル保存を優先 */
+  var lang = localStorage.getItem('chay_lang') || 'ja';
+
+  var TEXTS = {
+    ja:{
+      titleSub:"Lives — search & listing",
+      subtitle:"ジャンル / 地方・県 / 月 / バンド頭文字 で絞り込みできます（複数可）。",
+      genre:"ジャンル", region:"地方", pref:"県", month:"月", initial:"バンド頭文字",
+      reset:"条件リセット", search:"検索", none:"指定なし",
+      reading:"読み込み中…", nohit:"該当データがありません。条件を変えて試してください。",
+      fail:"読み込みに失敗しました。",
+      backTop:"トップへ戻る", toForm:"ライブ投稿フォームへ",
+      offi:"公式/イベントページ"
+    },
+    en:{
+      titleSub:"Lives — search & listing",
+      subtitle:"Filter by Genre / Region-Prefecture / Month / Band Initial (multiple selections allowed).",
+      genre:"Genre", region:"Region", pref:"Prefecture", month:"Month", initial:"Band Initial",
+      reset:"Reset", search:"Search", none:"None",
+      reading:"Loading…", nohit:"No results. Please try different filters.",
+      fail:"Failed to load.",
+      backTop:"Back to Top", toForm:"Go to Live Post Form",
+      offi:"Official/Event page"
+    }
+  };
+
+  var GENRES = [
+    {code:"Punk",label:"Punk"},{code:"Hardcore",label:"Hardcore"},{code:"PowerPop",label:"PowerPop"},
+    {code:"Indie",label:"Indie"},{code:"Garage",label:"Garage"},{code:"Mods",label:"Mods"},
+    {code:"NeoMods",label:"NeoMods"},{code:"Metal",label:"Metal"},{code:"HardRock",label:"HardRock"},
+    {code:"Reggae",label:"Reggae"},{code:"Rock",label:"Rock"},{code:"Pop",label:"Pop"},
+    {code:"Melodicore",label:"Melodicore"},{code:"Rockabilly",label:"Rockabilly"},{code:"Other",label:"Other"}
+  ];
+
+  var REGION_MAP = {
+    '北海道・東北':['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県'],
+    '関東':['茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県'],
+    '中部':['新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県'],
+    '近畿':['三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県'],
+    '中国':['鳥取県','島根県','岡山県','広島県','山口県'],
+    '四国':['徳島県','香川県','愛媛県','高知県'],
+    '九州・沖縄':['福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県']
+  };
+
+  var MONTHS = Array.from({length:12}, (_,i)=> (i+1));
+  var INITIALS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
+
+  var state = {genre:'', region:'', prefectures:[], months:[], initial:''};
+
+  /* 背景（保険の再設定） */
+  try{
+    document.getElementById('bg').style.backgroundImage =
+      'url(https://etramone7-coder.github.io/chaynupzine/assets/bg_lives_search.webp)';
+  }catch(_){}
+
+  /* GAS実行URLの解決（doGet注入 or ?exec= or フォールバック） */
+  (function resolveExecUrl(){
+    try{
+      var injected = (window.EXEC_URL||'').trim();
+      var viaQuery = new URLSearchParams(location.search).get('exec') || '';
+      if (!injected || injected.indexOf('<?=') === 0) injected = '';
+      var fallback = 'https://script.google.com/macros/s/AKfycbxZ9JsvX-BQUrFXLTBSkf9i_MgWxt-fyQygLDQfi2DQWy3qZ7dtc_IObvi3VMYoaCQAxw/exec';
+      window.EXEC_URL = injected || viaQuery || fallback;
+    }catch(_){
+      window.EXEC_URL = 'https://script.google.com/macros/s/AKfycbxZ9JsvX-BQUrFXLTBSkf9i_MgWxt-fyQygLDQfi2DQWy3qZ7dtc_IObvi3VMYoaCQAxw/exec';
+    }
+  })();
+
+  /* ★ GET→POST フォールバックで確実に取得 */
+  async function callListLives(payload, onOK, onNG){
+    // 1) Apps Script 内なら google.script.run を優先
+    try{
+      if (window.google && google.script && google.script.run){
+        google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).listLives(payload);
+        return;
+      }
+    }catch(_){}
+
+    // 2) まず GET を試す（JSON の時のみ採用）
+    try{
+      var url1 = window.EXEC_URL
+        + (window.EXEC_URL.indexOf('?')>=0?'&':'?')
+        + 'fn=listLives&payload=' + encodeURIComponent(JSON.stringify(payload))
+        + '&v=' + Date.now();
+      var r1 = await fetch(url1, {method:'GET', mode:'cors', cache:'no-store'});
+      var ct = r1.headers.get('content-type') || '';
+      if (r1.ok && ct.indexOf('application/json')>=0){
+        onOK(await r1.json());
+        return;
+      }
+    }catch(_){}
+
+    // 3) POST フォールバック
+    try{
+      var r2 = await fetch(window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now(), {
+        method:'POST', mode:'cors', cache:'no-store',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ fn:'listLives', payload, csrf:(window.__CZ_CSRF||'') })
+      });
+      if(!r2.ok){ throw new Error('HTTP '+r2.status); }
+      onOK(await r2.json());
+    }catch(err){ onNG(err); }
+  }
+
+  function chipEl(label, active, onClick){
+    var el=document.createElement('div');
+    el.className='chip'+(active?' active':'');
+    el.textContent=label;
+    el.onclick=onClick;
+    return el;
+  }
+
+  function drawGenre(){
+    var wrap=document.getElementById('chips-genre');
+    wrap.innerHTML='';
+    GENRES.forEach(function(g){
+      wrap.appendChild(chipEl(g.label, state.genre===g.code, function(){
+        state.genre=(state.genre===g.code)?'':g.code;
+        drawGenre(); updateSels(); updateSearchEnabled();
+      }));
+    });
+    document.getElementById('sel-genre').textContent = TEXTS[lang].genre+': '+(state.genre||TEXTS[lang].none);
+  }
+
+  function drawRegion(){
+    var wrap=document.getElementById('chips-region');
+    wrap.innerHTML='';
+    Object.keys(REGION_MAP).forEach(function(r){
+      wrap.appendChild(chipEl(r, state.region===r, function(){
+        state.region=(state.region===r)?'':r;
+        state.prefectures=[];
+        drawRegion(); drawPref(); updateSels(); updateSearchEnabled();
+      }));
+    });
+    document.getElementById('sel-region').textContent=TEXTS[lang].region+': '+(state.region||TEXTS[lang].none);
+  }
+
+  function drawPref(){
+    var row=document.getElementById('pref-row');
+    var wrap=document.getElementById('chips-pref');
+    var sel=document.getElementById('sel-pref');
+    wrap.innerHTML='';
+    if(!state.region){ row.style.display='none'; sel.textContent=''; return; }
+    row.style.display='';
+    (REGION_MAP[state.region]||[]).forEach(function(p){
+      var active=state.prefectures.includes(p);
+      wrap.appendChild(chipEl(p,active,function(){
+        var i=state.prefectures.indexOf(p);
+        if(i>=0) state.prefectures.splice(i,1); else state.prefectures.push(p);
+        drawPref(); updateSels(); updateSearchEnabled();
+      }));
+    });
+    sel.textContent=TEXTS[lang].pref+': '+(state.prefectures.length?state.prefectures.join('/'):(TEXTS[lang].none+(lang==='ja'?'（地方のみで検索可）':'')));
+  }
+
+  function drawMonth(){
+    var wrap=document.getElementById('chips-month');
+    wrap.innerHTML='';
+    MONTHS.forEach(function(m){
+      var active=state.months.includes(m);
+      wrap.appendChild(chipEl(m+(lang==='ja'?'月':''), active, function(){
+        var i=state.months.indexOf(m);
+        if(i>=0) state.months.splice(i,1); else state.months.push(m);
+        drawMonth(); updateSels(); updateSearchEnabled();
+      }));
+    });
+    document.getElementById('sel-month').textContent=TEXTS[lang].month+': '+(state.months.length?state.months.join('/') : TEXTS[lang].none);
+  }
+
+  function drawInitial(){
+    var wrap=document.getElementById('chips-initial');
+    wrap.innerHTML='';
+    INITIALS.forEach(function(ch){
+      wrap.appendChild(chipEl(ch, state.initial===ch, function(){
+        state.initial=(state.initial===ch)?'':ch;
+        drawInitial(); updateSels(); updateSearchEnabled();
+      }));
+    });
+    document.getElementById('sel-initial').textContent=TEXTS[lang].initial+': '+(state.initial||TEXTS[lang].none);
+  }
+
+  function updateSels(){
+    var foot='条件: '
+      + TEXTS[lang].genre+':' +(state.genre||TEXTS[lang].none)+'　'
+      + TEXTS[lang].region+':' +(state.region||TEXTS[lang].none)+'　'
+      + (state.region?(TEXTS[lang].pref+':' +(state.prefectures.length?state.prefectures.join('/') : TEXTS[lang].none)+'　'):'')
+      + TEXTS[lang].month+':' +(state.months.length?state.months.join('/') : TEXTS[lang].none)+'　'
+      + TEXTS[lang].initial+':' +(state.initial||TEXTS[lang].none);
+    document.getElementById('foot-sel').textContent=foot;
+  }
+
+  function hasAnySelection(){ return state.genre||state.region||state.prefectures.length||state.months.length||state.initial; }
+  function updateSearchEnabled(){ document.getElementById('btn-search').disabled=!hasAnySelection(); }
+
+  // カード
+  function toJPStatus(v){ return v==='canceled'?'中止':(v==='done'?'終了':'開催予定'); }
+  function secureHttps(u){ try{ var s=String(u||'').trim(); return s.startsWith('https://') ? s : ''; }catch(_){ return ''; } }
+  function card(it){
+    var box = document.createElement('div');
+    box.className = 'resultbox';
+
+    var line1 = document.createElement('div');
+    var st = document.createElement('span'); st.textContent = '［'+toJPStatus(String(it.status||'').toLowerCase())+'］ ';
+    var rp = document.createElement('span'); rp.textContent = [it.region||'', it.prefecture||''].filter(Boolean).join(' / ');
+    line1.appendChild(st); line1.appendChild(rp);
+    box.appendChild(line1);
+
+    var art = document.createElement('div');
+    art.style.fontWeight = '800';
+    art.textContent = it.artist || '—';
+    box.appendChild(art);
+
+    if(it.title){
+      var t = document.createElement('div');
+      t.style.opacity = '.9';
+      t.textContent = it.title;
+      box.appendChild(t);
+    }
+
+    var meta = document.createElement('div');
+    meta.style.opacity = '.85';
+    var parts=[];
+    if(it.date) parts.push(it.date);
+    if(it.open_time) parts.push('OPEN '+it.open_time);
+    if(it.start_time) parts.push('START '+it.start_time);
+    if(it.venue) parts.push('@ '+it.venue);
+    meta.textContent = parts.join('  ');
+    box.appendChild(meta);
+
+    if(it.price){
+      var pr = document.createElement('div');
+      pr.style.opacity = '.85';
+      pr.textContent = it.price;
+      box.appendChild(pr);
+    }
+
+    if(it.description){
+      var de = document.createElement('div');
+      de.style.marginTop = '6px';
+      de.textContent = it.description;
+      box.appendChild(de);
+    }
+
+    var ref = secureHttps(it.reference_url||'');
+    if(ref){
+      var a = document.createElement('a');
+      a.href = ref; a.target = '_blank'; a.rel='noopener nofollow';
+      a.textContent = TEXTS[lang].offi;
+      a.style.display='inline-block'; a.style.marginTop='6px'; a.style.color='#1e90ff'; a.style.textDecoration='none';
+      box.appendChild(a);
+    }
+
+    return box;
+  }
+
+  // 検索
+  function showAlert(msg, loading){
+    var a=document.getElementById('result-alert');
+    if(!msg){ a.classList.add('hidden'); a.textContent=''; a.classList.remove('loading'); return; }
+    a.textContent=msg; a.classList.remove('hidden'); a.classList.toggle('loading',!!loading);
+  }
+  function runSearch(){
+    var btn = document.getElementById('btn-search');
+    if(btn.disabled) return;
+    btn.disabled = true;
+    showAlert(TEXTS[lang].reading, true);
+    document.getElementById('results').innerHTML='';
+
+    var firstPref = state.prefectures && state.prefectures.length ? state.prefectures[0] : '';
+
+    var payload = {
+      genre: state.genre || '',
+      region: state.region || '',
+      prefecture: firstPref || '',
+      months: (state.months||[]).slice(0), // ← 配列で送信
+      initial: state.initial || '',
+      limit: 30,
+      offset: 0
+    };
+
+    callListLives(payload, function(res){
+      btn.disabled = false;
+      if(!res || !res.ok){
+        showAlert(TEXTS[lang].fail); return;
+      }
+      showAlert('');
+      var items = res.items || [];
+      var box = document.getElementById('results');
+      if(!items.length){
+        showAlert(TEXTS[lang].nohit); return;
+      }
+      items.forEach(function(it){ box.appendChild(card(it)); });
+    }, function(err){
+      btn.disabled = false;
+      showAlert(TEXTS[lang].fail + '：' + (err && err.message ? err.message : String(err)));
+    });
+  }
+
+  document.getElementById('btn-reset').onclick=function(){
+    state={genre:'', region:'', prefectures:[], months:[], initial:''};
+    drawGenre(); drawRegion(); drawPref(); drawMonth(); drawInitial();
+    updateSels(); updateSearchEnabled(); document.getElementById('results').innerHTML='';
+    document.getElementById('result-alert').classList.add('hidden');
+  };
+  document.getElementById('btn-search').onclick=runSearch;
+
+  /* 言語切替（ボタン上下） */
+  function setLangUI(){
+    var T = TEXTS[lang];
+    document.getElementById('title-sub').textContent = T.titleSub;
+    document.getElementById('subtitle').textContent  = T.subtitle;
+    document.getElementById('btn-reset').textContent = T.reset;
+    document.getElementById('btn-search').textContent= T.search;
+    document.getElementById('btn-top').textContent   = T.backTop;
+    document.getElementById('btn-form').textContent  = T.toForm;
+    document.getElementById('lang-ja').classList.toggle('active', lang==='ja');
+    document.getElementById('lang-en').classList.toggle('active', lang==='en');
+    drawGenre(); drawRegion(); drawPref(); drawMonth(); drawInitial(); updateSels();
+  }
+  document.getElementById('lang-ja').onclick=function(){ lang='ja'; localStorage.setItem('chay_lang',lang); setLangUI(); };
+  document.getElementById('lang-en').onclick=function(){ lang='en'; localStorage.setItem('chay_lang',lang); setLangUI(); };
+
+  // 初期描画
+  setLangUI();
+  updateSearchEnabled();
+})();
+</script>
+</body>
+</html>

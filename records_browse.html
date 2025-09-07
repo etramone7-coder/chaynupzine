@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHAYNUPZINE — Record View</title>
+<style>
+  :root{ --ink:#222; --panel:rgba(255,255,255,.6); }
+  html,body{
+    margin:0; background:transparent; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:20px; line-height:1.5;
+  }
+  .bg{
+    position:fixed; inset:0;
+    background-color:#f3f5f7;
+    background-image:url("https://etramone7-coder.github.io/chaynupzine/assets/bg_records.webp");
+    background-size:cover; background-position:center;
+    filter:brightness(.88); z-index:0;
+  }
+
+  .wrap{max-width:1080px; margin:28px auto; padding:0 16px}
+  .panel{
+    position:relative; z-index:1;
+    background:var(--panel); backdrop-filter:saturate(120%) blur(10px);
+    border-radius:16px; box-shadow:0 10px 28px rgba(0,0,0,.6);
+    padding:20px; min-height:720px;
+  }
+
+  /* ▼▼ 修正：ヘッダーを2カラムにして右上に言語ボタン ▼▼ */
+  .topbar{
+    display:grid;
+    grid-template-columns: 1fr auto; /* 左=ロゴ＆戻る / 右=言語トグル */
+    align-items:start;
+    gap:12px;
+    position:relative;
+  }
+  .top-left{display:flex; flex-direction:column; gap:8px; align-items:flex-start;}
+  /* ▲▲ ここまで ▲▲ */
+
+  .brand{background:#111; color:#fff; border-radius:8px; padding:7px 12px; font-weight:800}
+
+  .btn{border:0; border-radius:14px; padding:10px 14px; font-size:18px; font-weight:800; cursor:pointer}
+  .btn.ghost{background:#fff; color:#111; border:1px solid #ddd}
+  .btn.warn{background:#fff0f0; color:#a33; border:1px solid #f3b9b9}
+
+  .grid{display:grid; gap:18px; margin-top:16px}
+  @media(min-width:980px){ .grid{grid-template-columns:420px 1fr} }
+
+  /* 左カラム */
+  .leftbox{display:flex; flex-direction:column; gap:14px}
+  .jacket{
+    width:100%; aspect-ratio:1/1; border-radius:14px; background:#f5f5f5;
+    display:flex; align-items:center; justify-content:center; overflow:hidden; color:#888
+  }
+  .jacket img{width:100%; height:100%; object-fit:cover; display:block}
+
+  .ytwrap{position:relative; width:100%; padding-top:56.25%; border-radius:14px; overflow:hidden; background:#000}
+  .ytwrap iframe{position:absolute; inset:0; width:100%; height:100%; border:0}
+
+  /* 右カラム */
+  .head{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start}
+  .title{min-width:0}
+  .band{font-size:26px; font-weight:900; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .track{font-size:20px; color:#444; margin:4px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .badge{padding:8px 12px; border-radius:999px; font-size:16px; font-weight:800; align-self:flex-start}
+
+  .meta{display:grid; gap:8px; margin:10px 0 0}
+  .kv{display:flex; gap:10px; align-items:center}
+  .k{font-weight:800; color:#555; min-width:7em}
+  .v{color:#222}
+
+  .desc{margin-top:14px; white-space:pre-wrap}
+  .author{margin-top:10px; color:#555}
+  .actions{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap}
+
+  .alert{margin-top:14px; padding:12px; border-radius:12px; border:1px solid #e6e6e6; background:#fff; font-size:16px; display:none}
+  .alert.show{display:block}
+
+  /* 言語トグル（既存） */
+  .lang{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    align-items:flex-start;
+  }
+  .lang button{
+    border:1px solid #ddd;
+    background:#fff;
+    color:#111;
+    padding:6px 10px;
+    border-radius:10px;
+    font-size:15px;
+    cursor:pointer
+  }
+  .lang button.active{
+    background:#111;
+    color:#fff;
+    border-color:#111
+  }
+
+  /* ── 追加の見た目調整（右カラムの言語トグルを右寄せ） ── */
+  .topbar .actions{
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:flex-end !important;
+    gap:8px !important;
+  }
+  .topbar .lang{ align-items:flex-end; }
+  .topbar .lang button{ min-width:52px; }
+
+  /* 戻るボタンは左寄せのまま */
+  #btn-back{ white-space:nowrap; align-self:flex-start; }
+
+  /* 横スクロール抑止とロゴ/見出しの自動縮小 */
+  html,body{ max-width:100%; overflow-x:hidden; }
+  .brand{ font-size:clamp(16px,5.2vw,22px); padding:6px 10px; }
+  h1{ font-size:clamp(18px,4.6vw,24px); }
+  #subtitle{ white-space:nowrap; }
+</style>
+</head>
+<body>
+<div id="bg" class="bg"></div>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="topbar">
+      <!-- 左：ロゴ＋サブタイトル＋戻る -->
+      <div class="top-left">
+        <h1>
+          <span class="brand">CHAYNUPZINE</span>
+          <span id="subtitle" style="font-size:16px;color:#555">Record view</span>
+        </h1>
+        <!-- ★ 修正：戻るは履歴→フォールバックで search_records.html?lang=.. -->
+        <button id="btn-back" class="btn ghost">検索へ戻る</button>
+        <!-- ★ 追加：トップページへ戻る -->
+        <a class="btn ghost" id="btn-home" href="https://etramone7-coder.github.io/chaynupzine/" target="_top" rel="noopener noreferrer">トップへ戻る</a>
+      </div>
+
+      <!-- 右：言語トグル（右上固定） -->
+      <div class="actions" style="display:flex;gap:10px;align-items:center">
+        <div class="lang">
+          <button id="lang-ja" type="button">JP</button>
+          <button id="lang-en" type="button">EN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- 左 -->
+      <div class="leftbox">
+        <div class="jacket" id="jacketBox">No image</div>
+        <!-- 既存の埋め込み枠（このページで使います） -->
+        <div class="ytwrap" id="ytWrap" style="display:none">
+          <iframe id="ytFrame"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen></iframe>
+        </div>
+      </div>
+
+      <!-- 右 -->
+      <div>
+        <div class="head">
+          <div class="title">
+            <h2 class="band" id="band">(Band)</h2>
+            <div class="track" id="track">(Track)</div>
+          </div>
+          <div class="badge" id="genreBadge">GENRE</div>
+        </div>
+
+        <div class="meta">
+          <div class="kv"><div class="k" id="label-genre">ジャンル</div><div class="v" id="genre">-</div></div>
+          <div class="kv"><div class="k" id="label-era">年代</div><div class="v" id="era">-</div></div>
+          <div class="kv"><div class="k" id="label-catalog">型番</div><div class="v" id="catalog">-</div></div>
+          <div class="kv"><div class="k" id="label-format">フォーマット</div><div class="v" id="format">-</div></div>
+        </div>
+
+        <div class="desc" id="description"></div>
+        <div class="author" id="author"></div>
+
+        <div class="actions">
+          <button class="btn warn" id="reportBtn" type="button">通報する</button>
+        </div>
+        <div id="msg" class="alert"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* 背景：JS も CSS と同じ URL で統一（相対パスでの上書きを防ぐ） */
+(function(){
+  document.getElementById('bg').style.backgroundImage =
+    'url(https://etramone7-coder.github.io/chaynupzine/assets/bg_records.webp)';
+})();
+
+/* ジャンルごとの色（バッジ） */
+var GENRE_STYLES = {
+  Punk:{bg:'#111',fg:'#fff'},
+  Hardcore:{bg:'#b00020',fg:'#fff'},
+  PowerPop:{bg:'#ffd54f',fg:'#111'},
+  Indie:{bg:'#4fc3f7',fg:'#111'},
+  Garage:{bg:'#8d6e63',fg:'#fff'},
+  Mods:{bg:'#607d8b',fg:'#fff'},
+  NeoMods:{bg:'#26a69a',fg:'#fff'},
+  Metal:{bg:'#424242',fg:'#fff'},
+  HardRock:{bg:'#6d4c41',fg:'#fff'},
+  Reggae:{bg:'#2e7d32',fg:'#fff'},
+  Rock:{bg:'#3949ab',fg:'#fff'},
+  Pop:{bg:'#f06292',fg:'#fff'},
+  Melodicore:{bg:'#ef6c00',fg:'#fff'},
+  Rockabilly:{bg:'#7e57c2',fg:'#fff'},
+  Other:{bg:'#9e9e9e',fg:'#fff'}
+};
+
+/* ===== i18n（JP/EN 切替） ===== */
+var I18N = {
+  ja:{
+    subtitle:'Record view',
+    labels:{ genre:'ジャンル', era:'年代', catalog:'型番', format:'フォーマット',
+             report:'通報する', back:'検索へ戻る', by:'投稿者：' }
+  },
+  en:{
+    subtitle:'Record view',
+    labels:{ genre:'Genre', era:'Era', catalog:'Catalog No.', format:'Format',
+             report:'Report', back:'Back to Search', by:'by ' }
+  }
+};
+var lang = (localStorage.getItem('chay_lang') || ((navigator.language||'ja').toLowerCase().startsWith('en')?'en':'ja'));
+var currentRecord = null;
+
+function setLangUI(){
+  var t = I18N[lang];
+  document.getElementById('subtitle').textContent = t.subtitle;
+  document.getElementById('label-genre').textContent   = t.labels.genre;
+  document.getElementById('label-era').textContent     = t.labels.era;
+  document.getElementById('label-catalog').textContent = t.labels.catalog;
+  document.getElementById('label-format').textContent  = t.labels.format;
+  document.getElementById('reportBtn').textContent     = t.labels.report;
+  document.getElementById('btn-back').textContent      = t.labels.back;
+  document.getElementById('lang-ja').classList.toggle('active', lang==='ja');
+  document.getElementById('lang-en').classList.toggle('active', lang==='en');
+
+  // データ取得済みなら本文も切替
+  if(currentRecord){
+    document.getElementById('description').textContent =
+      (lang==='en' && currentRecord.description_en) ? currentRecord.description_en : (currentRecord.description||'');
+    document.getElementById('author').textContent =
+      currentRecord.author ? (t.labels.by + currentRecord.author) : '';
+  }
+}
+document.getElementById('lang-ja').onclick = function(){ lang='ja'; localStorage.setItem('chay_lang',lang); setLangUI(); };
+document.getElementById('lang-en').onclick = function(){ lang='en'; localStorage.setItem('chay_lang',lang); setLangUI(); };
+
+/* ★ 追加：戻るボタン（履歴が無い/他ページからの直開きでも確実に戻る） */
+(function setupBackButton(){
+  function getLangParam(){
+    var u=new URL(location.href);
+    return u.searchParams.get('lang') || localStorage.getItem('chay_lang') || 'ja';
+  }
+  document.getElementById('btn-back').addEventListener('click', function(){
+    var cameFromSearch = document.referrer && /search_records\.html(\?|$)/.test(document.referrer);
+    if (cameFromSearch && history.length > 1){
+      history.back();
+    } else {
+      location.href = 'search_records.html?lang=' + encodeURIComponent(getLangParam());
+    }
+  });
+})();
+
+/* 画像フォールバック（Drive/HTTPS） */
+function normalizeHttps(u){
+  try{
+    if(!u) return '';
+    if(/^https:\/\//i.test(u)) return u;
+    if(/^http:\/\//i.test(u))  return u.replace(/^http:/i,'https:');
+    return u;
+  }catch(_){ return String(u||''); }
+}
+function extractDriveId(u){
+  try{
+    var s=String(u||'');
+    var m=s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if(m) return m[1];
+    m=s.match(/[?&]id=([a-zA-Z0-9_-]+)/); if(m) return m[1];
+    m=s.match(/uc\?export=view&id=([a-zA-Z0-9_-]+)/); if(m) return m[1];
+  }catch(e){}
+  return '';
+}
+function buildImageSources(url){
+  url = normalizeHttps(url);
+  var arr=[]; if(!url) return arr;
+  var id=extractDriveId(url);
+  if(id){
+    arr.push('https://drive.google.com/uc?export=view&id='+id);
+    arr.push('https://drive.google.com/thumbnail?id='+id+'&sz=w900');
+  }
+  if(/^https:\/\//i.test(url)) arr.push(url);
+  return arr;
+}
+function setJacket(url){
+  var box=document.getElementById('jacketBox'); box.innerHTML='';
+  var srcs=buildImageSources(url);
+  if(!srcs.length){ box.textContent='No image'; return; }
+  var img=new Image(); var i=0; img.loading='lazy';
+  function next(){ if(i>=srcs.length){ box.textContent='No image'; return; } img.src=srcs[i++]; }
+  img.onerror=next; next(); box.appendChild(img);
+}
+
+/* YouTube 埋め込み（安全なID抽出） */
+function extractYouTubeId(u){
+  u = String(u || '');
+  if(!u) return '';
+  var m = u.match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{6,})/);
+  return m ? m[1] : '';
+}
+function setYouTube(u){
+  var wrap  = document.getElementById('ytWrap');
+  var frame = document.getElementById('ytFrame');
+  var id = extractYouTubeId(u);
+  if (id){
+    frame.src = 'https://www.youtube.com/embed/' + id + '?rel=0&modestbranding=1';
+    wrap.style.display = '';
+  }else{
+    wrap.style.display = 'none';
+    frame.src='';
+  }
+}
+
+/* レンダリング */
+function render(rec){
+  currentRecord = rec;
+
+  document.getElementById('band').textContent  = rec.band || '(Band)';
+  document.getElementById('track').textContent = rec.track|| '(Track)';
+
+  var g = rec.genre || 'Other';
+  document.getElementById('genre').textContent = g;
+  var style = GENRE_STYLES[g] || GENRE_STYLES.Other;
+  var badge = document.getElementById('genreBadge');
+  badge.textContent = g;
+  badge.style.background = style.bg;
+  badge.style.color = style.fg;
+
+  // 年代（release_year → 1970s 形式）
+  var era = '';
+  var yr = String(rec.release_year||'').match(/(\d{4})/);
+  if(yr){ var y=parseInt(yr[1],10); if(!isNaN(y)) era = (Math.floor(y/10)*10) + 's'; }
+  document.getElementById('era').textContent = era || '-';
+
+  document.getElementById('catalog').textContent = rec.catalog_no || '-';
+  document.getElementById('format').textContent  = rec.format || '-';
+
+  document.getElementById('description').textContent =
+    (lang==='en' && rec.description_en) ? rec.description_en : (rec.description || '');
+  document.getElementById('author').textContent =
+    rec.author ? ((I18N[lang].labels.by) + rec.author) : '';
+
+  setJacket(rec.image_url||'');
+  setYouTube(rec.youtube_url||'');
+}
+
+/* 通報 */
+function ensureClientId(){
+  try{
+    var k='chaynup_cid';
+    var v=localStorage.getItem(k);
+    if(!v){ v = 'cid_' + Math.random().toString(36).slice(2); localStorage.setItem(k,v); }
+    return v;
+  }catch(_){ return ''; }
+}
+function reportThis(rowIndex){
+  var reason = prompt('通報理由を入力してください（例：権利侵害、スパム等）');
+  if(!reason) return;
+  var msg=document.getElementById('msg');
+  msg.className='alert'; msg.textContent='通報送信中…'; msg.classList.add('show');
+  google.script.run
+    .withSuccessHandler(function(res){
+      if(res && res.ok){
+        if(res.autoHidden){ msg.textContent='通報を受け付けました（累計閾値に達したため自動的に非表示になりました）。'; }
+        else{ msg.textContent='通報を受け付けました。ご協力ありがとうございます。'; }
+      }else{
+        msg.textContent='通報に失敗しました：' + (res && res.error || 'unknown');
+      }
+    })
+    .withFailureHandler(function(err){
+      msg.textContent='通報に失敗しました：' + (err && err.message ? err.message : String(err));
+    })
+    .submitReport({ sheetName:'Records', rowIndex: Number(rowIndex), reason: reason, client_id: ensureClientId() });
+}
+
+/* ===== 追加：EXEC_URL解決 ＆ GET→POST フォールバック ===== */
+(function resolveExecUrl(){
+  try{
+    var viaQuery = new URL(location.href).searchParams.get('exec') || '';
+    var fallback = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
+    window.EXEC_URL = (viaQuery || fallback);
+  }catch(_){
+    window.EXEC_URL = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
+  }
+})();
+async function fetchRecordByRow(row){
+  if(!window.EXEC_URL) throw new Error('EXEC_URL missing');
+
+  // 1) GET を試す
+  try{
+    var url1 = window.EXEC_URL
+      + (window.EXEC_URL.indexOf('?')>=0?'&':'?')
+      + 'fn=getRecordByRow&payload=' + encodeURIComponent(JSON.stringify({rowIndex:Number(row)}))
+      + '&v=' + Date.now();
+    var r1 = await fetch(url1, {method:'GET', mode:'cors', cache:'no-store'});
+    var ctype = (r1.headers && r1.headers.get && r1.headers.get('content-type')) || '';
+    if (r1.ok && ctype.indexOf('application/json') >= 0){
+      return await r1.json();
+    }
+  }catch(_){}
+
+  // 2) 失敗時は POST フォールバック
+  var url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
+  var r2 = await fetch(url2, {
+    method:'POST', mode:'cors', cache:'no-store',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ fn:'getRecordByRow', payload:{rowIndex:Number(row)}, csrf:(window.__CZ_CSRF||'') })
+  });
+  if(!r2.ok){ throw new Error('HTTP '+r2.status); }
+  return await r2.json();
+}
+
+/* 起動 */
+(function(){
+  // 言語UI初期化
+  setLangUI();
+
+  function rowFromHref(){
+    var m = (location.search || location.href).match(/[?&]row=(\d+)/);
+    var n = m ? Number(m[1]) : 0;
+    return (Number.isInteger(n) && n>=2) ? n : 0; // row はシート2行目以降のみ許可
+  }
+  function showError(msg){
+    var m=document.getElementById('msg');
+    m.textContent = msg;
+    m.classList.add('show');
+  }
+
+  async function start(row){
+    var t = I18N[lang] || I18N.ja;
+    if(!row){ showError(t.subtitle + '：' + 'レコードID（row）が指定されていません。'); return; }
+
+    /* ★ 追加：まずは検索画面から渡されたキャッシュで即時描画 */
+    try{
+      var cached = sessionStorage.getItem('cz_selected_record');
+      if (cached){
+        var rec = JSON.parse(cached);
+        if (rec && String(rec.__row||rec.rowIndex||rec.id) === String(row)){
+          render(rec); // 先に表示して体感を短縮
+        }
+      }
+    }catch(_){}
+
+    // WebApp 内なら google.script.run、そうでなければ fetch フォールバック
+    try{
+      if (window.google && google.script && google.script.run){
+        google.script.run
+          .withSuccessHandler(function(res){
+            if(!res || !res.ok){ showError(t.subtitle + '：読み込みに失敗しました。'); return; }
+            render(res.data || {});
+            document.getElementById('reportBtn').onclick = function(){ reportThis(row); };
+            try{ sessionStorage.setItem('cz_selected_record', JSON.stringify(Object.assign({__row:row}, res.data||{}))); }catch(_){}
+          })
+          .withFailureHandler(function(err){
+            showError('読み込みに失敗しました：' + (err && err.message ? err.message : String(err)));
+          })
+          .getRecordByRow(Number(row));
+        return;
+      }
+    }catch(_){}
+
+    try{
+      var res = await fetchRecordByRow(row);
+      if(!res || !res.ok){ showError('読み込みに失敗しました。'); return; }
+      render(res.data || {});
+      document.getElementById('reportBtn').onclick = function(){ reportThis(row); };
+      try{ sessionStorage.setItem('cz_selected_record', JSON.stringify(Object.assign({__row:row}, res.data||{}))); }catch(_){}
+    }catch(err){
+      /* ★ 修正：タイポ howError → showError */
+      showError('読み込みに失敗しました。：' + (err && err.message ? err.message : 'Load failed'));
+    }
+  }
+
+  // URL の ?row= を見て開始（getLocation に依存しない）
+  start(rowFromHref());
+})();
+</script>
+</body>
+</html>

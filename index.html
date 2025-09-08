@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CHAYNUPZINE</title>
+<style>
+  :root{ --ink:#000; --paper:#f2e8d5; }
+  *{ box-sizing:border-box }
+  html,body{ height:100%; margin:0 }
+  body{
+    background:var(--paper);
+    font-family: Impact, "Arial Black", system-ui, -apple-system,
+      "Hiragino Kaku Gothic ProN","Noto Sans JP", sans-serif;
+    color:var(--ink);
+  }
+
+  header{ text-align:center; padding:18px 16px 8px }
+  .logo{
+    font-size:48px; font-weight:900;
+    background:#000; color:#fff;
+    display:inline-block; padding:12px 22px;
+    transform:skewX(-10deg); margin-bottom:8px;
+  }
+  .subtitle{ font-size:14px; letter-spacing:.05em; color:#333 }
+
+  /* —— ヒーロー（背景 + 透明リンク） —— */
+  .top-hero{
+    position:relative;
+    width:min(96vw, 900px);
+    margin:8px auto 0;
+    aspect-ratio: 2 / 3;                   /* 元画像 1024x1536 */
+    background:url("https://raw.githubusercontent.com/etramone7-coder/chaynupzine/main/assets/chaynupzine_poster.webp") center/cover no-repeat;
+    border-radius:6px;
+    box-shadow:0 8px 24px rgba(0,0,0,.18);
+    overflow:hidden;
+  }
+
+  /* 透明クリック領域 */
+  .hotspot{
+    position:absolute; display:block; cursor:pointer;
+    text-decoration:none; outline:none;
+  }
+  .hotspot:focus-visible{ outline:2px dashed #000; outline-offset:2px; }
+
+  /* ===== 当たり位置（必要なら微調整ください） ===== */
+  /* Records（左～中段左の "レコード / Records" 文字一帯） */
+  .hotspot.records{  left:6%;  top:20%; width:40%; height:18%; }
+  /* Features（中央やや右の "特集 / Features"） */
+  .hotspot.features{ left:40%; top:43%; width:35%; height:10%; }
+  /* Live info（右下の "ライブ情報 / Live info" 一帯） */
+  .hotspot.lives{    left:40%; top:70%; width:35%; height:15%; transform:rotate(-10deg); }
+
+  /* 投稿ボタン行（任意） */
+  .actions{ text-align:center; padding:12px 12px 18px }
+  .btn{
+    display:inline-block; margin:10px 8px 0;
+    background:#fff; color:#000;
+    padding:12px 18px; font-size:16px; font-weight:800;
+    text-decoration:none; border:3px solid #000; transform:skewX(-6deg);
+  }
+  .btn:hover{ background:#000; color:#fff }
+
+  footer{ text-align:center; font-size:12px; padding:16px 0 24px; color:#333 }
+
+  /* 小さな端末でのヒット範囲確保 */
+  @media (max-width:420px){
+    .logo{ font-size:40px }
+    .top-hero{ width:94vw }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="logo">CHAYNUPZINE</div>
+    <div class="subtitle">independent punk culture archive / since 2025</div>
+  </header>
+
+  <!-- 背景ポスター上に透明リンクを重ねる -->
+  <div class="top-hero" role="img" aria-label="ChaynupZine トップ背景">
+    <a class="hotspot records"  href="./search_records.html"   aria-label="レコード検索"></a>
+    <a class="hotspot features" href="./search_features.html"  aria-label="特集検索"></a>
+    <a class="hotspot lives"    href="./search_lives.html"     aria-label="ライブ情報検索"></a>
+  </div>
+
+  <!-- 任意：投稿導線 -->
+  <div class="actions">
+    <a class="btn" href="./submit.html">レコード投稿</a>
+    <a class="btn" href="./submit_live.html">ライブ投稿</a>
+    <a class="btn" href="./submit_feature.html">特集投稿</a>
+  </div>
+
+  <footer>© CHAYNUPZINE — independent punk culture archive.</footer>
+
+  <!-- BFCache 復帰時の白画面対策（必要なら） -->
+  <script>
+    window.addEventListener('pageshow', function (ev) {
+      if (ev.persisted) location.reload();
+    });
+  </script>
+</body>
+</html>

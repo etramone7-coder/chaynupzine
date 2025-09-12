@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CHAYNUPZINE — 投稿フォーム（レコード紹介）</title>
+<style>
+  :root{ --panel:rgba(255,255,255,.92); --ink:#222; --chip:#eef1f5; }
+  html,body{
+    height:100%; margin:0; background:#f3f5f7; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:20px; line-height:1.5;
+  }
+  *,*::before,*::after{ box-sizing:border-box; }
+
+  .bg{
+    position:fixed; inset:0; background-size:cover; background-position:center;
+    filter:brightness(.88); z-index:0;
+    background-color:#f3f5f7;
+    background-image:url("https://etramone7-coder.github.io/chaynupzine/assets/bg_submit_records.webp");
+  }
+  .wrap{max-width:980px; margin:28px auto; padding:0 16px;}
+  .panel{
+    background:var(--panel); backdrop-filter:saturate(120%) blur(10px);
+    border-radius:16px; box-shadow:0 10px 28px rgba(0,0,0,.16);
+    padding:20px; min-height:860px;
+    position:relative; z-index:1;
+  }
+
+  /* ── 追加：ヘッダー右上に JP/EN を縦並び配置 ── */
+  .topbar{
+    display:grid;
+    grid-template-columns: 1fr auto;
+    align-items:start;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .brand{display:inline-block; background:#111; color:#fff; border-radius:8px;
+         padding:7px 12px; font-weight:800; letter-spacing:.4px;}
+  .titleline{display:flex; align-items:center; gap:12px}
+  .sub{font-size:16px; color:#555; overflow-wrap:anywhere;}
+
+  .lang{
+    display:flex; flex-direction:column; gap:6px; align-items:flex-end;
+  }
+  .lang button{
+    border:1px solid #ddd; background:#fff; color:#111;
+    padding:6px 10px; border-radius:10px; font-size:15px; cursor:pointer; min-width:52px;
+    font-weight:800;
+  }
+  .lang button.active{ background:#111; color:#fff; border-color:#111; }
+
+  /* レイアウト */
+  .formgrid{display:grid; gap:16px;}
+  @media(min-width:980px){ .formgrid{grid-template-columns: 1fr 360px;} }
+
+  /* 入力 */
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field label{font-weight:800; font-size:18px;}
+  .input, select, textarea{
+    font-size:18px; padding:12px 14px; border-radius:12px; border:1px solid #dcdcdc;
+    background:#fff; color:#222; outline:none; width:100%; max-width:100%;
+  }
+  textarea{min-height:160px; resize:vertical; }
+  .row2{display:grid; gap:12px;}
+  @media(min-width:640px){ .row2{grid-template-columns:1fr 1fr;} }
+  .help{font-size:14px; color:#666; overflow-wrap:anywhere;}
+  .counter{font-size:14px; color:#555; text-align:right; margin-top:4px;}
+  .consent{margin-top:10px; font-size:14px; color:#333; overflow-wrap:anywhere;}
+
+  /* ボタンなど */
+  .actions{display:flex; gap:12px; justify-content:flex-end; margin-top:10px; flex-wrap:wrap;}
+  .btn{border:0; border-radius:14px; padding:12px 16px; font-size:18px;
+       font-weight:800; cursor:pointer;}
+  .btn.primary{background:#111; color:#fff;}
+  .btn.ghost{background:#fff; color:#111; border:1px solid #ddd;}
+  .btn[disabled]{opacity:.6; cursor:progress;}
+  .alert{margin:12px 0; padding:12px; border-radius:14px; background:#ffe9e9;
+         color:#a33; border:1px solid #f6bcbc; font-size:16px; display:none; overflow-wrap:anywhere;}
+  .alert.ok{background:#eefcf1; color:#0a7a32; border-color:#c6ecd1; display:block;}
+  .alert.err{display:block;}
+
+  /* プレビュー */
+  .preview{ background:#fff; border:1px solid #eee; border-radius:16px; padding:16px; }
+  .thumb{width:100%; max-width:320px; height:320px; border-radius:14px;
+         background:#f5f5f5; display:flex; align-items:center; justify-content:center;
+         color:#888; overflow:hidden; margin:0 auto 10px;}
+  .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .pvtitle{font-weight:900; font-size:19px; text-align:center;}
+  .pvmeta {font-size:16px; color:#555; text-align:center; margin-top:2px;}
+  .pvdesc {font-size:16px; color:#333; margin-top:10px; white-space:pre-wrap; overflow-wrap:anywhere;}
+</style>
+</head>
+<body>
+<div id="bg" class="bg"></div>
+
+<div class="wrap">
+  <div class="panel">
+    <!-- ▼ ヘッダー（右上に言語ボタン） -->
+    <div class="topbar">
+      <div class="titleline">
+        <span class="brand">CHAYNUPZINE</span>
+        <span class="sub" id="t-form-title" data-i18n="form_title">投稿フォーム（レコード紹介）</span>
+      </div>
+      <div class="lang">
+        <button id="btnJP" type="button" aria-label="Switch to Japanese">JP</button>
+        <button id="btnEN" type="button" aria-label="Switch to English">EN</button>
+      </div>
+    </div>
+
+    <p class="sub" id="t-help" data-i18n="help">
+      NGワードは自動検知。画像は <b>1枚 10MB以下 / 長辺 3000px以下</b> を推奨。Google Drive共有URLまたは画像直リンクでもOK。
+    </p>
+
+    <div class="formgrid">
+      <!-- 左：フォーム本体 -->
+      <form id="postForm" novalidate>
+        <!-- ジャンル / 国 -->
+        <div class="field">
+          <label for="genre" data-i18n="genre">GENRE（ジャンル）</label>
+          <select id="genre" name="genre" required>
+            <option value="" data-i18n="select_prompt">選択してください</option>
+            <option>Punk</option><option>Hardcore</option><option>PowerPop</option>
+            <option>Indie</option><option>Garage</option><option>Mods</option>
+            <option>NeoMods</option><option>Metal</option><option>HardRock</option>
+            <option>Reggae</option><option>Rock</option><option>Pop</option>
+            <option>Melodicore</option><option>Rockabilly</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="country" data-i18n="country">COUNTRY（国名）</label>
+          <select id="country" name="country" required>
+            <option value="" data-i18n="select_prompt">選択してください</option>
+            <option>Japan</option><option>USA</option><option>UK</option><option>Germany</option>
+            <option>France</option><option>Italy</option><option>Spain</option><option>Sweden</option>
+            <option>Norway</option><option>Finland</option><option>Netherlands</option><option>Belgium</option>
+            <option>Ireland</option><option>Australia</option><option>Canada</option><option>Brazil</option>
+            <option>Argentina</option><option>Mexico</option><option>Korea</option><option>China</option>
+            <option>Taiwan</option><option>New Zealand</option><option>Poland</option><option>Czech</option>
+            <option>Greece</option><option>Turkey</option><option>Israel</option><option>Other</option>
+          </select>
+        </div>
+
+        <!-- バンド / トラック -->
+        <div class="field">
+          <label for="band" data-i18n="band">BAND（必須）</label>
+          <input id="band" name="band" class="input" placeholder="例: THE RYDERS" required />
+        </div>
+        <div class="field">
+          <label for="track" data-i18n="track">TRACK（必須）</label>
+          <input id="track" name="track" class="input" placeholder="Song title" required />
+        </div>
+
+        <!-- 年 / 品番 -->
+        <div class="row2">
+          <div class="field">
+            <label for="release_year" data-i18n="release_year">RELEASE YEAR（任意）</label>
+            <input id="release_year" name="release_year" class="input" placeholder="YYYY 例: 1983" inputmode="numeric" />
+          </div>
+          <div class="field">
+            <label for="catalog_no" data-i18n="catalog_no">CATALOG NO.（任意）</label>
+            <input id="catalog_no" name="catalog_no" class="input" placeholder="例: XXX-001" />
+          </div>
+        </div>
+
+        <!-- 形態 -->
+        <div class="field">
+          <label for="format" data-i18n="format">FORMAT（任意）</label>
+          <input id="format" name="format" class="input" placeholder="例: 7&quot;EP / LP / CD / Cassette" />
+        </div>
+
+        <!-- 紹介文（500文字、カウンター） -->
+        <div class="field">
+          <label for="description" data-i18n="description">DESCRIPTION（紹介文）</label>
+          <textarea id="description" name="description" maxlength="500" placeholder="テキストを入力"></textarea>
+          <div class="help" id="t-desc-help" data-i18n="desc_help">※紹介文は500文字以内で入力してください</div>
+          <div class="counter" id="descCounter">0 / 500</div>
+        </div>
+
+        <!-- 画像URL / アップロード -->
+        <div class="field">
+          <label for="image_url" data-i18n="img_url">JACKET IMAGE URL（任意）</label>
+          <input id="image_url" name="image_url" class="input" placeholder="https://drive.google.com/... or https://example.com/..." />
+          <div class="help" id="t-img-help" data-i18n="img_help">Drive共有URL/直リンクどちらでも可。下のアップロードと併用OK（URLがあればURL優先）。</div>
+        </div>
+        <div class="field">
+          <label for="upload" data-i18n="upload">UPLOAD IMAGE（jpg/png/webp 任意）</label>
+          <input id="upload" name="upload" type="file" accept="image/*" class="input" />
+        </div>
+
+        <!-- YouTube / 投稿者 / 編集キー -->
+        <div class="field">
+          <label for="youtube_url" data-i18n="yt_url">YOUTUBE URL（任意）</label>
+          <input id="youtube_url" name="youtube_url" class="input" placeholder="https://youtu.be/... または https://www.youtube.com/watch?v=xxxxx" />
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="author" data-i18n="author">AUTHOR（投稿者・任意）</label>
+            <input id="author" name="author" class="input" placeholder="your name" />
+          </div>
+          <div class="field">
+            <label for="edit_key" data-i18n="edit_key">EDIT KEY（編集キー・必須）</label>
+            <input id="edit_key" name="edit_key" class="input"
+              placeholder="半角英数字 8〜32 文字。後の編集・削除時に必要"
+              minlength="8" maxlength="32" pattern="[A-Za-z0-9]{8,32}" inputmode="latin" required />
+            <div class="help" id="t-ek-help" data-i18n="ek_help">編集キーは <b>半角英数字のみ・8〜32文字</b> を入力してください。</div>
+          </div>
+        </div>
+
+        <!-- 免責 同意 -->
+        <div class="consent">
+          <p id="t-disclaimer" data-i18n="disclaimer">
+            ※免責事項：誹謗中傷・差別的表現・個人情報の投稿は禁止です。投稿内容は公開される可能性があります。運営は一切の責任を負いません。
+          </p>
+          <label><input type="checkbox" id="consentCheck"> <span id="t-agree" data-i18n="agree">上記免責事項に同意します</span></label>
+        </div>
+
+        <div class="actions">
+          <a class="btn ghost" id="btn-back-search" href="https://etramone7-coder.github.io/chaynupzine/search_records.html" target="_top" rel="noopener noreferrer" data-i18n="back_search">検索へ戻る</a>
+          <a class="btn ghost" id="btn-home" href="https://etramone7-coder.github.io/chaynupzine/" target="_top" rel="noopener noreferrer" data-i18n="back_home">トップへ戻る</a>
+          <button class="btn primary" type="button" id="submitBtn" data-i18n="submit">投稿</button>
+        </div>
+
+        <div id="msg" class="alert"></div>
+      </form>
+
+      <!-- 右（PC）／下（モバイル）：プレビュー -->
+      <aside class="preview" id="preview">
+        <div class="thumb" id="pvThumb">no image</div>
+        <div class="pvtitle" id="pvTitle">Band / Track</div>
+        <div class="pvmeta"  id="pvMeta">Country / Genre</div>
+        <div class="pvdesc"  id="pvDesc">（紹介文がここに反映されます）</div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ▼▼ 実行URL（既存のまま） ▼▼ */
+const EXEC_URL = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
+
+/* ==== i18n（JP/EN 切替） ==== */
+const I18N = {
+  ja:{
+    form_title:'投稿フォーム（レコード紹介）',
+    help:'NGワードは自動検知。画像は <b>1枚 10MB以下 / 長辺 3000px以下</b> を推奨。Google Drive共有URLまたは画像直リンクでもOK。',
+    select_prompt:'選択してください',
+    genre:'GENRE（ジャンル）', country:'COUNTRY（国名）',
+    band:'BAND（必須）', track:'TRACK（必須）',
+    release_year:'RELEASE YEAR（任意）', catalog_no:'CATALOG NO.（任意）', format:'FORMAT（任意）',
+    description:'DESCRIPTION（紹介文）', desc_help:'※紹介文は500文字以内で入力してください',
+    img_url:'JACKET IMAGE URL（任意）', img_help:'Drive共有URL/直リンクどちらでも可。下のアップロードと併用OK（URLがあればURL優先）。',
+    upload:'UPLOAD IMAGE（jpg/png/webp 任意）',
+    yt_url:'YOUTUBE URL（任意）',
+    author:'AUTHOR（投稿者・任意）', edit_key:'EDIT KEY（編集キー・必須）',
+    ek_help:'編集キーは <b>半角英数字のみ・8〜32文字</b> を入力してください。',
+    disclaimer:'※免責事項：誹謗中傷・差別的表現・個人情報の投稿は禁止です。投稿内容は公開される可能性があります。運営は一切の責任を負いません。',
+    agree:'上記免責事項に同意します',
+    back_search:'検索へ戻る', back_home:'トップへ戻る', submit:'投稿',
+    msg_preparing:'送信準備中…', msg_need_agree:'免責事項に同意してください。',
+    msg_required_missing:'未入力の必須項目があります。', msg_ngword:'紹介文に禁止ワードが含まれています。',
+    msg_bad_img:'画像URLの形式が不正です（https必須／画像拡張子 or 許可ドメインのみ）。',
+    msg_bad_yt:'YouTubeのURL形式のみ許可されています（youtu.be / youtube.com/watch / /shorts）。',
+    msg_bad_ek:'編集キーは半角英数字のみ・8〜32文字で入力してください。',
+    msg_post_ok:'投稿しました。ありがとうございます！',
+    msg_post_ng:'投稿に失敗しました: '
+  },
+  en:{
+    form_title:'Submission Form (Record Review)',
+    help:'NG words are automatically detected. Recommended image: <b>≤10MB / long edge ≤3000px</b>. Google Drive shared URL or direct HTTPS image is OK.',
+    select_prompt:'Select',
+    genre:'GENRE', country:'COUNTRY',
+    band:'BAND (required)', track:'TRACK (required)',
+    release_year:'RELEASE YEAR (optional)', catalog_no:'CATALOG NO. (optional)', format:'FORMAT (optional)',
+    description:'DESCRIPTION', desc_help:'* Up to 500 characters',
+    img_url:'JACKET IMAGE URL (optional)', img_help:'Drive shared URL or direct image URL. Upload below is also OK (URL wins if both provided).',
+    upload:'UPLOAD IMAGE (jpg/png/webp, optional)',
+    yt_url:'YOUTUBE URL (optional)',
+    author:'AUTHOR (optional)', edit_key:'EDIT KEY (required)',
+    ek_help:'Use <b>alphanumeric only, 8–32 chars</b>.',
+    disclaimer:'Disclaimer: Offensive/defamatory content and PII are prohibited. Submissions may be published. The site assumes no responsibility.',
+    agree:'I agree to the disclaimer above',
+    back_search:'Back to Search', back_home:'Back to Top', submit:'Submit',
+    msg_preparing:'Preparing to submit…', msg_need_agree:'Please agree to the disclaimer.',
+    msg_required_missing:'Required fields are missing.', msg_ngword:'Your description contains prohibited words.',
+    msg_bad_img:'Invalid image URL (HTTPS required / image extension or allowed host).',
+    msg_bad_yt:'Only valid YouTube URLs are allowed (youtu.be / youtube.com/watch / /shorts).',
+    msg_bad_ek:'Edit key must be alphanumeric only, 8–32 characters.',
+    msg_post_ok:'Submitted. Thank you!',
+    msg_post_ng:'Submission failed: '
+  }
+};
+/* 修正1: lang 初期化の優先順位を修正 */
+let lang = localStorage.getItem('cz_lang') ||
+           ((navigator.language||'ja').toLowerCase().startsWith('en') ? 'en' : 'ja');
+function applyI18n(){
+  const dict = I18N[lang] || I18N.ja;
+  document.documentElement.lang = (lang==='en'?'en':'ja');
+  document.getElementById('t-form-title').innerHTML = dict.form_title;
+  document.getElementById('t-help').innerHTML = dict.help;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const k = el.getAttribute('data-i18n');
+    if (k && dict[k] && el.id !== 't-form-title' && el.id !== 't-help') {
+      el.innerHTML = dict[k];
+    }
+  });
+  document.getElementById('btnJP').classList.toggle('active', lang==='ja');
+  document.getElementById('btnEN').classList.toggle('active', lang==='en');
+}
+document.getElementById('btnJP').onclick = ()=>{ lang='ja'; localStorage.setItem('cz_lang',lang); applyI18n(); };
+document.getElementById('btnEN').onclick = ()=>{ lang='en'; localStorage.setItem('cz_lang',lang); applyI18n(); };
+applyI18n();
+/* ここまで i18n */
+
+async function callSubmitRecords(payload, onOK, onNG){
+  try{
+    if (window.google && google.script && google.script.run){
+      google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).submitFromClient(payload);
+      return;
+    }
+  }catch(_){}
+  try{
+    const url1 = EXEC_URL
+      + (EXEC_URL.indexOf('?')>=0?'&':'?')
+      + 'fn=submitFromClient&payload=' + encodeURIComponent(JSON.stringify(payload))
+      + '&v=' + Date.now();
+    const r1 = await fetch(url1, { method:'GET', mode:'cors', cache:'no-store' });
+    const ct = r1.headers.get('content-type') || '';
+    if (r1.ok && ct.indexOf('application/json') >= 0){
+      onOK(await r1.json()); return;
+    }
+  }catch(_){}
+  try{
+    const url2 = EXEC_URL + (EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
+    const r2 = await fetch(url2, {
+      method:'POST', mode:'cors', cache:'no-store',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn:'submitFromClient', payload, csrf:(window.__CZ_CSRF||'') })
+    });
+    if(!r2.ok){ const t = await r2.text().catch(()=> ''); throw new Error('HTTP '+r2.status+' '+t); }
+    onOK(await r2.json());
+  }catch(err){ onNG(err); }
+}
+
+/* 背景（既存） */
+(function(){
+  var url = 'https://etramone7-coder.github.io/chaynupzine/assets/bg_submit_records.webp';
+  document.getElementById('bg').style.backgroundImage = 'url(' + url + ')';
+})();
+
+/* クライアントID（既存） */
+function getClientId(){
+  try{
+    var k='chaynupzine_cid';
+    var id=localStorage.getItem(k);
+    if(!id){ id = 'cid_'+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem(k,id); }
+    return id;
+  }catch(_){ return ''; }
+}
+
+/* 軽量バリデーション（既存） */
+function isHttpsUrl(u){
+  if(!u) return false;
+  try{ var x=new URL(u.trim()); return x.protocol==='https:'; }catch(_){ return false; }
+}
+function isAllowedYouTube(u){
+  if(!u) return true;
+  try{
+    var s=u.trim();
+    if(/^https:\/\/youtu\.be\/[\w-]{6,}/i.test(s)) return true;
+    if(/^https:\/\/(www\.)?youtube\.com\/watch\?/.test(s) && /[?&]v=([\w-]{6,})/.test(s)) return true;
+    if(/^https:\/\/(www\.)?youtube\.com\/shorts\/[\w-]{6,}/i.test(s)) return true;
+    return false;
+  }catch(_){ return false; }
+}
+function isAllowedImageUrl(u){
+  if(!u) return true;
+  if(!isHttpsUrl(u)) return false;
+  var host; try{ host=new URL(u).host.toLowerCase(); }catch(_){ return false; }
+  var okHosts = [
+    'drive.google.com','lh3.googleusercontent.com','images.unsplash.com',
+    'i.imgur.com','imgur.com','githubusercontent.com','raw.githubusercontent.com',
+    'static.wikia.nocookie.net','upload.wikimedia.org'
+  ];
+  if(okHosts.some(h=>host===h || host.endsWith('.'+h))) return true;
+  if(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(u)) return true;
+  return false;
+}
+
+/* NGワード（既存） */
+var NG_TERMS = ["kill","die","rape","suicide","terror","bomb","fuck","cunt",
+ "asshole","nazi","kkk","white power","retard","spic","chink","gook","fag"];
+
+/* 画像URL→表示候補（既存） */
+function extractDriveId(u){
+  try{
+    var s=String(u||'');
+    var m=s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if(m) return m[1];
+    m=s.match(/[?&]id=([a-zA-Z0-9_-]+)/); if(m) return m[1];
+    m=s.match(/uc\?export=view&id=([a-zA-Z0-9_-]+)/); if(m) return m[1];
+  }catch(e){} return '';
+}
+function buildImageSources(url){
+  var arr=[]; if(!url) return arr;
+  if(String(url).indexOf('images.unsplash.com')>=0){
+    arr.push(url + (url.indexOf('?')>=0 ? '&w=600' : '?w=600')); return arr;
+  }
+  var id=extractDriveId(url);
+  if(id){
+    arr.push('https://drive.google.com/uc?export=view&id='+id);
+    arr.push('https://drive.google.com/thumbnail?id='+id+'&sz=w600');
+  }
+  arr.push(url); return arr;
+}
+function setPreviewImageByUrl(url){
+  var box=document.getElementById('pvThumb'); box.innerHTML='';
+  var sources=buildImageSources(url);
+  if(!sources.length){ box.textContent='no image'; return; }
+  var img=new Image(); img.loading='lazy';
+  var i=0; function next(){ if(i>=sources.length){ box.textContent='no image'; return; } img.src=sources[i++]; }
+  img.onerror=next; next(); box.appendChild(img);
+}
+
+/* プレビュー更新（既存＋言語に応じた初期文言） */
+/* 修正2: (Band)/(Track) の条件分岐を削除して固定値に */
+function refreshPv(){
+  var band=document.getElementById('band')?.value|| '(Band)';
+  var track=document.getElementById('track')?.value|| '(Track)';
+  var country=document.getElementById('country')?.value||'-';
+  var genre=document.getElementById('genre')?.value||'-';
+  var desc =document.getElementById('description')?.value||'';
+  document.getElementById('pvTitle').textContent = band + ' / ' + track;
+  document.getElementById('pvMeta').textContent  = country + ' / ' + genre;
+  document.getElementById('pvDesc').textContent  = desc || (lang==='en'?'(Description will appear here)':'（紹介文がここに反映されます）');
+}
+['band','track','country','genre','description'].forEach(function(id){
+  var el=document.getElementById(id); if(el) el.addEventListener('input', refreshPv);
+});
+document.getElementById('image_url').addEventListener('input', function(){
+  var v=this.value.trim(); if(v) setPreviewImageByUrl(v);
+});
+document.getElementById('upload').addEventListener('change', function(ev){
+  var f=this.files && this.files[0]; if(!f) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var box=document.getElementById('pvThumb'); box.innerHTML='';
+    var img=new Image(); img.src=e.target.result; box.appendChild(img);
+  };
+  reader.readAsDataURL(f);
+});
+
+/* 説明文カウンター（既存） */
+(function(){
+  var t=document.getElementById('description');
+  var c=document.getElementById('descCounter');
+  function upd(){ c.textContent = (t.value.length) + ' / 500'; }
+  t.addEventListener('input', upd); upd();
+})();
+
+/* 送信（既存。メッセージのみ i18n） */
+document.getElementById('submitBtn').addEventListener('click', function(){
+  const dict = I18N[lang] || I18N.ja;
+  var msg=document.getElementById('msg');
+  var btn=document.getElementById('submitBtn');
+  msg.className='alert'; msg.textContent=dict.msg_preparing;
+
+  var f=document.getElementById('postForm');
+  if(!document.getElementById('consentCheck').checked){
+    msg.className='alert err'; msg.textContent=dict.msg_need_agree; return;
+  }
+  if(!f.genre.value || !f.country.value || !f.band.value || !f.track.value || !f.edit_key.value){
+    msg.className='alert err'; msg.textContent=dict.msg_required_missing; return;
+  }
+  var text=(f.description.value||"").toLowerCase();
+  for(var i=0;i<NG_TERMS.length;i++){
+    if(text.indexOf(NG_TERMS[i])>=0){
+      msg.className='alert err'; msg.textContent=dict.msg_ngword; return;
+    }
+  }
+
+  var imgUrl = (f.image_url.value||'').trim();
+  var ytUrl  = (f.youtube_url.value||'').trim();
+  if(imgUrl && !isAllowedImageUrl(imgUrl)){
+    msg.className='alert err'; msg.textContent=dict.msg_bad_img; return;
+  }
+  if(ytUrl && !isAllowedYouTube(ytUrl)){
+    msg.className='alert err'; msg.textContent=dict.msg_bad_yt; return;
+  }
+
+  var ek = (f.edit_key.value||'').trim();
+  if(ek.length < 8 || ek.length > 32 || !/^[A-Za-z0-9]{8,32}$/.test(ek)){
+    msg.className='alert err'; msg.textContent=dict.msg_bad_ek; return;
+  }
+
+  function T(v){ return (v||'').trim(); }
+  var payload={
+    genre:T(f.genre.value), country:T(f.country.value), band:T(f.band.value), track:T(f.track.value),
+    release_year:T(f.release_year.value), catalog_no:T(f.catalog_no.value), format:T(f.format.value),
+    description:T(f.description.value), image_url:T(imgUrl),
+    youtube_url:T(ytUrl), author:T(f.author.value), edit_key:T(ek),
+    client_id:getClientId()
+  };
+
+  var file=f.upload.files && f.upload.files[0];
+  if(!payload.image_url && file){
+    var r=new FileReader();
+    r.onload=function(e){ payload.image_data = e.target.result; actuallySend(payload); };
+    r.readAsDataURL(file);
+  }else{
+    actuallySend(payload);
+  }
+
+  function actuallySend(body){
+    btn.disabled=true;
+    callSubmitRecords(
+      body,
+      function(res){
+        if(res && res.ok){
+          msg.className='alert ok'; msg.textContent=dict.msg_post_ok;
+          f.reset(); refreshPv();
+          document.getElementById('pvThumb').innerHTML='no image';
+          document.getElementById('descCounter').textContent='0 / 500';
+        }else{
+          msg.className='alert err';
+          msg.textContent=dict.msg_post_ng + (res && res.error || 'unknown');
+        }
+        btn.disabled=false;
+      },
+      function(err){
+        msg.className='alert err';
+        msg.textContent=dict.msg_post_ng + (err && err.message ? err.message : String(err));
+        btn.disabled=false;
+      }
+    );
+  }
+});
+
+/* 初期プレビュー */
+refreshPv();
+</script>
+</body>
+</html>

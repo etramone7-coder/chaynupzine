@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHAYNUPZINE — Lives browse</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#151922; --ink:#e7e9ee; --muted:#9aa3af;
+    --line:#2b3240; --accent:#1e90ff; --danger:#e25555;
+    --chip:#2a3142; --chip-ink:#cfd6e6;
+  }
+  html,body{margin:0;height:100%;background:transparent;color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN",Meiryo,system-ui,sans-serif}
+  .bg{position:fixed;inset:0;background:#0f1115 url("https://etramone7-coder.github.io/chaynupzine/assets/bg_lives.webp") center/cover no-repeat;
+      opacity:.25;filter:contrast(1) brightness(.9);z-index:0}
+  .wrap{max-width:1100px;margin:28px auto;padding:0 14px;position:relative;z-index:1}
+  .titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 12px}
+  .brand{background:#111;color:#fff;border-radius:8px;padding:7px 12px;font-weight:800;letter-spacing:.4px}
+  .title{font-weight:800;letter-spacing:.3px;color:#fff;font-size:22px;margin:0}
+  .lang{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .lang button{border:1px solid #3a4254;background:#0e121a;color:#e7e9ee;padding:6px 10px;border-radius:10px;font-size:13px;cursor:pointer}
+  .lang button.active{background:#e7e9ee;color:#0e121a;border-color:#e7e9ee}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 0}
+  .btnA{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;font-size:16px}
+  .btnA.ghost{background:#0e121a;color:#fff;border:1px solid var(--line)}
+  .btnA.primary{background:var(--accent);color:#fff}
+  .filters{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 6px}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--chip-ink);font-size:12px;border:1px solid #3a4254}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
+  .card{background:#0e121a;border:1px solid #273045;border-radius:12px;overflow:hidden;
+        display:grid;grid-template-columns:minmax(220px,42%) 1fr;gap:12px}
+  .leftcol{display:flex;flex-direction:column;gap:12px;padding:10px 12px}
+  .ph{aspect-ratio:16/9;background:#0b0e14;color:#2c3343;display:flex;align-items:center;justify-content:center}
+  .cover{width:100%;height:auto;display:block;object-fit:cover}
+  .pad{padding:10px 12px}
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .artist{font-weight:800}
+  .titleLive{opacity:.92}
+  .meta,.price,.desc{font-size:13px;color:#b8c0d1}
+  .badge{font-size:11px;padding:2px 8px;border:1px solid #3a4254;border-radius:999px;color:#c6d0e1}
+  .badge.st{border-color:#2b6cb0}
+  .badge.er{border-color:#a33;color:#ffb3b3}
+  .morewrap{display:flex;justify-content:center;margin:16px 0 6px}
+  .btn{border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer}
+  .btn:disabled{opacity:.6;cursor:default}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 0}
+  .in{background:#0e121a;border:1px solid var(--line);border-radius:8px;color:#fff;padding:8px 10px}
+  .small{font-size:12px;color:#9aa3af}
+  .yt{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-top:1px solid #273045}
+  .yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .msg{margin:6px 0 0;font-size:12px}
+  .ok{color:#5dd39e}.err{color:var(--danger)}
+  .linkOffi{display:inline-block;margin-top:6px;text-decoration:none;color:#8ab4ff}
+
+  /* ★ 見えづらさ修正：背景ベールは薄めに、文字色は黒固定をやめる */
+  .bg::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.35)}
+  /* ★ カード内テキストは明色で統一 */
+  .card .artist,
+  .card .titleLive,
+  .card .meta,
+  .card .price,
+  .card .desc,
+  .card .small { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="wrap">
+  <div class="titlebar">
+    <div>
+      <div class="brand">CHAYNUPZINE</div>
+      <h1 id="pageTitle" class="title">Lives browse</h1>
+    </div>
+    <div class="lang">
+      <button id="lang-ja" type="button">JP</button>
+      <button id="lang-en" type="button">EN</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <a class="btnA ghost" id="btn-top" href="https://etramone7-coder.github.io/chaynupzine/">トップへ戻る</a>
+    <a class="btnA ghost" id="btn-form" href="https://etramone7-coder.github.io/chaynupzine/submit_live.html">ライブ投稿フォームへ</a>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+    <div id="chips" class="filters"></div>
+    <div class="small" id="summary"></div>
+
+    <div class="toolbar">
+      <span class="small" id="tool-cap">投稿を編集/削除</span>
+      <button id="btnEdit" class="btn" type="button">編集</button>
+
+      <span id="editControls" style="display:none;align-items:center;gap:8px">
+        <input id="editKey" class="in" type="text" placeholder="編集キー">
+        <button id="btnHide" class="btn" type="button">非表示</button>
+        <button id="btnUnhide" class="btn" type="button" style="background:#3949ab">再表示</button>
+      </span>
+      <span id="editMsg" class="msg"></span>
+    </div>
+  </div>
+
+  <div id="results" class="grid"></div>
+  <div class="morewrap"><button id="moreBtn" class="btn" type="button" style="display:none">もっと見る</button></div>
+  <div id="foot" class="small"></div>
+</div>
+
+<script>
+(function(){
+  var lang = localStorage.getItem('chay_lang') || 'ja';
+  var TEXTS = {
+    ja:{title:'Lives browse',top:'トップへ戻る',toForm:'ライブ投稿フォームへ',
+        editCap:'投稿を編集/削除',more:'もっと見る',offi:'公式/イベントページ',
+        report:'通報',status:{scheduled:'開催予定',canceled:'中止',done:'終了'},
+        cond:'条件に合致するライブを表示します。', nodata:'データを取得できませんでした。検索ページからもう一度お試しください。',
+        edit:'編集', hide:'非表示', unhide:'再表示', needKey:'編集キーを入力してください', ok:'完了しました', fail:'失敗しました'}
+    ,
+    en:{title:'Lives browse',top:'Back to Top',toForm:'Go to Live Post Form',
+        editCap:'Edit/Delete a Post',more:'Load more',offi:'Official/Event page',
+        report:'Report',status:{scheduled:'Scheduled',canceled:'Canceled',done:'Finished'},
+        cond:'Showing lives matching your filters.', nodata:'No data to show. Please open from the search page again.',
+        edit:'Edit', hide:'Hide', unhide:'Unhide', needKey:'Please enter your edit key', ok:'Done', fail:'Failed'}
+  };
+
+  function setLangUI(){
+    var T=TEXTS[lang];
+    document.getElementById('pageTitle').textContent=T.title;
+    document.getElementById('btn-top').textContent=T.top;
+    document.getElementById('btn-form').textContent=T.toForm;
+    document.getElementById('tool-cap').textContent=T.editCap;
+    document.getElementById('moreBtn').textContent=T.more;
+    document.getElementById('summary').textContent=T.cond;
+    document.getElementById('btnEdit').textContent=T.edit;
+    document.getElementById('btnHide').textContent=T.hide;
+    document.getElementById('btnUnhide').textContent=T.unhide;
+    document.getElementById('editKey').placeholder = (lang==='ja'?'編集キー':'Edit key');
+    document.getElementById('lang-ja').classList.toggle('active',lang==='ja');
+    document.getElementById('lang-en').classList.toggle('active',lang==='en');
+    document.querySelectorAll('.btn-report').forEach(b=>b.textContent=T.report);
+  }
+  document.getElementById('lang-ja').onclick=function(){lang='ja';localStorage.setItem('chay_lang',lang);setLangUI();renderLive(current);};
+  document.getElementById('lang-en').onclick=function(){lang='en';localStorage.setItem('chay_lang',lang);setLangUI();renderLive(current);};
+
+  function el(tag,attrs){var e=document.createElement(tag);if(attrs)Object.assign(e,attrs);return e;}
+  function toStatus(v){
+    var key=(String(v||'scheduled')).toLowerCase();
+    return TEXTS[lang].status[key]||TEXTS[lang].status.scheduled;
+  }
+
+  /* === 追加ユーティリティ === */
+  function qs(k){ var m=location.search.match(new RegExp('[?&]'+k+'=([^&]+)')); return m?decodeURIComponent(m[1]):''; }
+
+  function normalizeDrive(u){
+    try{
+      var s=String(u||'').trim(); if(!s) return '';
+      var m=s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
+      return s.startsWith('https://')?s:'';
+    }catch(_){ return ''; }
+  }
+  function pick(v, arr){ for(var i=0;i<arr.length;i++){ if(v[arr[i]]) return v[arr[i]]; } return ''; }
+  function ytId(u){
+    try{
+      var s=String(u||'').trim(); if(!s) return '';
+      if(/^[A-Za-z0-9_-]{6,}$/.test(s) && s.indexOf('http')!==0) return s;
+      var url=new URL(s.startsWith('http')?s:'https://youtu.be/'+s);
+      var host=url.hostname.replace(/^www\./,'');
+      if(host==='youtu.be'){ var p=url.pathname.slice(1); return (/^[A-Za-z0-9_-]{6,}$/.test(p)?p:''); }
+      if(host==='youtube.com' || host==='m.youtube.com'){
+        var v=url.searchParams.get('v'); if(v && /^[A-Za-z0-9_-]{6,}$/.test(v)) return v;
+        var m=url.pathname.match(/\/embed\/([A-Za-z0-9_-]{6,})/); if(m) return m[1];
+      }
+    }catch(_){}
+    var m2=String(u||'').match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{6,})/);
+    return m2?m2[1]:'';
+  }
+
+  /* ★ 画像ソース解決（URL / dataURI / サーバフォールバック） */
+  function resolveImageSrc(item){
+    // 1) URLフィールド群
+    var u = item.image_url || pick(item,['image','cover','img','imageUrl','coverUrl']);
+    u = normalizeDrive(u);
+    if(u) return u;
+
+    // 2) base64(dataURL)
+    var d = item.image_data || pick(item,['imageData','img_data','dataUrl']);
+    if(d && /^data:image\//i.test(d)) return d;
+
+    // 3) サーバ側フォールバック（行番号から取得できる想定のエンドポイント）
+    if(item.rowIndex){
+      try{
+        var base = (window.EXEC_URL||'').trim() || '';
+        if(base){
+          return base + (base.indexOf('?')>=0?'&':'?') + 'fn=getImage&row=' + encodeURIComponent(item.rowIndex);
+        }
+      }catch(_){}
+    }
+    return '';
+  }
+
+  /* === 描画 === */
+  function renderLive(it){
+    var root=document.getElementById('results'); root.innerHTML='';
+    if(!it){ 
+      root.appendChild(el('div',{className:'small',textContent:TEXTS[lang].nodata}));
+      return;
+    }
+
+    // 別名キーを吸収して欠損を補完
+    it.image_url = it.image_url || pick(it,['image','cover','img']);
+    it.description = it.description || pick(it,['desc','body','text']);
+    it.title = it.title || pick(it,['titleLive','ttl']);
+
+    var c=el('div',{className:'card'});
+
+    var left=el('div',{className:'leftcol'});
+    var imgSrc = resolveImageSrc(it);                /* ★ 修正：解決関数を使用 */
+    if(imgSrc){ left.appendChild(el('img',{src:imgSrc, className:'cover', alt:'flyer'})); }
+    else{ left.appendChild(el('div',{className:'ph',textContent:'flyer'})); }  /* ★ プレースホルダ */
+
+    if(it.youtube_url){
+      var id=ytId(it.youtube_url);
+      if(id){
+        var y=el('div',{className:'yt'});
+        y.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+        left.appendChild(y);
+      }
+    }
+    c.appendChild(left);
+
+    var pad=el('div',{className:'pad'}); c.appendChild(pad);
+
+    var row1=el('div',{className:'row'});
+    var st=el('span',{className:'badge st',textContent:'［'+toStatus(it.status)+ '］'});
+    var regionLabel = (lang==='en' ? (it.region_en||it.region||'') : (it.region||it.region_en||''));
+    var prefLabel   = (lang==='en' ? (it.prefecture_en||it.prefecture||'') : (it.prefecture||it.prefecture_en||''));
+    var rp=el('span',{className:'badge',textContent:[regionLabel,prefLabel].filter(Boolean).join(' / ')});
+    row1.appendChild(st); if(rp.textContent) row1.appendChild(rp);
+    pad.appendChild(row1);
+
+    pad.appendChild(el('div',{className:'artist',textContent:it.artist||'—'}));
+    var showTitle = (lang==='en' ? (it.title_en||it.title) : (it.title||it.title_en));
+    if(showTitle){ pad.appendChild(el('div',{className:'titleLive',textContent:showTitle})); }
+
+    var metaParts=[];
+    if(it.date) metaParts.push(it.date);
+    if(it.open_time) metaParts.push('OPEN '+it.open_time);
+    if(it.start_time) metaParts.push('START '+it.start_time);
+    var venueLabel = (lang==='en' ? (it.venue_en||it.venue) : (it.venue||it.venue_en));
+    if(venueLabel) metaParts.push('@ '+venueLabel);
+    if(metaParts.length){ pad.appendChild(el('div',{className:'meta',textContent:metaParts.join('  ')})); }
+
+    var showPrice = (lang==='en' ? (it.price_en||it.price) : (it.price||it.price_en));
+    if(showPrice){ pad.appendChild(el('div',{className:'price',textContent:showPrice})); }
+
+    var showDesc = (lang==='en' ? (it.description_en||it.description) : (it.description||it.description_en));
+    if(showDesc){ pad.appendChild(el('div',{className:'desc',textContent:showDesc})); }
+
+    var ref = (function(u){ try{ return (u&&u.startsWith('https://'))?u:''; }catch(_){return '';} })(it.reference_url);
+    if(ref){
+      var a=el('a',{href:ref,target:'_blank',rel:'noopener nofollow',className:'linkOffi',textContent:TEXTS[lang].offi});
+      pad.appendChild(a);
+    }
+
+    document.getElementById('results').appendChild(c);
+  }
+
+  /* === セッションの取得 + 不足時の補完 === */
+  function getSelectedFromSession(){
+    var raw = sessionStorage.getItem('cz_selected_live') || sessionStorage.getItem('cz_selected_record') || '';
+    if(!raw) return null;
+    try{ return JSON.parse(raw); }catch(_){ return null; }
+  }
+
+  // Apps Script 内（iframe等）なら google.script.run で補完
+  async function tryHydrateFromServer(stub){
+    try{
+      if(!window.google || !google.script || !google.script.run) return stub;
+      if(!stub || !stub.rowIndex) return stub;
+
+      const res = await new Promise((resolve,reject)=>{
+        google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)
+          .listLives({limit:2000, offset:0});
+      });
+      if(!res || !res.ok || !res.items) return stub;
+      const hit = res.items.find(x=> Number(x.rowIndex)===Number(stub.rowIndex));
+      if(!hit) return stub;
+      return Object.assign({}, hit, stub);
+    }catch(_){
+      return stub;
+    }
+  }
+
+  /* === 外部環境向けの補完（fetch 経由） === */
+
+  (function resolveExecUrl(){
+    try{
+      var injected = (window.EXEC_URL||'').trim();
+      if (!injected || injected.indexOf('<?=')===0) injected = '';
+      var fallback='https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
+      window.EXEC_URL = injected || fallback;
+    }catch(_){
+      window.EXEC_URL='https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
+    }
+  })();
+
+  async function callListLives(payload, onOK, onNG){
+    try{
+      if (window.google && google.script && google.script.run){
+        google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).listLives(payload);
+        return;
+      }
+    }catch(_){}
+
+    // GET
+    try{
+      var url1 = window.EXEC_URL
+        + (window.EXEC_URL.indexOf('?')>=0?'&':'?')
+        + 'fn=listLives&payload=' + encodeURIComponent(JSON.stringify(payload))
+        + '&v=' + Date.now();
+      var r1 = await fetch(url1, {method:'GET', mode:'cors', cache:'no-store'});
+      var ct = r1.headers.get('content-type')||'';
+      if(r1.ok && ct.indexOf('application/json')>=0){
+        onOK(await r1.json()); return;
+      }
+    }catch(_){}
+
+    // POST(text/plain)
+    try{
+      var url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
+      var r2 = await fetch(url2, {
+        method:'POST', mode:'cors', cache:'no-store',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({fn:'listLives', payload, csrf:(window.__CZ_CSRF||'')})
+      });
+      if(!r2.ok){ throw new Error('HTTP '+r2.status); }
+      onOK(await r2.json()); return;
+    }catch(err){ onNG(err); }
+  }
+
+  async function hydrateFromNetwork(rowIndex){
+    return await new Promise((resolve)=>{
+      callListLives({limit:2000, offset:0}, function(res){
+        try{
+          if(!res || !res.ok || !res.items){ resolve(null); return; }
+          var hit = res.items.find(x=> Number(x.rowIndex)===Number(rowIndex));
+          resolve(hit || null);
+        }catch(_){ resolve(null); }
+      }, function(){ resolve(null); });
+    });
+  }
+
+  setLangUI();
+
+  let current = getSelectedFromSession();
+  var rowHint = qs('row'); if(current && !current.rowIndex && rowHint){ current.rowIndex = Number(rowHint)||current.rowIndex; }
+
+  (async function(){
+    current = await tryHydrateFromServer(current);
+    if((!current || !current.title) && rowHint){
+      var fetched = await hydrateFromNetwork(rowHint);
+      if(fetched) current = fetched;
+    }
+    renderLive(current);
+  })();
+})();
+</script>
+</body>
+</html>

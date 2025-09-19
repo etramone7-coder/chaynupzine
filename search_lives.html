@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHAYNUPZINE — Lives search</title>
+<style>
+  :root{ --card-bg: rgba(255,255,255,.92); --chip:#eef1f5; --txt:#222; }
+  html,body{
+    height:100%; margin:0; background:transparent; color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; font-size:20px;
+  }
+  .bg{
+    position:fixed; inset:0;
+    background-color:#f3f5f7;
+    background-image:url("https://etramone7-coder.github.io/chaynupzine/assets/bg_lives_search.webp");
+    background-size:cover; background-position:center;
+    filter:brightness(.88);
+    z-index:0;
+  }
+  .wrap{max-width:980px; margin:28px auto; padding:0 16px; position:relative; z-index:1}
+  .panel{
+    background:rgba(255,255,255,0.6); backdrop-filter:saturate(120%) blur(10px);
+    border-radius:16px; box-shadow:0 10px 28px rgba(0,0,0,.16);
+    padding:20px 20px 12px; min-height:860px; position:relative
+  }
+  h1{font-size:24px; margin:0 0 10px; display:flex; align-items:center; gap:12px}
+  .brand{display:inline-block; background:#111; color:#fff; border-radius:8px; padding:7px 12px; font-weight:800; letter-spacing:.4px}
+  .sub{font-size:16px; color:#555}
+  .lang{margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:8px}
+  .lang button{padding:6px 12px; font-size:14px; border-radius:8px; border:1px solid #ddd; background:#fff; cursor:pointer}
+  .lang button.active{background:#111; color:#fff; border-color:#111}
+  .chips{display:flex; flex-wrap:wrap; gap:12px; margin:12px 0 8px}
+  .chip{padding:12px 16px; border-radius:999px; background:var(--chip); cursor:pointer; font-size:18px; font-weight:700; user-select:none; line-height:1}
+  .chip.active{background:#111; color:#fff}
+  .row{margin:14px 0 20px; border-top:1px dashed #ddd; padding-top:12px}
+  .sel{font-size:15px; color:#666; margin-top:7px}
+  .actions{display:flex; justify-content:flex-end; gap:12px; margin:12px 0; align-items:center; flex-wrap:wrap}
+  .btn{border:0; border-radius:14px; padding:12px 16px; background:#111; color:#fff; font-weight:800; cursor:pointer; font-size:18px}
+  .btn.ghost{background:#fff; color:#111; border:1px solid #ddd}
+  .btn[disabled]{opacity:.5; cursor:not-allowed}
+  .btn-link{display:inline-block; text-decoration:none}
+  .list-compact{display:grid; grid-template-columns:repeat(1,1fr); gap:14px; margin-top:12px}
+  .resultbox{padding:12px; background:rgba(255,255,255,0.6); border:1px solid #eee; border-radius:12px; color:#333}
+  .alert{margin:12px 0; padding:12px; border-radius:14px; background:#ffe9e9; color:#a33; border:1px solid #f6bcbc; font-size:16px}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="bg" class="bg"></div>
+<div class="wrap">
+  <div class="panel">
+    <h1>
+      <span class="brand">CHAYNUPZINE</span>
+      <span class="sub" id="title-sub">Lives — search & listing</span>
+      <span class="lang">
+        <button id="lang-ja" type="button">JP</button>
+        <button id="lang-en" type="button">EN</button>
+      </span>
+    </h1>
+
+    <!-- ▼ 追加：使い方ガイド（JP/EN） -->
+    <details id="guide" style="margin:10px 0;padding:10px;background:#fafafa;border:1px solid #ccc;border-radius:8px">
+      <summary style="cursor:pointer;font-weight:700">
+        <span class="guide-ja">使い方ガイド</span>
+        <span class="guide-en" style="display:none">How to use</span>
+      </summary>
+      <div class="guide-ja">
+        <ul style="margin:8px 0 0 18px;font-size:15px;line-height:1.6">
+          <li>ジャンル・地方・県・月・バンド頭文字を自由に組み合わせて検索できます。</li>
+          <li><b>どれか一つの条件だけを選んでも検索可能です。</b></li>
+          <li>「条件リセット」で全ての絞り込みを解除します。</li>
+          <li>JP/EN ボタンで言語を切り替えられます。</li>
+          <li>結果をクリックすると詳細ページに移動します。</li>
+        </ul>
+      </div>
+      <div class="guide-en" style="display:none">
+        <ul style="margin:8px 0 0 18px;font-size:15px;line-height:1.6">
+          <li>You can combine Genre / Region-Pref / Month / Band initial as you like.</li>
+          <li><b>You can also search with just one filter.</b></li>
+          <li>Use “Reset” to clear all filters.</li>
+          <li>Switch language with JP / EN.</li>
+          <li>Click a result to open its detail page.</li>
+        </ul>
+      </div>
+    </details>
+
+    <p class="sub" id="subtitle">ジャンル / 地方・県 / 月 / バンド頭文字 で絞り込みできます（複数可）。</p>
+    <!-- フィルタ -->
+    <div class="row"><div class="chips" id="chips-genre"></div><div class="sel" id="sel-genre"></div></div>
+    <div class="row"><div class="chips" id="chips-region"></div><div class="sel" id="sel-region"></div></div>
+    <div class="row" id="pref-row" style="display:none"><div class="chips" id="chips-pref"></div><div class="sel" id="sel-pref"></div></div>
+    <div class="row"><div class="chips" id="chips-month"></div><div class="sel" id="sel-month"></div></div>
+    <div class="row"><div class="chips" id="chips-initial"></div><div class="sel" id="sel-initial"></div></div>
+
+    <div class="actions">
+      <a class="btn ghost btn-link" id="btn-top"  href="https://etramone7-coder.github.io/chaynupzine/" target="_top" rel="noopener noreferrer">トップへ戻る</a>
+      <a class="btn ghost btn-link" id="btn-form" href="https://etramone7-coder.github.io/chaynupzine/submit_live.html" target="_top" rel="noopener noreferrer">ライブ投稿フォームへ</a>
+      <button class="btn ghost" id="btn-reset" type="button">条件リセット</button>
+      <button class="btn" id="btn-search" type="button" disabled>検索</button>
+    </div>
+
+    <div id="result-alert" class="alert hidden"></div>
+    <div id="results" class="list-compact"></div>
+    <div class="sel" id="foot-sel"></div>
+  </div>
+</div>
+<script>
+(function(){
+  // ▼ ここだけ変更（保存は chay_lang、旧 cz_lang は読み取りフォールバック）
+  var lang ='ja';
+
+  var TEXTS = {
+    ja:{titleSub:"Lives — search & listing",subtitle:"ジャンル / 地方・県 / 月 / バンド頭文字 で絞り込みできます（複数可）。",genre:"ジャンル",region:"地方",pref:"県",month:"月",initial:"バンド頭文字",reset:"条件リセット",search:"検索",none:"指定なし",reading:"読み込み中…",nohit:"該当データがありません。条件を変えて試してください。",fail:"読み込みに失敗しました。",backTop:"トップへ戻る",toForm:"ライブ投稿フォームへ",offi:"公式/イベントページ",status:{scheduled:"開催予定",canceled:"中止",done:"終了"}},
+    en:{titleSub:"Lives — search & listing",subtitle:"Filter by Genre / Region-Prefecture / Month / Band Initial (multiple selections allowed).",genre:"Genre",region:"Region",pref:"Prefecture",month:"Month",initial:"Band Initial",reset:"Reset",search:"Search",none:"None",reading:"Loading…",nohit:"No results. Please try different filters.",fail:"Failed to load.",backTop:"Back to Top",toForm:"Go to Live Post Form",offi:"Official/Event page",status:{scheduled:"Scheduled",canceled:"Canceled",done:"Done"}}
+  };
+  var GENRES = [
+    {code:"Punk",label:"Punk"},{code:"Hardcore",label:"Hardcore"},{code:"PowerPop",label:"PowerPop"},
+    {code:"Indie",label:"Indie"},{code:"Garage",label:"Garage"},{code:"Mods",label:"Mods"},
+    {code:"NeoMods",label:"NeoMods"},{code:"Metal",label:"Metal"},{code:"HardRock",label:"HardRock"},
+    {code:"Reggae",label:"Reggae"},{code:"Rock",label:"Rock"},{code:"Pop",label:"Pop"},
+    {code:"Melodicore",label:"Melodicore"},{code:"Rockabilly",label:"Rockabilly"},{code:"Other",label:"Other"}
+  ];
+
+  var REGION_MAP = {
+    ja:{
+      '北海道・東北':['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県'],
+      '関東':['茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県'],
+      '中部':['新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県'],
+      '近畿':['三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県'],
+      '中国':['鳥取県','島根県','岡山県','広島県','山口県'],
+      '四国':['徳島県','香川県','愛媛県','高知県'],
+      '九州・沖縄':['福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県']
+    },
+    en:{
+      'Hokkaido/Tohoku':['Hokkaido','Aomori','Iwate','Miyagi','Akita','Yamagata','Fukushima'],
+      'Kanto':['Ibaraki','Tochigi','Gunma','Saitama','Chiba','Tokyo','Kanagawa'],
+      'Chubu':['Niigata','Toyama','Ishikawa','Fukui','Yamanashi','Nagano','Gifu','Shizuoka','Aichi'],
+      'Kinki':['Mie','Shiga','Kyoto','Osaka','Hyogo','Nara','Wakayama'],
+      'Chugoku':['Tottori','Shimane','Okayama','Hiroshima','Yamaguchi'],
+      'Shikoku':['Tokushima','Kagawa','Ehime','Kochi'],
+      'Kyushu/Okinawa':['Fukuoka','Saga','Nagasaki','Kumamoto','Oita','Miyazaki','Kagoshima','Okinawa']
+    }
+  };
+
+  var MONTHS = Array.from({length:12}, (_,i)=> (i+1));
+  var INITIALS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
+
+  var state = {genre:'', region:'', prefectures:[], months:[], initial:''};
+  // ▼ 追加：直近の検索結果を保持（言語切替時に再描画）
+  var gLastResults = null;
+
+  /* ✅ 翻訳関数（そのまま） */
+  const enCache = new Map();
+  async function ja2en(text){
+    const key = (text||'').trim();
+    if(!key) return '';
+    if(enCache.has(key)) return enCache.get(key);
+    try{
+      const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=en&dt=t&q='+encodeURIComponent(key);
+      const r = await fetch(url,{cache:'no-store'});
+      const data = await r.json();
+      const out = (data && data[0]) ? data[0].map(x=>x[0]).join('') : key;
+      enCache.set(key,out);
+      return out;
+    }catch(_){
+      enCache.set(key,key);
+      return key;
+    }
+  }
+  (function resolveExecUrl(){
+    try{
+      var injected = (window.EXEC_URL||'').trim();
+      var viaQuery = new URLSearchParams(location.search).get('exec') || '';
+      if (!injected || injected.indexOf('<?=') === 0) injected = '';
+      var fallback = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
+      window.EXEC_URL = injected || viaQuery || fallback;
+    }catch(_){
+      window.EXEC_URL = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
+    }
+  })();
+  async function callListLives(payload, onOK, onNG){
+    try{
+      if (window.google && google.script && google.script.run){
+        google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).listLives(payload);
+        return;
+      }
+    }catch(_){}
+    try{
+      var url1 = window.EXEC_URL
+        + (window.EXEC_URL.indexOf('?')>=0?'&':'?')
+        + 'fn=listLives&payload=' + encodeURIComponent(JSON.stringify(payload))
+        + '&v=' + Date.now();
+      var r1 = await fetch(url1, {method:'GET', mode:'cors', cache:'no-store', credentials:'omit', redirect:'follow'});
+      var ct = r1.headers.get('content-type') || '';
+      if (r1.ok && ct.indexOf('application/json')>=0){
+        onOK(await r1.json());
+        return;
+      }
+    }catch(_){}
+
+    try{
+      var r2 = await fetch(window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now(), {
+        method:'POST', mode:'cors', cache:'no-store', credentials:'omit', redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({ fn:'listLives', payload, csrf:(window.__CZ_CSRF||'') })
+      });
+      if(r2.ok){
+        onOK(await r2.json());
+        return;
+      }
+    }catch(_){}
+
+    try{
+      var body = new URLSearchParams();
+      body.set('fn','listLives');
+      body.set('payload', JSON.stringify(payload));
+      body.set('csrf', (window.__CZ_CSRF||''));
+      var r3 = await fetch(window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now(), {
+        method:'POST', mode:'cors', cache:'no-store', credentials:'omit', redirect:'follow',
+        headers:{'Content-Type':'application/x-www-form-urlencoded;charset=utf-8'},
+        body: body.toString()
+      });
+      if(!r3.ok){ throw new Error('HTTP '+r3.status); }
+      onOK(await r3.json());
+    }catch(err){ onNG(err); }
+  }
+  function chipEl(label, active, onClick){
+    var el=document.createElement('div');
+    el.className='chip'+(active?' active':'');
+    el.textContent=label;
+    el.onclick=onClick;
+    return el;
+  }
+
+  function drawGenre(){
+    var wrap=document.getElementById('chips-genre');
+    wrap.innerHTML='';
+    GENRES.forEach(function(g){
+      wrap.appendChild(chipEl(g.label, state.genre===g.code, function(){
+        state.genre=(state.genre===g.code)?'':g.code;
+        drawGenre(); updateSels(); updateSearchEnabled();
+      }));
+    });
+    document.getElementById('sel-genre').textContent = TEXTS[lang].genre+': '+(state.genre||TEXTS[lang].none);
+  }
+
+  function drawRegion(){
+    var wrap=document.getElementById('chips-region');
+    wrap.innerHTML='';
+    Object.keys(REGION_MAP[lang]).forEach(function(r){
+      wrap.appendChild(chipEl(r, state.region===r, function(){
+        state.region=(state.region===r)?'':r;
+        state.prefectures=[];
+        drawRegion(); drawPref(); updateSels(); updateSearchEnabled();
+      }));
+    });
+    document.getElementById('sel-region').textContent=TEXTS[lang].region+': '+(state.region||TEXTS[lang].none);
+  }
+
+  function drawPref(){
+    var row=document.getElementById('pref-row');
+    var wrap=document.getElementById('chips-pref');
+    var sel=document.getElementById('sel-pref');
+    wrap.innerHTML='';
+    if(!state.region){ row.style.display='none'; sel.textContent=''; return; }
+    row.style.display='';
+    (REGION_MAP[lang][state.region]||[]).forEach(function(p){
+      var active=state.prefectures.includes(p);
+      wrap.appendChild(chipEl(p,active,function(){
+        var i=state.prefectures.indexOf(p);
+        if(i>=0) state.prefectures.splice(i,1); else state.prefectures.push(p);
+        drawPref(); updateSels(); updateSearchEnabled();
+      }));
+    });
+    sel.text内容=TEXTS[lang].pref+': '+(state.prefectures.length?state.prefectures.join('/'):(TEXTS[lang].none+(lang==='ja'?'（地方のみで検索可）':'')));
+  }
+
+  function drawMonth(){
+    var wrap=document.getElementById('chips-month');
+    wrap.innerHTML='';
+    MONTHS.forEach(function(m){
+      var active=state.months.includes(m);
+      wrap.appendChild(chipEl(m+(lang==='ja'?'月':''), active, function(){
+        var i=state.months.indexOf(m);
+        if(i>=0) state.months.splice(i,1); else state.months.push(m);
+        drawMonth(); updateSels(); updateSearchEnabled();
+      }));
+    });
+    document.getElementById('sel-month').textContent=TEXTS[lang].month+': '+(state.months.length?state.months.join('/') : TEXTS[lang].none);
+  }
+
+  function drawInitial(){
+    var wrap=document.getElementById('chips-initial');
+    wrap.innerHTML='';
+    INITIALS.forEach(function(ch){
+      wrap.appendChild(chipEl(ch, state.initial===ch, function(){
+        state.initial=(state.initial===ch)?'':ch;
+        drawInitial(); updateSels(); updateSearchEnabled();
+      }));
+    });
+    document.getElementById('sel-initial').textContent=TEXTS[lang].initial+': '+(state.initial||TEXTS[lang].none);
+  }
+
+  function updateSels(){
+    var foot='条件: '
+      + TEXTS[lang].genre+':' +(state.genre||TEXTS[lang].none)+'　'
+      + TEXTS[lang].region+':' +(state.region||TEXTS[lang].none)+'　'
+      + (state.region?(TEXTS[lang].pref+':' +(state.prefectures.length?state.prefectures.join('/') : TEXTS[lang].none)+'　'):'')
+      + TEXTS[lang].month+':' +(state.months.length?state.months.join('/') : TEXTS[lang].none)+'　'
+      + TEXTS[lang].initial+':' +(state.initial||TEXTS[lang].none);
+    document.getElementById('foot-sel').textContent=foot;
+  }
+
+  function hasAnySelection(){ return state.genre||state.region||state.prefectures.length||state.months.length||state.initial; }
+  function updateSearchEnabled(){ document.getElementById('btn-search').disabled=!hasAnySelection(); }
+
+  function toJPStatus(v){ return v==='canceled'?(lang==='ja'?'中止':'Canceled'):(v==='done'?(lang==='ja'?'終了':'Done'):(lang==='ja'?'開催予定':'Scheduled')); }
+
+  function formatDateTime(str){
+    try{
+      if(!str) return '';
+      const d = new Date(str);
+      if(isNaN(d)) return str; // 無効ならそのまま返す
+      const pad = n => String(n).padStart(2,'0');
+      return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
+        + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }catch(e){
+      return str;
+    }
+  }
+
+  function secureHttps(u){ try{ var s=String(u||'').trim(); return s.startsWith('https://') ? s : ''; }catch(_){ return ''; } }
+
+  // （既存の個別カード生成関数：残していますが、再描画互換のため新関数を使用します）
+  async function card(it){
+    var box = document.createElement('div');
+    box.className = 'resultbox';
+    box.style.cursor = 'pointer';
+
+    // ▼ row パラメータで遷移（修正点）
+    box.onclick = function(){
+      const row = encodeURIComponent(it.rowIndex || '');
+      location.href = 'lives_browse.html?row=' + row + '&lang=' + lang;
+    };
+
+    var st = document.createElement('div');
+    st.textContent = '[' + toJPStatus(it.status, lang) + ']'
+      + (it.region ? ' ' + it.region : '')
+      + (it.prefecture ? ' / ' + it.prefecture : '');
+    box.appendChild(st);
+
+    var ttl = document.createElement('div');
+    ttl.style.fontWeight='700';
+    ttl.style.fontSize='18px';
+    // ▼ 修正：英語表示は title_en を優先、無ければ必要時のみ翻訳
+    ttl.textContent = (lang==='en')
+      ? (it.title_en || (it.title ? await ja2en(it.title) : ''))
+      : it.title;
+    box.appendChild(ttl);
+
+    var bands = document.createElement('div');
+    // ▼ 修正：bands → artist
+    bands.textContent = it.artist || '';
+    box.appendChild(bands);
+
+    var meta = document.createElement('div');
+    meta.style.opacity = '.85';
+    var parts=[];
+    if(it.date) parts.push(formatDateTime(it.date));
+    if(it.open_time) parts.push('OPEN ' + formatDateTime(it.open_time));
+    if(it.start_time) parts.push('START ' + formatDateTime(it.start_time));
+    if(it.venue) parts.push('@ ' + ((lang==='en') ? await ja2en(it.venue) : it.venue));
+    meta.textContent = parts.join('  ');
+    box.appendChild(meta);
+
+    if(it.description || it.description_en){
+      var de = document.createElement('div');
+      de.style.marginTop = '6px';
+      // ▼ 修正：英語は description_en 優先、無ければ必要時のみ翻訳
+      try{
+        if(lang === 'en'){
+          de.textContent = it.description_en || (it.description ? await ja2en(it.description) : '');
+        }else{
+          de.textContent = it.description || '';
+        }
+      }catch(e){
+        de.textContent = it.description || '';
+      }
+      box.appendChild(de);
+    }
+
+    // ▼ 修正：reference_url は廃止のためリンク生成を削除
+
+    return box;
+  }
+  function showAlert(msg){
+    var box=document.getElementById('result-alert');
+    box.textContent=msg;
+    box.classList.remove('hidden');
+  }
+  function hideAlert(){ document.getElementById('result-alert').classList.add('hidden'); }
+
+  // ▼ 追加：まとめ描画（言語切替でも再利用）
+  async function renderResultCards(items){
+    var res = document.getElementById('results');
+    res.innerHTML = '';
+    if(!items || !items.length) return;
+
+    for(const it of items){
+      var box = document.createElement('div');
+      box.className = 'resultbox';
+      box.style.cursor = 'pointer';
+
+      // row で遷移（修正点）
+      box.onclick = function(){
+        const row = encodeURIComponent(it.rowIndex || '');
+        location.href = 'lives_browse.html?row=' + row + '&lang=' + lang;
+      };
+
+      // ステータス + 地域/県（EN時は簡易翻訳）
+      var regionLabel = it.region || '';
+      var prefLabel   = it.prefecture || '';
+      if(lang === 'en'){
+        if(regionLabel) regionLabel = await ja2en(regionLabel);
+        if(prefLabel)   prefLabel   = await ja2en(prefLabel);
+      }
+      var st = document.createElement('div');
+      st.textContent = '[' + toJPStatus(it.status, lang) + ']'
+        + (regionLabel ? ' ' + regionLabel : '')
+        + (prefLabel ? ' / ' + prefLabel : '');
+      box.appendChild(st);
+
+      // タイトル（修正：enは title_en 優先）
+      var ttl = document.createElement('div');
+      ttl.style.fontWeight='700';
+      ttl.style.fontSize='18px';
+      ttl.textContent = (lang==='en')
+        ? (it.title_en || (it.title ? await ja2en(it.title) : ''))
+        : (it.title || '');
+      box.appendChild(ttl);
+
+      // バンド（修正：bands → artist。EN時は従来同様の分割翻訳を維持）
+      var bands = document.createElement('div');
+      if(it.artist && lang==='en'){
+        const parts = String(it.artist).split(/[,/、／]| ・ /).map(s=>s.trim()).filter(Boolean);
+        const trans = await Promise.all(parts.map(ja2en));
+        bands.textContent = trans.join(', ');
+      }else{
+        bands.textContent = it.artist || '';
+      }
+      box.appendChild(bands);
+
+      // メタ（会場はEN時に翻訳）
+      var meta = document.createElement('div');
+      meta.style.opacity = '.85';
+      var parts=[];
+      if(it.date) parts.push(formatDateTime(it.date));
+      if(it.open_time) parts.push('OPEN ' + formatDateTime(it.open_time));
+      if(it.start_time) parts.push('START ' + formatDateTime(it.start_time));
+      if(it.venue){
+        const v = (lang==='en') ? await ja2en(it.venue) : it.venue;
+        parts.push('@ ' + v);
+      }
+      meta.textContent = parts.join('  ');
+      box.appendChild(meta);
+
+      // 説明（修正：enは description_en 優先）
+      if(it.description || it.description_en){
+        var de = document.createElement('div');
+        de.style.marginTop = '6px';
+        if(lang === 'en'){
+          try{ de.textContent = it.description_en || (it.description ? await ja2en(it.description) : ''); }
+          catch(_){ de.textContent = it.description || ''; }
+        }else{
+          de.textContent = it.description || '';
+        }
+        box.appendChild(de);
+      }
+
+      // ▼ 修正：reference_url ブロックは削除
+
+      res.appendChild(box);
+    }
+  }
+  async function doSearch(){
+    document.getElementById('results').innerHTML='';
+    hideAlert();
+    showAlert(TEXTS[lang].reading);
+
+    var payload={genre:state.genre,region:state.region,prefectures:state.prefectures,months:state.months,initial:state.initial};
+    callListLives(payload, async function(out){
+      hideAlert();
+      if(!out||!out.ok){ showAlert(TEXTS[lang].fail); return; }
+      if(!out.items||!out.items.length){ showAlert(TEXTS[lang].nohit); return; }
+
+      // ▼ 追加：結果を保持し、言語切替でも使い回す
+      gLastResults = out.items.slice();
+      await renderResultCards(gLastResults);
+    }, function(){
+      hideAlert(); showAlert(TEXTS[lang].fail);
+    });
+  }
+
+  function resetAll(){
+    state.genre=''; state.region=''; state.prefectures=[];
+    state.months=[]; state.initial='';
+    drawGenre(); drawRegion(); drawPref(); drawMonth(); drawInitial();
+    updateSels(); updateSearchEnabled();
+    document.getElementById('results').innerHTML='';
+    hideAlert();
+    gLastResults = null; // キャッシュもクリア
+  }
+
+  function setLang(newLang){
+    lang=newLang;
+    // ▼ 保存は chay_lang に統一
+    try{ localStorage.setItem('chay_lang', lang); }catch(_){}
+    document.getElementById('lang-ja').classList.toggle('active', lang==='ja');
+    document.getElementById('lang-en').classList.toggle('active', lang==='en');
+    document.getElementById('title-sub').textContent=TEXTS[lang].titleSub;
+    document.getElementById('subtitle').textContent=TEXTS[lang].subtitle;
+    document.getElementById('btn-reset').textContent=TEXTS[lang].reset;
+    document.getElementById('btn-search').textContent=TEXTS[lang].search;
+    document.querySelector('a.btn-link').textContent=TEXTS[lang].backTop;
+    document.querySelectorAll('a.btn-link')[1].textContent=TEXTS[lang].toForm;
+
+    // ▼ 追加：ガイドの言語切替
+    try{
+      var guide = document.getElementById('guide');
+      if(guide){
+        guide.querySelectorAll('.guide-ja').forEach(el=>{ el.style.display = (lang==='ja') ? '' : 'none'; });
+        guide.querySelectorAll('.guide-en').forEach(el=>{ el.style.display = (lang==='en') ? '' : 'none'; });
+      }
+    }catch(_){}
+
+    drawGenre(); drawRegion(); drawPref(); drawMonth(); drawInitial();
+    updateSels(); updateSearchEnabled();
+    // ▼ 直近結果があれば、現在言語で再描画
+    if (gLastResults && Array.isArray(gLastResults)) { renderResultCards(gLastResults); }
+  }
+
+  // 初期化
+  document.getElementById('btn-reset').onclick=resetAll;
+  document.getElementById('btn-search').onclick=doSearch;
+  document.getElementById('lang-ja').onclick=function(){ setLang('ja'); };
+  document.getElementById('lang-en').onclick=function(){ setLang('en'); };
+  setLang(lang);
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHAYNUPZINE — Lives browse</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#151922; --ink:#e7e9ee; --muted:#9aa3af;
+    --line:#2b3240; --accent:#1e90ff; --danger:#e25555;
+    --chip:#2a3142; --chip-ink:#cfd6e6;
+  }
+  html,body{margin:0;height:100%;background:transparent;color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN",Meiryo,system-ui,sans-serif}
+  .bg{position:fixed;inset:0;background:#0f1115 url("https://etramone7-coder.github.io/chaynupzine/assets/bg_lives.webp") center/cover no-repeat;
+      opacity:.25;filter:contrast(1) brightness(.9);z-index:0}
+  .wrap{max-width:1100px;margin:28px auto;padding:0 14px;position:relative;z-index:1}
+  .titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 12px}
+  .brand{background:#111;color:#fff;border-radius:8px;padding:7px 12px;font-weight:800;letter-spacing:.4px}
+  .title{font-weight:800;letter-spacing:.3px;color:#fff;font-size:22px;margin:0}
+  .lang{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  .lang button{border:1px solid #3a4254;background:#0e121a;color:#e7e9ee;padding:6px 10px;border-radius:10px;font-size:13px;cursor:pointer}
+  .lang button.active{background:#e7e9ee;color:#0e121a;border-color:#e7e9ee}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 0}
+  .btnA{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;font-size:16px}
+  .btnA.ghost{background:#0e121a;color:#fff;border:1px solid var(--line)}
+  .btnA.primary{background:var(--accent);color:#fff}
+  .filters{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 6px}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--chip-ink);font-size:12px;border:1px solid #3a4254}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
+  .card{background:#0e121a;border:1px solid #273045;border-radius:12px;overflow:hidden;
+        display:grid;grid-template-columns:minmax(220px,42%) 1fr;gap:12px}
+  .leftcol{display:flex;flex-direction:column;gap:12px;padding:10px 12px}
+  .ph{aspect-ratio:16/9;background:#0b0e14;color:#2c3343;display:flex;align-items:center;justify-content:center}
+  .cover{width:100%;height:auto;display:block;object-fit:cover}
+  .pad{padding:10px 12px}
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .artist{font-weight:800}
+  .titleLive{opacity:.92}
+  .meta,.price,.desc{font-size:13px;color:#b8c0d1}
+  .badge{font-size:11px;padding:2px 8px;border:1px solid #3a4254;border-radius:999px;color:#c6d0e1}
+  .badge.st{border-color:#2b6cb0}
+  .badge.er{border-color:#a33;color:#ffb3b3}
+  .morewrap{display:flex;justify-content:center;margin:16px 0 6px}
+  .btn{border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:800;cursor:pointer}
+  .btn:disabled{opacity:.6;cursor:default}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 0}
+  .in{background:#0e121a;border:1px solid var(--line);border-radius:8px;color:#fff;padding:8px 10px}
+  .small{font-size:12px;color:#9aa3af}
+  .yt{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-top:1px solid #273045}
+  .yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .msg{margin:6px 0 0;font-size:12px}
+  .ok{color:#5dd39e}.err{color:var(--danger)}
+  .linkOffi{display:inline-block;margin-top:6px;text-decoration:none;color:#8ab4ff}
+  .bg::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.35)}
+  .card .artist,.card .titleLive,.card .meta,.card .price,.card .desc,.card .small{color:var(--ink);}
+  .pad,.desc,.titleLive,.artist{word-break:break-word;overflow-wrap:anywhere;}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<div class="wrap">
+  <div class="titlebar">
+    <div>
+      <div class="brand">CHAYNUPZINE</div>
+      <h1 id="pageTitle" class="title">Lives browse</h1>
+    </div>
+    <div class="lang">
+      <button id="lang-ja" type="button">JP</button>
+      <button id="lang-en" type="button">EN</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <a class="btnA ghost" id="btn-top" href="https://etramone7-coder.github.io/chaynupzine/">トップへ戻る</a>
+    <a class="btnA ghost" id="btn-form" href="https://etramone7-coder.github.io/chaynupzine/submit_live.html">ライブ投稿フォームへ</a>
+  </div>
+
+  <div class="panel" style="margin-top:12px">
+    <div id="chips" class="filters"></div>
+    <div class="small" id="summary"></div>
+
+    <div class="toolbar">
+      <span class="small" id="tool-cap">投稿を編集/削除</span>
+      <button id="btnEdit" class="btn" type="button">編集</button>
+      <span id="editControls" style="display:none;align-items:center;gap:8px">
+        <input id="editKey" class="in" type="text" placeholder="編集キー">
+        <button id="btnSave" class="btn" type="button" style="background:#1e90ff">保存</button>
+        <button id="btnHide" class="btn" type="button">非表示</button>
+        <button id="btnUnhide" class="btn" type="button" style="background:#3949ab">再表示</button>
+      </span>
+      <span id="editMsg" class="msg"></span>
+    </div>
+  </div>
+
+  <div id="results" class="grid"></div>
+  <div class="morewrap"><button id="moreBtn" class="btn" type="button" style="display:none">もっと見る</button></div>
+  <div id="foot" class="small"></div>
+</div>
+<script>
+(function(){
+  var lang = 'ja';  /* ★ デフォルトJP固定 */
+  var EXEC_URL = "https://script.google.com/macros/s/EXEC_URL/exec";
+  var PAGE_SIZE = 10;
+  var livesAll = [], livesShown = 0;
+
+  /* 翻訳対応テキスト */
+  var TEXTS = {
+    ja:{ status:{scheduled:"予定",canceled:"中止",done:"終了"},
+         editSaved:"保存しました",editFailed:"保存失敗",hidden:"非表示にしました",unhidden:"再表示しました"},
+    en:{ status:{scheduled:"Scheduled",canceled:"Canceled",done:"Done"},
+         editSaved:"Saved",editFailed:"Save failed",hidden:"Hidden",unhidden:"Unhidden"}
+  };
+
+  /* 画像URL正規化 + キャッシュバスター */
+  function normalizeDrive(url){
+    if(!url) return "";
+    if(url.includes("drive.google.com")){
+      var m=url.match(/[-\w]{25,}/);
+      if(m) return "https://drive.google.com/uc?export=view&id="+m[0];
+    }
+    return url;
+  }
+  function resolveImageSrc(url){
+    var base=normalizeDrive(url);
+    if(!base) return "";
+    return base+(base.includes("?")?"&":"?")+"v="+Date.now();
+  }
+
+  /* 日付・時刻フォーマット */
+  function formatDate(s){
+    if(!s) return "";
+    var d=new Date(s);
+    return d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate();
+  }
+  function formatTime(s){ return s? s.replace(/:00$/,"") : ""; }
+
+  /* データ取得 */
+  async function fetchLives(){
+    try{
+      var r=await fetch(EXEC_URL+"?type=listLives");
+      var j=await r.json();
+      if(!j.ok) throw new Error(j.error||"error");
+      livesAll=j.items||[];
+      renderMore(true);
+    }catch(e){
+      document.getElementById("results").textContent="取得に失敗しました";
+    }
+  }
+
+  /* レンダリング */
+  function renderMore(reset){
+    var res=document.getElementById("results");
+    if(reset){ res.innerHTML=""; livesShown=0; }
+    var next=livesAll.slice(livesShown,livesShown+PAGE_SIZE);
+    next.forEach(renderCard);
+    livesShown+=next.length;
+    document.getElementById("moreBtn").style.display=(livesShown<livesAll.length)?"":"none";
+  }
+
+  function renderCard(it){
+    var res=document.getElementById("results");
+    var card=document.createElement("div");
+    card.className="card";
+
+    var left=document.createElement("div");
+    left.className="leftcol";
+    var img=document.createElement("img");
+    img.className="cover";
+    img.src=resolveImageSrc(it.image_url);
+    img.onerror=function(){this.replaceWith(Object.assign(document.createElement("div"),{className:"ph",textContent:"No Image"}));};
+    left.appendChild(img);
+
+    if(it.youtube_url){
+      var yt=document.createElement("div");
+      yt.className="yt";
+      yt.innerHTML='<iframe src="'+it.youtube_url+'" allowfullscreen></iframe>';
+      left.appendChild(yt);
+    }
+    card.appendChild(left);
+
+    var right=document.createElement("div");
+    right.className="pad";
+
+    var row=document.createElement("div"); row.className="row";
+    var art=document.createElement("div"); art.className="artist"; art.textContent=it.artist||"";
+    row.appendChild(art);
+
+    var ttl=document.createElement("div"); ttl.className="titleLive";
+    ttl.textContent=(lang==="en"?(it.title_en||it.title):(it.title||""));
+    row.appendChild(ttl);
+    right.appendChild(row);
+
+    var desc=document.createElement("div"); desc.className="desc";
+    desc.textContent=(lang==="en"?(it.description_en||it.description):(it.description||""));
+    right.appendChild(desc);
+
+    var meta=document.createElement("div"); meta.className="meta";
+    var st=TEXTS[lang].status[it.status]||it.status;
+    meta.textContent=st+" / "+formatDate(it.date)+" "+formatTime(it.start_time);
+    right.appendChild(meta);
+
+    if(it.price){ var pr=document.createElement("div"); pr.className="price"; pr.textContent=it.price; right.appendChild(pr); }
+    if(it.venue){ var vn=document.createElement("div"); vn.className="small"; vn.textContent=(lang==="en"?(it.venue_en||it.venue):it.venue); right.appendChild(vn); }
+
+    card.appendChild(right);
+    res.appendChild(card);
+  }
+  /* === 編集機能 === */
+  async function updateLive(rowIndex, field, value, editKey){
+    try{
+      var r=await fetch(EXEC_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({fn:"updateLive",rowIndex:rowIndex,field:field,value:value,edit_key:editKey})
+      });
+      var j=await r.json();
+      if(!j.ok) throw new Error(j.error||"fail");
+      document.getElementById("editMsg").textContent=TEXTS[lang].editSaved;
+      return true;
+    }catch(e){
+      document.getElementById("editMsg").textContent=TEXTS[lang].editFailed;
+      return false;
+    }
+  }
+
+  async function hideLive(rowIndex, hide, editKey){
+    try{
+      var r=await fetch(EXEC_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({fn:(hide?"hideLive":"unhideLive"),rowIndex:rowIndex,edit_key:editKey})
+      });
+      var j=await r.json();
+      if(!j.ok) throw new Error(j.error||"fail");
+      document.getElementById("editMsg").textContent= hide? TEXTS[lang].hidden : TEXTS[lang].unhidden;
+    }catch(e){
+      document.getElementById("editMsg").textContent=TEXTS[lang].editFailed;
+    }
+  }
+
+  /* === 初期化 === */
+  document.getElementById("moreBtn").onclick=function(){renderMore();};
+
+  document.getElementById("btnEdit").onclick=function(){
+    document.getElementById("editControls").style.display="inline-flex";
+  };
+
+  document.getElementById("btnHide").onclick=function(){
+    var key=document.getElementById("editKey").value.trim();
+    if(!key){ document.getElementById("editMsg").textContent=TEXTS[lang].fail; return; }
+    var row=currentRowIndex(); if(row) hideLive(row,true,key);
+  };
+  document.getElementById("btnUnhide").onclick=function(){
+    var key=document.getElementById("editKey").value.trim();
+    if(!key){ document.getElementById("editMsg").textContent=TEXTS[lang].fail; return; }
+    var row=currentRowIndex(); if(row) hideLive(row,false,key);
+  };
+
+  function currentRowIndex(){
+    var sel = sessionStorage.getItem("cz_selected_live");
+    if(!sel) return null;
+    try{ var obj=JSON.parse(sel); return obj.rowIndex; }catch(_){return null;}
+  }
+
+  /* === 実行 === */
+  fetchLives();
+})();
+</script>
+</body>
+</html>
+  /* === 描画 === */
+  function renderLive(it){
+    var root=document.getElementById('results'); root.innerHTML='';
+    if(!it){ 
+      root.appendChild(el('div',{className:'small',textContent:TEXTS[lang].nodata}));
+      return;
+    }
+    it.image_url = it.image_url || pick(it,['image','cover','img']);
+    it.description = it.description || pick(it,['desc','body','text']);
+    it.description_en = it.description_en || pick(it,['descriptionEN','desc_en']);
+    it.title = it.title || pick(it,['titleLive','ttl']);
+    it.title_en = it.title_en || pick(it,['titleEN','ttl_en']);
+
+    var c=el('div',{className:'card'});
+    var left=el('div',{className:'leftcol'});
+    var imgSrc = resolveImageSrc(it);
+    if(imgSrc){ left.appendChild(createImgWithFallback(imgSrc)); }
+    else{ left.appendChild(el('div',{className:'ph',textContent:'flyer'})); }
+    if(it.youtube_url){
+      var id=ytId(it.youtube_url);
+      if(id){
+        var y=el('div',{className:'yt'});
+        y.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'" allowfullscreen></iframe>';
+        left.appendChild(y);
+      }
+    }
+    c.appendChild(left);
+
+    var pad=el('div',{className:'pad'}); c.appendChild(pad);
+    var row1=el('div',{className:'row'});
+    var st=el('span',{className:'badge st',textContent:'［'+toStatus(it.status)+ '］'});
+    var regionLabel = (lang==='en' ? (it.region_en||it.region||'') : (it.region||it.region_en||''));
+    var prefLabel   = (lang==='en' ? (it.prefecture_en||it.prefecture||'') : (it.prefecture||it.prefecture_en||''));
+    var rp=el('span',{className:'badge',textContent:[regionLabel,prefLabel].filter(Boolean).join(' / ')});
+    row1.appendChild(st); if(rp.textContent) row1.appendChild(rp);
+    pad.appendChild(row1);
+
+    pad.appendChild(el('div',{className:'artist',textContent:it.artist||'—'}));
+    var showTitle = (lang==='en' ? (it.title_en||it.title) : (it.title||it.title_en));
+    if(showTitle){ pad.appendChild(el('div',{className:'titleLive',textContent:showTitle})); }
+
+    var metaParts=[];
+    if(it.date) metaParts.push(formatDate(it.date));
+    if(it.open_time){ var ot=formatTime(it.open_time); if(ot) metaParts.push('OPEN '+ot); }
+    if(it.start_time){ var stt=formatTime(it.start_time); if(stt) metaParts.push('START '+stt); }
+    var venueLabel = (lang==='en' ? (it.venue_en||it.venue) : (it.venue||it.venue_en));
+    if(venueLabel) metaParts.push('@ '+venueLabel);
+    if(metaParts.length){ pad.appendChild(el('div',{className:'meta',textContent:metaParts.join('  ')})); }
+
+    var showPrice = (lang==='en' ? (it.price_en||it.price) : (it.price||it.price_en));
+    if(showPrice){ pad.appendChild(el('div',{className:'price',textContent:showPrice})); }
+    var showDesc = (lang==='en' ? (it.description_en||it.description) : (it.description||it.description_en));
+    if(showDesc){ pad.appendChild(el('div',{className:'desc',textContent:showDesc})); }
+
+    /* === 編集フィールド === */
+    var editBox = el('div',{className:'editBox',style:'margin-top:8px;display:none;flex-direction:column;gap:6px'});
+    ['title','description','venue','region','prefecture','price'].forEach(function(field){
+      var inp=el('input',{className:'in',value:it[field]||'',placeholder:field});
+      inp.onchange=function(){
+        var key=document.getElementById('editKey').value.trim();
+        if(!key){ document.getElementById('editMsg').textContent=TEXTS[lang].needKey; return; }
+        updateLive(it.rowIndex,field,inp.value,key);
+      };
+      editBox.appendChild(inp);
+    });
+    pad.appendChild(editBox);
+
+    var ref = (function(u){ try{ return (u&&u.startsWith('https://'))?u:''; }catch(_){return '';} })(it.reference_url);
+    if(ref){ var a=el('a',{href:ref,target:'_blank',rel:'noopener nofollow',className:'linkOffi',textContent:TEXTS[lang].offi}); pad.appendChild(a); }
+
+    document.getElementById('results').appendChild(c);
+
+    document.getElementById('btnEdit').onclick=function(){
+      editBox.style.display=(editBox.style.display==='none'?'flex':'none');
+    };
+  }
+
+  /* === 編集API === */
+  async function updateLive(rowIndex, field, value, editKey){
+    try{
+      var r=await fetch(EXEC_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({fn:"updateLive",rowIndex:rowIndex,field:field,value:value,edit_key:editKey})
+      });
+      var j=await r.json();
+      if(!j.ok) throw new Error(j.error||"fail");
+      document.getElementById("editMsg").textContent=TEXTS[lang].editSaved;
+    }catch(e){
+      document.getElementById("editMsg").textContent=TEXTS[lang].editFailed;
+    }
+  }
+  async function hideLive(rowIndex, hide, editKey){
+    try{
+      var r=await fetch(EXEC_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({fn:(hide?"hideLive":"unhideLive"),rowIndex:rowIndex,edit_key:editKey})
+      });
+      var j=await r.json();
+      if(!j.ok) throw new Error(j.error||"fail");
+      document.getElementById("editMsg").textContent= hide? TEXTS[lang].hidden : TEXTS[lang].unhidden;
+    }catch(e){
+      document.getElementById("editMsg").textContent=TEXTS[lang].editFailed;
+    }
+  }
+
+  /* === 実行 === */
+  let current = getSelectedFromSession();
+  var rowHint = qs('row'); if(current && !current.rowIndex && rowHint){ current.rowIndex = Number(rowHint)||current.rowIndex; }
+  (async function(){
+    current = await tryHydrateFromServer(current);
+    var keyRow = rowHint || (current && current.rowIndex);
+    if(keyRow){
+      var fetched = await hydrateFromNetwork(keyRow);
+      if(fetched) current = fetched;
+    }
+    renderLive(current);
+  })();
+})();
+</script>
+</body>
+</html>

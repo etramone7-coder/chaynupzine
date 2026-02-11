@@ -380,7 +380,9 @@ async function renderResultCards(items){
       if (blurb) blurb = await ja2en(blurb);
     }
 
-    var viewUrl = './features_browse.html?row=' + encodeURIComponent(String(it.rowIndex || ''));
+    var viewUrl = (it.slug && String(it.slug).trim())
+  ? ('./features_browse.html?slug=' + encodeURIComponent(String(it.slug)))
+  : ('./features_browse.html?row='  + encodeURIComponent(String(it.rowIndex || '')));
 
     card.innerHTML =
       '<div class="title">'+escapeHtml(title)+'</div>'+

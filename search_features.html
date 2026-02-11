@@ -134,7 +134,7 @@
   try{
     var injected = (window.EXEC_URL||'<?= EXEC_URL ?>'||'').trim();
     if (!injected || injected.indexOf('<?=')===0) injected = '';
-    var fallback='https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
+    var fallback='https://script.google.com/macros/s/AKfycbzkQN0yd6DLoImgNdI0877buJU56w6G-ewWlNfZOVuVmKmRlEeGElI6p4QHnL5glSHK1A/exec';
     window.EXEC_URL = injected || fallback;
   }catch(_){
     window.EXEC_URL='https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';

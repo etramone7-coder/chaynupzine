@@ -69,7 +69,7 @@
   details{margin-top:14px}
   summary{cursor:pointer;color:#cbd5e1}
 
-  /* ▼▼ 追加（最小変更）：ネイティブのfileボタンは隠し、カスタムボタンを使う */
+  /* ▼▼ 追加：ネイティブのfileボタンは隠し、カスタムボタンを使う */
   .hiddenfile{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
   .filebtn{
     display:inline-block;padding:10px 12px;border:1px solid var(--line);
@@ -168,13 +168,11 @@
     <input id="edit_key" type="text" placeholder="半角英数のみ。後から編集/削除に必要"
            inputmode="latin" pattern="[A-Za-z0-9]{8,32}" minlength="8" maxlength="32" required>
 
-    <!-- paragraphs (1..3 → ★5に拡張) -->
+    <!-- paragraphs -->
     <div id="paras"></div>
 
     <button id="submitBtn" class="btn">投稿</button>
     <div id="msg" class="msg"></div>
-
-    <!-- ▲ フォームここまで ▲ -->
 
     <!-- 中央：トップへ戻る -->
     <div class="actions">
@@ -272,57 +270,48 @@ var TEXTS={
 
 /* ===== 言語切替 ===== */
 (function(){
-  function $(q){ return document.querySelector(q); }
   function getLang(){
-  var v = localStorage.getItem('chay_lang');
-  if (v === 'en') return 'en';  // 保存がENならEN
-  return 'ja';                  // それ以外はJPを既定に
-}
+    var v='';
+    try{ v = localStorage.getItem('chay_lang') || ''; }catch(_){}
+    if (v === 'en') return 'en';
+    return 'ja';
+  }
 
   function setLangUI(lang){
-    var $ = (q)=>document.querySelector(q);
-    var t = TEXTS[lang];
+    var t = TEXTS[lang] || TEXTS.ja;
 
-    $('#lang-ja')?.classList.toggle('active', lang==='ja');
-    $('#lang-en')?.classList.toggle('active', lang==='en');
+    document.getElementById('lang-ja')?.classList.toggle('active', lang==='ja');
+    document.getElementById('lang-en')?.classList.toggle('active', lang==='en');
 
-    $('#pageSubtitle') && ($('#pageSubtitle').textContent = t.subtitle);
-    $('#btn-top') && ($('#btn-top').textContent = t.top);
-    $('#disclaimer') && ($('#disclaimer').innerHTML = t.disclaimer);
-    $('#agreeLabel') && ($('#agreeLabel').textContent = t.agree);
+    var el;
+    el=document.getElementById('pageSubtitle'); if(el) el.textContent = t.subtitle;
+    el=document.getElementById('btn-top'); if(el) el.textContent = t.top;
+    el=document.getElementById('disclaimer'); if(el) el.innerHTML = t.disclaimer;
+    el=document.getElementById('agreeLabel'); if(el) el.textContent = t.agree;
 
     const L = t.labels;
-    const map = {
-      genreLabel:'genre', genreOtherLabel:'genre_other',
-      eraLabel:'era', regionLabel:'region',
-      titleLabel:'title', authorLabel:'author', editKeyLabel:'edit'
-    };
+    const map = { genreLabel:'genre', genreOtherLabel:'genre_other', eraLabel:'era', regionLabel:'region', titleLabel:'title', authorLabel:'author', editKeyLabel:'edit' };
     Object.keys(map).forEach(id=>{
-      const el = document.getElementById(id);
-      if(el) el.textContent = L[map[id]];
+      const x = document.getElementById(id);
+      if(x) x.textContent = L[map[id]];
     });
 
     const P = t.ph;
-    const setPH = (id, v)=>{ const el=document.getElementById(id); if(el) el.placeholder=v; };
+    const setPH = (id, v)=>{ const x=document.getElementById(id); if(x) x.placeholder=v; };
     setPH('genre_other', P.genre_other);
     setPH('regionOther', P.region_other);
     setPH('title',       P.title);
     setPH('author',      P.author);
+
     const sb = document.getElementById('submitBtn'); if(sb) sb.textContent = t.btnSubmit;
 
-    document.querySelectorAll('[data-i18n="para"]').forEach(span=>{
-      span.textContent = P.para;
-    });
+    document.querySelectorAll('[data-i18n="para"]').forEach(span=>{ span.textContent = P.para; });
     document.querySelectorAll('[data-i18n="img"]').forEach(b=>{
       const idx = b.dataset.idx || '';
       b.textContent = P.img + idx;
     });
-    document.querySelectorAll('[data-i18n="ytOpen"]').forEach(a=>{
-      a.textContent = P.ytOpen;
-    });
-    document.querySelectorAll('input[type="text"][data-i18n-ph="yt"]').forEach(inp=>{
-      inp.placeholder = P.yt;
-    });
+    document.querySelectorAll('[data-i18n="ytOpen"]').forEach(a=>{ a.textContent = P.ytOpen; });
+    document.querySelectorAll('input[type="text"][data-i18n-ph="yt"]').forEach(inp=>{ inp.placeholder = P.yt; });
 
     const pvEmpty = document.getElementById('pvEmpty');
     if(pvEmpty) pvEmpty.textContent = P.pvEmpty;
@@ -337,7 +326,6 @@ var TEXTS={
       }
     });
 
-    // 言語が変わったらプレビューを再描画（英訳対応のため）
     if (window.__updatePreviewOnce) window.__updatePreviewOnce();
   }
 
@@ -353,11 +341,6 @@ var TEXTS={
       en.__bound=true;
     }
   }
-
-  document.addEventListener('click',function(ev){
-    if(ev.target && ev.target.id==='lang-ja'){ ev.preventDefault(); localStorage.setItem('chay_lang','ja'); setLangUI('ja'); }
-    if(ev.target && ev.target.id==='lang-en'){ ev.preventDefault(); localStorage.setItem('chay_lang','en'); setLangUI('en'); }
-  },false);
 
   window.__setLangUI = setLangUI;
   window.__getLang   = getLang;
@@ -419,15 +402,14 @@ async function callSubmitFeature(payload, onOK, onNG){
   function $(q){ return document.querySelector(q); }
   function el(tag, attrs){ var e=document.createElement(tag); if(attrs) Object.assign(e, attrs); return e; }
 
-  // ★追加：短縮URL拒否
+  // ★短縮URL拒否
   const SHORTENERS_RE = /^(https:\/\/)(bit\.ly|tinyurl\.com|goo\.gl|is\.gd|t\.co|ow\.ly|buff\.ly|rb\.gy)\//i;
 
   function isAllowedHttpUrl(u){
     try{ var s=String(u||'').trim(); if(!/^https:\/\//i.test(s)) return false; return !SHORTENERS_RE.test(s); }
     catch(_){ return false; }
   }
-    function isAllowedImageUrl(u){
-    // Code.gs の _isAllowedHttpUrl と整合：https で短縮URLでなければ許可
+  function isAllowedImageUrl(u){
     if(!u) return true;
     return isAllowedHttpUrl(u);
   }
@@ -454,8 +436,10 @@ async function callSubmitFeature(payload, onOK, onNG){
   var MAX_EDGE  = 3000;
   var NG_TERMS = ["kill","die","rape","suicide","terror","bomb","fuck","cunt","asshole","nazi","kkk","white power","retard","spic","chink","gook","fag"];
 
-  function clearBlobURLs(){ try{ blobURLs.forEach(u=>URL.revokeObjectURL(u)); }catch(_){}
-    blobURLs=[]; }
+  function clearBlobURLs(){
+    try{ blobURLs.forEach(u=>URL.revokeObjectURL(u)); }catch(_){}
+    blobURLs=[];
+  }
 
   function getClientId(){
     try{
@@ -484,14 +468,17 @@ async function callSubmitFeature(payload, onOK, onNG){
       return out;
     }catch(_){
       enCache.set(key, key);
-      return key; // 失敗時は原文
+      return key;
     }
   }
 
   // build paragraph inputs
   function buildParas(){
-    var lang = (window.__getLang && __getLang()) || 'ja';
-    var T = TEXTS[lang].ph;
+    // ★依存排除：localStorageから直接読む（言語UIが壊れていても段落生成を止めない）
+    var saved = '';
+    try{ saved = localStorage.getItem('chay_lang') || ''; }catch(_){}
+    var lang = (saved === 'en') ? 'en' : 'ja';
+    var T = (TEXTS[lang] || TEXTS.ja).ph;
 
     var host = $('#paras'); host.innerHTML='';
     for(let i=1;i<=PARA_MAX;i++){
@@ -522,7 +509,9 @@ async function callSubmitFeature(payload, onOK, onNG){
         btn.textContent = T.choose;
         btn.addEventListener('click', ()=> file.click());
         file.addEventListener('change', (e)=>{
-          const P = TEXTS[(window.__getLang&&__getLang())||'ja'].ph;
+          const saved2 = (function(){ try{ return localStorage.getItem('chay_lang') || ''; }catch(_){ return ''; } })();
+          const lang2 = (saved2 === 'en') ? 'en' : 'ja';
+          const P = (TEXTS[lang2] || TEXTS.ja).ph;
           const f = e.currentTarget;
           btn.textContent = (f.files && f.files[0]) ? (P.selected + f.files[0].name) : P.choose;
         });
@@ -545,7 +534,10 @@ async function callSubmitFeature(payload, onOK, onNG){
       host.appendChild(box);
     }
 
-    if(window.__setLangUI) __setLangUI(lang);
+    // ★安全化：例外で止めない
+    try{
+      if(window.__setLangUI) window.__setLangUI(lang);
+    }catch(_){}
   }
 
   function fileToDataURL(file){
@@ -576,12 +568,11 @@ async function callSubmitFeature(payload, onOK, onNG){
     }catch(e){ return {ok:false, reason:String(e.message||e)}; }
   }
 
-  // ===== 時間短縮：クライアント圧縮（長辺1600px・WebP優先/品質0.82） =====
+  // ===== クライアント圧縮（長辺1600px・WebP優先/品質0.82） =====
   async function compressImageFile(file, maxEdge=1600, quality=0.82){
     const typeWebP = 'image/webp';
     const fallback = 'image/jpeg';
 
-    // 画像読み込み（createImageBitmap優先）
     let bmp;
     try{
       if('createImageBitmap' in window){
@@ -612,7 +603,6 @@ async function callSubmitFeature(payload, onOK, onNG){
     const ctx = c.getContext('2d');
     ctx.drawImage(bmp, 0, 0, tw, th);
 
-    // WebPが使えなければJPEGで
     let dataUrl = c.toDataURL(typeWebP, quality);
     if(!/^data:image\/webp/.test(dataUrl)){
       dataUrl = c.toDataURL(fallback, quality);
@@ -648,10 +638,10 @@ async function callSubmitFeature(payload, onOK, onNG){
     return sel || '';
   }
 
-  // ===== preview（多重描画防止＋英訳反映）=====
+  // ===== preview =====
   let __painting = false;
   async function updatePreview(){
-    if(__painting) return;           // ★重複防止
+    if(__painting) return;
     __painting = true;
 
     try{
@@ -663,7 +653,6 @@ async function callSubmitFeature(payload, onOK, onNG){
 
       const lang = (window.__getLang && __getLang()) || 'ja';
 
-      // title/author（EN時は英訳を試行）
       const rawTitle = (els.title.value || '').trim() || '—';
       const rawAuthor = (els.author.value || '').trim();
 
@@ -683,12 +672,17 @@ async function callSubmitFeature(payload, onOK, onNG){
         var text = (els['para'+i+'_text'].value||'').trim();
         var srcs=[];
         for(let j=1;j<=IMG_PER;j++){
-          var warnEl = els['p'+i+'_img'+j+'_warn']; if(warnEl){ warnEl.style.display='none'; warnEl.textContent=''; }
+          var warnEl = els['p'+i+'_img'+j+'_warn'];
+          if(warnEl){ warnEl.style.display='none'; warnEl.textContent=''; }
 
           var u = (els['p'+i+'_img'+j+'_url'].value||'').trim();
           if(u){
-            if(!isAllowedImageUrl(u)){ if(warnEl){ warnEl.textContent='画像URLは https 必須・短縮URL不可・画像拡張子または許可ドメインのみ'; warnEl.style.display=''; } u=''; }
-            else { u = normalizeDriveUrl(u); }
+            if(!isAllowedImageUrl(u)){
+              if(warnEl){ warnEl.textContent='画像URLは https 必須・短縮URL不可'; warnEl.style.display=''; }
+              u='';
+            }else{
+              u = normalizeDriveUrl(u);
+            }
           }
           if(!u){
             var fEl = els['p'+i+'_img'+j+'_file'];
@@ -727,7 +721,8 @@ async function callSubmitFeature(payload, onOK, onNG){
         }
 
         if(y){
-          var a = el('a',{href:y,target:'_blank',rel:'noopener','data-i18n':'ytOpen'}); a.textContent = TEXTS[(window.__getLang&&__getLang())||'ja'].ph.ytOpen;
+          var a = el('a',{href:y,target:'_blank',rel:'noopener','data-i18n':'ytOpen'});
+          a.textContent = TEXTS[(window.__getLang&&__getLang())||'ja'].ph.ytOpen;
           var yt = el('div',{className:'ytlink'}); yt.appendChild(a);
           sec.appendChild(yt);
         }
@@ -743,22 +738,15 @@ async function callSubmitFeature(payload, onOK, onNG){
       __painting = false;
     }
   }
-  // 外部から一度だけ呼ぶためのラッパ
   window.__updatePreviewOnce = ()=>{ updatePreview(); };
 
   // NGチェック
   function clientNgCheck(){
     try{
-      var text = [
-        els.author.value,
-        els.era.value,
-        getRegionValue()
-      ].join('\n');
-
+      var text = [ els.author.value, els.era.value, getRegionValue() ].join('\n');
       for(let i=1;i<=PARA_MAX;i++){
         text += '\n' + (els['para'+i+'_text'].value||'');
       }
-
       var low = text.toLowerCase();
       for(var i=0;i<NG_TERMS.length;i++){
         var w=NG_TERMS[i];
@@ -821,7 +809,7 @@ async function callSubmitFeature(payload, onOK, onNG){
         }
 
         if(!(els.title.value||'').trim()){ throw new Error('TITLE は必須です'); }
-        if(!(els.author.value||'').trim()){ throw new Error('AUTHOR は必須です'); }  /* ★追加 */
+        if(!(els.author.value||'').trim()){ throw new Error('AUTHOR は必須です'); }
         if(!(els.genre.value||'').trim()){ throw new Error('GENRE を選択してください'); }
         if(els.genre.value==='other' && !(els.genre_other.value||'').trim()){
           throw new Error('GENRE が OTHER の場合は自由入力も必須です');
@@ -855,7 +843,6 @@ async function callSubmitFeature(payload, onOK, onNG){
           client_id: (function(){ try{ return getClientId(); }catch(_){ return ''; } })()
         };
 
-        // ===== 時間短縮：画像圧縮を並列化して一括 await =====
         const imgTasks = [];
 
         for(let i=1;i<=PARA_MAX;i++){
@@ -870,7 +857,7 @@ async function callSubmitFeature(payload, onOK, onNG){
             var rawUrl = (urlEl.value||'').trim();
             if(rawUrl){
               if(!isAllowedImageUrl(rawUrl)){
-                if(warnEl){ warnEl.textContent='画像URLは https 必須・短縮URL不可・画像拡張子または許可ドメインのみ'; warnEl.style.display=''; }
+                if(warnEl){ warnEl.textContent='画像URLは https 必須・短縮URL不可'; warnEl.style.display=''; }
                 rawUrl = '';
               }else{
                 rawUrl = normalizeDriveUrl(rawUrl);
@@ -879,7 +866,6 @@ async function callSubmitFeature(payload, onOK, onNG){
             payload['p'+i+'_img'+j+'_url'] = rawUrl;
 
             if(!payload['p'+i+'_img'+j+'_url'] && fileEl && fileEl.files && fileEl.files[0]){
-              // 圧縮→DataURL化（長辺1600px, 品質0.82）
               const f = fileEl.files[0];
               imgTasks.push((async()=>{
                 const dataUrl = await compressImageFile(f, 1600, 0.82);
@@ -889,7 +875,6 @@ async function callSubmitFeature(payload, onOK, onNG){
           }
         }
 
-        // まとめて待つ（並列）
         await Promise.all(imgTasks);
 
         callSubmitFeature(
@@ -900,14 +885,28 @@ async function callSubmitFeature(payload, onOK, onNG){
               els.msg.textContent='Posted!';
               var keep = { genre:els.genre.value, era:els.era.value, regionSel:els.regionSel.value, regionOther:els.regionOther.value, edit_key:els.edit_key.value };
               document.querySelectorAll('input[type=text], textarea').forEach(function(i){ i.value=''; });
-              for(let i=1;i<=PARA_MAX;i++){ for(let j=1;j<=IMG_PER;j++){ els['p'+i+'_img'+j+'_file'].value=''; els['p'+i+'_img'+j+'_warn'].style.display='none'; els['p'+i+'_img'+j+'_warn'].textContent=''; } }
+              for(let i=1;i<=PARA_MAX;i++){
+                for(let j=1;j<=IMG_PER;j++){
+                  els['p'+i+'_img'+j+'_file'].value='';
+                  els['p'+i+'_img'+j+'_warn'].style.display='none';
+                  els['p'+i+'_img'+j+'_warn'].textContent='';
+                  // filebtnラベル復帰
+                  var btn = document.querySelector('.filebtn[data-for="p'+i+'_img'+j+'_file"]');
+                  if(btn){
+                    var saved = '';
+                    try{ saved = localStorage.getItem('chay_lang') || ''; }catch(_){}
+                    var lang = (saved==='en')?'en':'ja';
+                    btn.textContent = (TEXTS[lang]||TEXTS.ja).ph.choose;
+                  }
+                }
+              }
               els.genre.value=keep.genre; els.era.value=keep.era; els.regionSel.value=keep.regionSel; els.regionOther.value=keep.regionOther; els.edit_key.value=keep.edit_key;
               els.genreOtherWrap.style.display = (els.genre.value==='other') ? '' : 'none';
               els.regionOther.style.display    = (els.regionSel.value==='__other') ? '' : 'none';
               updatePreview();
             }else{
               var msg = (res && res.error) ? String(res.error) : 'server error';
-              if(/invalid image_url/i.test(msg)) msg = '画像URLが無効です（https必須／短縮URL不可／画像拡張子または許可ドメイン）';
+              if(/invalid image_url/i.test(msg)) msg = '画像URLが無効です（https必須／短縮URL不可）';
               if(/invalid edit_key/i.test(msg)) msg = '編集キーが不正です（半角英数字 8〜32）';
               if(/ng word/i.test(msg)) msg = 'NGワードに該当する可能性があります。表現を言い換えてください。';
               throw new Error(msg);

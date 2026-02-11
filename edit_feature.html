@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHAYNUPZINE — Edit Feature</title>
+<style>
+  :root{
+    --ink:#222; --muted:#666; --brand:#111; --chip:#eef1f5;
+    --panel:rgba(255,255,255,.6);
+    --line:#e5e7eb; --link:#2E66CC;
+    --danger:#e25555;
+  }
+  html,body{margin:0;background:transparent;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:18px}
+  .bg{position:fixed;inset:0;background-color:#f3f5f7;background-size:cover;background-position:center;filter:brightness(.88);z-index:0}
+  .wrap{max-width:980px;margin:0 auto;padding:18px}
+  .panel{position:relative;z-index:1;background:var(--panel);
+    -webkit-backdrop-filter:saturate(120%) blur(10px);
+    backdrop-filter:saturate(120%) blur(10px);
+    border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.6);padding:20px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .brand{display:inline-block;background:var(--brand);color:#fff;border-radius:8px;padding:7px 12px;font-weight:800;letter-spacing:.4px}
+  .lang{position:fixed;top:10px;right:10px;display:flex;flex-direction:column;gap:8px;z-index:10}
+  .lang button{border:1px solid #ddd;background:#fff;color:#111;border-radius:12px;padding:8px 12px;cursor:pointer;font-weight:800}
+  .lang button.active{background:#111;color:#fff;border-color:#111}
+  .tools{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+  .back a{color:var(--link);text-decoration:none;font-weight:700}
+  .divider{height:1px;background:var(--line);margin:14px 0}
+  .alert{margin:12px 0;padding:12px;border-radius:14px;background:#ffe9e9;color:#a33;border:1px solid #f6bcbc;font-size:16px;display:none}
+  .alert.show{display:block}
+  .ok{margin:12px 0;padding:12px;border-radius:14px;background:#eafff4;color:#0b6b3a;border:1px solid #b8f2d2;font-size:16px;display:none}
+  .ok.show{display:block}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:780px){.row2{grid-template-columns:1fr}}
+  label{display:block;margin:12px 0 6px;font-weight:800}
+  .hint{font-size:13px;color:var(--muted);font-weight:600;margin-top:4px}
+  input[type=text],select,textarea{
+    width:100%;border:1px solid #d1d5db;border-radius:10px;padding:10px 12px;
+    background:rgba(255,255,255,.8);color:#111;outline:none
+  }
+  textarea{min-height:120px;resize:vertical;white-space:pre-wrap}
+  .para{padding:12px 0;border-top:1px solid rgba(0,0,0,.08)}
+  .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+  .thumbs input{font-size:14px}
+  .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  button.main{
+    border:0;border-radius:12px;padding:12px 16px;background:#111;color:#fff;
+    font-weight:900;cursor:pointer
+  }
+  button.danger{
+    border:0;border-radius:12px;padding:12px 16px;background:var(--danger);color:#fff;
+    font-weight:900;cursor:pointer
+  }
+  button.ghost{
+    border:1px solid #111;border-radius:12px;padding:12px 16px;background:transparent;color:#111;
+    font-weight:900;cursor:pointer
+  }
+  button:disabled{opacity:.6;cursor:default}
+</style>
+</head>
+<body>
+<div id="bg" class="bg"></div>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="top">
+      <div><span class="brand">CHAYNUPZINE</span></div>
+      <div class="lang">
+        <button id="lang-ja" type="button">JP</button>
+        <button id="lang-en" type="button">EN</button>
+      </div>
+    </div>
+
+    <div class="tools" style="margin-top:6px">
+      <div class="back"><a id="btn-top" href="https://etramone7-coder.github.io/chaynupzine/">← トップへ戻る</a></div>
+      <div class="back"><a id="btn-back" href="./search_features.html">← 特集一覧へ戻る</a></div>
+    </div>
+
+    <div id="alert" class="alert"></div>
+    <div id="ok" class="ok"></div>
+
+    <div class="divider"></div>
+
+    <div class="row2">
+      <div>
+        <label>対象（row または slug）</label>
+        <div class="hint">URLの ?row= または ?slug= を使う想定。どちらか必須。</div>
+        <input id="targetInfo" type="text" readonly>
+      </div>
+      <div>
+        <label>EDIT KEY（必須）</label>
+        <div class="hint">投稿者だけが知っているキー。これが無いと更新/削除できません。</div>
+        <input id="edit_key" type="text" inputmode="latin" pattern="[A-Za-z0-9]{8,32}" minlength="8" maxlength="32" placeholder="8〜32文字 半角英数字">
+      </div>
+    </div>
+
+    <label>TITLE</label>
+    <input id="title" type="text">
+
+    <div class="row2">
+      <div>
+        <label>AUTHOR</label>
+        <input id="author" type="text">
+      </div>
+      <div>
+        <label>STATUS</label>
+        <select id="status">
+          <option value="published">published</option>
+          <option value="draft">draft</option>
+          <option value="hidden">hidden</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div>
+        <label>GENRE</label>
+        <input id="genre" type="text" placeholder="band/label/region/...">
+      </div>
+      <div>
+        <label>GENRE OTHER</label>
+        <input id="genre_other" type="text">
+      </div>
+    </div>
+
+    <div class="row2">
+      <div>
+        <label>ERA</label>
+        <input id="era" type="text" placeholder="1990s など">
+      </div>
+      <div>
+        <label>REGION</label>
+        <input id="region" type="text">
+      </div>
+    </div>
+
+    <div id="paras"></div>
+
+    <div class="btnrow">
+      <button id="btn-load" class="ghost" type="button">読み込み</button>
+      <button id="btn-update" class="main" type="button">更新（update）</button>
+      <button id="btn-delete" class="danger" type="button">削除（delete / 非公開化）</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="tools">
+      <div class="back"><a id="btn-view" href="#" target="_blank" rel="noopener">→ この特集を開く</a></div>
+      <div class="hint" id="idhint"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* 背景画像（features_browse と同じ） */
+document.getElementById('bg').style.backgroundImage =
+  'url(https://etramone7-coder.github.io/chaynupzine/assets/feature_browse.webp)';
+
+/* ===== ユーティリティ ===== */
+function qs(k){
+  var m = location.search.match(new RegExp('[?&]'+k+'=([^&]+)'));
+  return m ? decodeURIComponent(m[1]) : '';
+}
+function showErr(msg){
+  var a=document.getElementById('alert'); a.textContent=msg; a.className='alert show';
+  var o=document.getElementById('ok'); o.className='ok';
+}
+function showOk(msg){
+  var o=document.getElementById('ok'); o.textContent=msg; o.className='ok show';
+  var a=document.getElementById('alert'); a.className='alert';
+}
+function normalizeHttps(u){
+  try{
+    if(!u) return '';
+    if(/^https:\/\//i.test(u)) return u;
+    if(/^http:\/\//i.test(u)) return u.replace(/^http:/i,'https:');
+    return u;
+  }catch(_){ return String(u||''); }
+}
+function ytNorm(u){
+  try{
+    if(!u) return '';
+    var s=String(u).trim();
+    var m1=s.match(/youtu\.be\/([\w-]{6,})/);
+    var m2=s.match(/[?&]v=([\w-]{6,})/);
+    var id=(m1&&m1[1])||(m2&&m2[1])||'';
+    return id?('https://www.youtube.com/watch?v='+id):'';
+  }catch(_){ return ''; }
+}
+
+/* ===== 言語（表示だけ。編集値はそのまま） ===== */
+var curLang=(function(){
+  var saved=localStorage.getItem('chay_lang');
+  if(saved!=='en' && saved!=='ja'){ localStorage.setItem('chay_lang','ja'); return 'ja'; }
+  return saved;
+})();
+function applyLang(){
+  document.getElementById('lang-ja').classList.toggle('active', curLang==='ja');
+  document.getElementById('lang-en').classList.toggle('active', curLang==='en');
+  document.getElementById('btn-top').textContent = (curLang==='ja'?'← トップへ戻る':'← Back to Top');
+  document.getElementById('btn-back').textContent = (curLang==='ja'?'← 特集一覧へ戻る':'← Back to Features');
+  document.getElementById('btn-load').textContent = (curLang==='ja'?'読み込み':'Load');
+  document.getElementById('btn-update').textContent = (curLang==='ja'?'更新（update）':'Update');
+  document.getElementById('btn-delete').textContent = (curLang==='ja'?'削除（delete / 非公開化）':'Delete (hide)');
+}
+document.getElementById('lang-ja').onclick=function(){curLang='ja';localStorage.setItem('chay_lang','ja');applyLang();};
+document.getElementById('lang-en').onclick=function(){curLang='en';localStorage.setItem('chay_lang','en');applyLang();};
+applyLang();
+
+/* ===== EXEC_URL ===== */
+(function resolveExecUrl(){
+  try{
+    var injected = (window.EXEC_URL||'<?= EXEC_URL ?>'||'').trim();
+    if (!injected || injected.indexOf('<?=')===0) injected = '';
+    var fallback='https://script.google.com/macros/s/AKfycbzkQN0yd6DLoImgNdI0877buJU56w6G-ewWlNfZOVuVmKmRlEeGElI6p4QHnL5glSHK1A/exec';
+    window.EXEC_URL = injected || fallback;
+  }catch(_){
+    window.EXEC_URL='https://script.google.com/macros/s/AKfycbzkQN0yd6DLoImgNdI0877buJU56w6G-ewWlNfZOVuVmKmRlEeGElI6p4QHnL5glSHK1A/exec';
+  }
+})();
+
+/* ===== APIラッパ ===== */
+async function apiGetFeature(arg){
+  // まずGET
+  const url1 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?')
+    + 'fn=getFeatureById&payload=' + encodeURIComponent(JSON.stringify(arg))
+    + '&v=' + Date.now();
+  const r1 = await fetch(url1,{method:'GET',mode:'cors',cache:'no-store'});
+  const ct = r1.headers.get('content-type')||'';
+  if(r1.ok && ct.indexOf('application/json')>=0) return await r1.json();
+
+  // POST fallback
+  const url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
+  const r2 = await fetch(url2,{
+    method:'POST',mode:'cors',cache:'no-store',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({fn:'getFeatureById',payload:arg,csrf:(window.__CZ_CSRF||'')})
+  });
+  if(!r2.ok) throw new Error('HTTP '+r2.status);
+  return await r2.json();
+}
+
+async function apiEditEntry(payload){
+  const url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
+  const r = await fetch(url,{
+    method:'POST',mode:'cors',cache:'no-store',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({fn:'editEntry',payload,csrf:(window.__CZ_CSRF||'')})
+  });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+
+/* ===== UI生成（段落5 × 画像3 + YouTube） ===== */
+function buildParas(){
+  var host=document.getElementById('paras'); host.innerHTML='';
+  for(var i=1;i<=5;i++){
+    var sec=document.createElement('div'); sec.className='para';
+
+    var lab=document.createElement('label'); lab.textContent='§'+i+' TEXT';
+    sec.appendChild(lab);
+    var ta=document.createElement('textarea'); ta.id='para'+i+'_text';
+    sec.appendChild(ta);
+
+    var ylab=document.createElement('label'); ylab.textContent='§'+i+' YouTube';
+    sec.appendChild(ylab);
+    var yt=document.createElement('input'); yt.type='text'; yt.id='youtube'+i; yt.placeholder='https://youtu.be/xxxx';
+    sec.appendChild(yt);
+
+    var ilab=document.createElement('label'); ilab.textContent='§'+i+' IMAGES (URL only)';
+    sec.appendChild(ilab);
+
+    var grid=document.createElement('div'); grid.className='thumbs';
+    for(var j=1;j<=3;j++){
+      var inp=document.createElement('input');
+      inp.type='text';
+      inp.id='p'+i+'_img'+j+'_url';
+      inp.placeholder='https://drive.google.com/... or https://example.com/...';
+      grid.appendChild(inp);
+    }
+    sec.appendChild(grid);
+
+    host.appendChild(sec);
+  }
+}
+buildParas();
+
+/* ===== 状態 ===== */
+var row = qs('row');
+var slug = qs('slug');
+var targetArg = row ? {rowIndex:Number(row)||0} : (slug ? {slug:String(slug)} : null);
+
+function setTargetInfo(){
+  var t = targetArg ? (targetArg.rowIndex?('row='+targetArg.rowIndex):('slug='+targetArg.slug)) : '(no target)';
+  document.getElementById('targetInfo').value = t;
+}
+setTargetInfo();
+
+function viewUrl(){
+  if(!targetArg) return '#';
+  var q = targetArg.rowIndex ? ('row='+encodeURIComponent(String(targetArg.rowIndex))) : ('slug='+encodeURIComponent(String(targetArg.slug)));
+  return './features_browse.html?'+q;
+}
+document.getElementById('btn-view').href = viewUrl();
+
+/* ===== 読み込み ===== */
+async function loadFeature(){
+  try{
+    if(!targetArg) return showErr('row または slug が必要です（URLに ?row= または ?slug= を付けてください）');
+    showOk(curLang==='ja'?'読み込み中…':'Loading…');
+    const res = await apiGetFeature(targetArg);
+    if(!res || !res.ok || !res.data) return showErr(curLang==='ja'?'対象が見つかりません':'Not found');
+
+    var d=res.data;
+
+    // 画面へ反映
+    document.getElementById('title').value = d.title||'';
+    document.getElementById('author').value = d.author||'';
+    document.getElementById('status').value = (d.status||'published');
+
+    document.getElementById('genre').value = d.genre||'';
+    document.getElementById('genre_other').value = d.genre_other||'';
+    document.getElementById('era').value = d.era||'';
+    document.getElementById('region').value = d.region||'';
+
+    for(var i=1;i<=5;i++){
+      document.getElementById('para'+i+'_text').value = d['para'+i+'_text']||'';
+      document.getElementById('youtube'+i).value = d['youtube'+i]||'';
+      for(var j=1;j<=3;j++){
+        document.getElementById('p'+i+'_img'+j+'_url').value = d['p'+i+'_img'+j+'_url']||'';
+      }
+    }
+
+    document.getElementById('idhint').textContent =
+      d.slug ? ('slug: '+d.slug+' / row: '+(res.rowIndex||'')) : ('row: '+(res.rowIndex||''));
+
+    showOk(curLang==='ja'?'読み込み完了':'Loaded');
+  }catch(e){
+    showErr('Error: '+(e && e.message ? e.message : String(e)));
+  }
+}
+
+document.getElementById('btn-load').onclick = loadFeature;
+
+/* ===== 更新 ===== */
+async function doUpdate(){
+  try{
+    var ek=(document.getElementById('edit_key').value||'').trim();
+    if(!/^[A-Za-z0-9]{8,32}$/.test(ek)) return showErr(curLang==='ja'?'EDIT KEY が不正です':'Invalid edit key');
+    if(!targetArg) return showErr(curLang==='ja'?'対象がありません':'No target');
+
+    var patch = {
+      status: (document.getElementById('status').value||'published'),
+      title: (document.getElementById('title').value||'').trim(),
+      author: (document.getElementById('author').value||'').trim(),
+      genre: (document.getElementById('genre').value||'').trim(),
+      genre_other: (document.getElementById('genre_other').value||'').trim(),
+      era: (document.getElementById('era').value||'').trim(),
+      region: (document.getElementById('region').value||'').trim()
+    };
+
+    for(var i=1;i<=5;i++){
+      patch['para'+i+'_text'] = (document.getElementById('para'+i+'_text').value||'').trim();
+      patch['youtube'+i] = ytNorm(document.getElementById('youtube'+i).value||'');
+      for(var j=1;j<=3;j++){
+        patch['p'+i+'_img'+j+'_url'] = normalizeHttps(document.getElementById('p'+i+'_img'+j+'_url').value||'').trim();
+      }
+    }
+
+    showOk(curLang==='ja'?'更新中…':'Updating…');
+
+    // rowIndex が必要なので、slug指定の時は一度取得してrowを確定
+    var rowIndex = targetArg.rowIndex || 0;
+    if(!rowIndex && targetArg.slug){
+      const got = await apiGetFeature({slug:targetArg.slug});
+      if(!got || !got.ok || !got.data || !got.rowIndex) return showErr(curLang==='ja'?'対象が見つかりません':'Not found');
+      rowIndex = Number(got.rowIndex)||0;
+    }
+    if(!(rowIndex>=2)) return showErr(curLang==='ja'?'rowIndex が不正です':'Invalid rowIndex');
+
+    const res = await apiEditEntry({
+      sheetName:'Features',
+      rowIndex: rowIndex,
+      edit_key: ek,
+      action:'update',
+      patch: patch
+    });
+
+    if(res && res.ok){
+      showOk(curLang==='ja'?'更新しました':'Updated');
+      return;
+    }
+    var msg = (res && res.error) ? String(res.error) : 'server error';
+    if(/edit_key mismatch/i.test(msg)) msg = (curLang==='ja'?'EDIT KEY が違います':'Edit key mismatch');
+    showErr(msg);
+  }catch(e){
+    showErr('Error: '+(e && e.message ? e.message : String(e)));
+  }
+}
+
+document.getElementById('btn-update').onclick = doUpdate;
+
+/* ===== 削除（is_hidden=true） ===== */
+async function doDelete(){
+  try{
+    var ek=(document.getElementById('edit_key').value||'').trim();
+    if(!/^[A-Za-z0-9]{8,32}$/.test(ek)) return showErr(curLang==='ja'?'EDIT KEY が不正です':'Invalid edit key');
+    if(!targetArg) return showErr(curLang==='ja'?'対象がありません':'No target');
+
+    var ok = confirm(curLang==='ja'
+      ? '本当に削除しますか？（実体は is_hidden=true の非公開化です）'
+      : 'Delete this feature? (It will be hidden via is_hidden=true)');
+    if(!ok) return;
+
+    showOk(curLang==='ja'?'削除中…':'Deleting…');
+
+    var rowIndex = targetArg.rowIndex || 0;
+    if(!rowIndex && targetArg.slug){
+      const got = await apiGetFeature({slug:targetArg.slug});
+      if(!got || !got.ok || !got.data || !got.rowIndex) return showErr(curLang==='ja'?'対象が見つかりません':'Not found');
+      rowIndex = Number(got.rowIndex)||0;
+    }
+    if(!(rowIndex>=2)) return showErr(curLang==='ja'?'rowIndex が不正です':'Invalid rowIndex');
+
+    const res = await apiEditEntry({
+      sheetName:'Features',
+      rowIndex: rowIndex,
+      edit_key: ek,
+      action:'delete'
+    });
+
+    if(res && res.ok){
+      showOk(curLang==='ja'?'削除しました（非公開化）':'Deleted (hidden)');
+      return;
+    }
+    var msg = (res && res.error) ? String(res.error) : 'server error';
+    if(/edit_key mismatch/i.test(msg)) msg = (curLang==='ja'?'EDIT KEY が違います':'Edit key mismatch');
+    showErr(msg);
+  }catch(e){
+    showErr('Error: '+(e && e.message ? e.message : String(e)));
+  }
+}
+
+document.getElementById('btn-delete').onclick = doDelete;
+
+/* 初回：自動ロード */
+loadFeature();
+</script>
+</body>
+</html>

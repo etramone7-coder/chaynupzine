@@ -426,20 +426,12 @@ async function callSubmitFeature(payload, onOK, onNG){
     try{ var s=String(u||'').trim(); if(!/^https:\/\//i.test(s)) return false; return !SHORTENERS_RE.test(s); }
     catch(_){ return false; }
   }
-  function isAllowedImageUrl(u){
+    function isAllowedImageUrl(u){
+    // Code.gs の _isAllowedHttpUrl と整合：https で短縮URLでなければ許可
     if(!u) return true;
-    if(!isAllowedHttpUrl(u)) return false;
-    try{
-      var host = new URL(u).host.toLowerCase();
-      var okHosts = [
-        'drive.google.com','lh3.googleusercontent.com','images.unsplash.com',
-        'i.imgur.com','imgur.com','githubusercontent.com','raw.githubusercontent.com',
-        'upload.wikimedia.org','static.wikia.nocookie.net'
-      ];
-      if(okHosts.some(h=> host===h || host.endsWith('.'+h))) return true;
-      return /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(u);
-    }catch(_){ return false; }
+    return isAllowedHttpUrl(u);
   }
+
   function normalizeDriveUrl(url){
     try{
       if(!url) return '';

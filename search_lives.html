@@ -99,9 +99,6 @@
     status:{scheduled:"開催予定",canceled:"中止",done:"終了"}
   };
 
-  /* =========================
-     GENRE：submit と一致（Glam追加）
-     ========================= */
   var GENRES = [
     {code:"Punk",label:"Punk"},{code:"Hardcore",label:"Hardcore"},{code:"PowerPop",label:"PowerPop"},
     {code:"Indie",label:"Indie"},{code:"Garage",label:"Garage"},{code:"Mods",label:"Mods"},
@@ -111,9 +108,6 @@
     {code:"Glam",label:"Glam"}
   ];
 
-  /* =========================
-     Region/Pref：保存値は日本語
-     ========================= */
   var REGION_MAP_JA = {
     '北海道・東北':['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県'],
     '関東':['茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県'],
@@ -287,16 +281,85 @@
     return (TEXTS.status && TEXTS.status[v]) ? TEXTS.status[v] : v;
   }
 
-  function formatDateTime(str){
+  /* ========= 安定化：日付と時刻を分離整形 ========= */
+
+  // date: "2025-09-27", "2025/09/27", Date文字列などを  YYYY/MM/DD へ
+  function formatDateOnly(v){
     try{
-      if(!str) return '';
-      const d = new Date(str);
-      if(isNaN(d)) return str;
-      const pad = n => String(n).padStart(2,'0');
-      return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
-        + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-    }catch(e){
-      return str;
+      if(!v) return '';
+      if(v instanceof Date && !isNaN(v.getTime())){
+        return v.getFullYear()+'/'+String(v.getMonth()+1).padStart(2,'0')+'/'+String(v.getDate()).padStart(2,'0');
+      }
+      var s = String(v).trim();
+      if(!s) return '';
+
+      // "20250927" -> "2025/09/27"
+      var m0 = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+      if(m0) return m0[1]+'/'+m0[2]+'/'+m0[3];
+
+      // まず数字を揃える
+      s = s.replace(/[.\-]/g,'/');
+
+      // "YYYY/MM/DD ..." から先頭日付だけ拾う
+      var m1 = s.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+      if(m1){
+        return m1[1]+'/'+String(m1[2]).padStart(2,'0')+'/'+String(m1[3]).padStart(2,'0');
+      }
+
+      // どうしてもDateにできるなら
+      var d = new Date(s);
+      if(!isNaN(d.getTime())){
+        return d.getFullYear()+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getDate()).padStart(2,'0');
+      }
+
+      return String(v);
+    }catch(_){
+      return String(v||'');
+    }
+  }
+
+  // time: "18:30", "1830", "18時30分", "18.30" を HH:MM に
+  function formatTimeOnly(v){
+    try{
+      if(v==null) return '';
+      var s = String(v).trim();
+      if(!s) return '';
+
+      // すでに Date 型が来た場合は時刻だけ抜く（念のため）
+      if(v instanceof Date && !isNaN(v.getTime())){
+        return String(v.getHours()).padStart(2,'0')+':'+String(v.getMinutes()).padStart(2,'0');
+      }
+
+      // "HH:MM" 形式
+      var m1 = s.match(/(\d{1,2})\s*[:：]\s*(\d{2})/);
+      if(m1){
+        return String(m1[1]).padStart(2,'0')+':'+m1[2];
+      }
+
+      // "18時30分" "18時" "18時30" 等
+      s = s.replace(/[．。]/g,':').replace(/[時]/g,':').replace(/[分]/g,'');
+      var m2 = s.match(/(\d{1,2})\s*:\s*(\d{2})/);
+      if(m2){
+        return String(m2[1]).padStart(2,'0')+':'+m2[2];
+      }
+
+      // "1830" or "930"
+      var m3 = s.replace(/[^\d]/g,'');
+      if(/^\d{3,4}$/.test(m3)){
+        m3 = ('0000'+m3).slice(-4);
+        return m3.slice(0,2)+':'+m3.slice(2,4);
+      }
+
+      // "18" だけ
+      var m4 = s.match(/^(\d{1,2})$/);
+      if(m4){
+        return String(m4[1]).padStart(2,'0')+':00';
+      }
+
+      // 最後の手段：そのまま
+      return String(v);
+    }catch(_){
+      return String(v||'');
     }
   }
 
@@ -322,7 +385,7 @@
         location.href = 'lives_browse.html?row=' + row;
       };
 
-      // ステータス + 地域/県（日本語のまま）
+      // ステータス + 地域/県
       var regionLabel = it.region || '';
       var prefLabel   = it.prefecture || '';
 
@@ -332,30 +395,38 @@
         + (prefLabel ? ' / ' + prefLabel : '');
       box.appendChild(st);
 
-      // タイトル（日本語のみ）
+      // タイトル
       var ttl = document.createElement('div');
       ttl.style.fontWeight='700';
       ttl.style.fontSize='18px';
       ttl.textContent = it.title || '';
       box.appendChild(ttl);
 
-      // バンド（artist）
+      // バンド
       var bands = document.createElement('div');
       bands.textContent = it.artist || '';
       box.appendChild(bands);
 
-      // メタ
+      // メタ（ここを安定化）
       var meta = document.createElement('div');
       meta.style.opacity = '.85';
       var parts=[];
-      if(it.date) parts.push(formatDateTime(it.date));
-      if(it.open_time) parts.push('OPEN ' + formatDateTime(it.open_time));
-      if(it.start_time) parts.push('START ' + formatDateTime(it.start_time));
+
+      var d = formatDateOnly(it.date);
+      if(d) parts.push(d);
+
+      var ot = formatTimeOnly(it.open_time);
+      if(ot) parts.push('OPEN ' + ot);
+
+      var stt = formatTimeOnly(it.start_time);
+      if(stt) parts.push('START ' + stt);
+
       if(it.venue) parts.push('@ ' + it.venue);
+
       meta.textContent = parts.join('  ');
       box.appendChild(meta);
 
-      // 説明（日本語のみ）
+      // 説明
       if(it.description){
         var de = document.createElement('div');
         de.style.marginTop = '6px';

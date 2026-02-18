@@ -175,25 +175,6 @@
     }
   };
 
-  /* 翻訳（EN表示で *_en が無い時の補助） */
-  const enCache = new Map();
-  async function ja2en(text){
-    const key = (text||'').trim();
-    if(!key) return '';
-    if(enCache.has(key)) return enCache.get(key);
-    try{
-      const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=en&dt=t&q='+encodeURIComponent(key);
-      const r = await fetch(url,{cache:'no-store'});
-      const data = await r.json();
-      const out = (data && data[0]) ? data[0].map(x=>x[0]).join('') : key;
-      enCache.set(key,out);
-      return out;
-    }catch(_){
-      enCache.set(key,key);
-      return key;
-    }
-  }
-
   function setLangUI(){
     var t = I18N[lang], L = t.labels;
 
@@ -370,7 +351,7 @@
   }
 
   /* === 1件描画（編集UI付き） === */
-  async function renderLive(it){
+  function renderLive(it){
     var root=document.getElementById('results'); root.innerHTML='';
     if(!it){
       root.appendChild(el('div',{className:'small',textContent:I18N[lang].labels.nodata}));
@@ -410,24 +391,16 @@
     var row1=el('div',{className:'row'});
     var st=el('span',{className:'badge st',textContent:'［'+toStatus(it.status)+'］'});
 
-    /* region/pref：ENでも*_enが無ければ表示翻訳 */
     var regionLabel = (lang==='en') ? (it.region_en || it.region || '') : (it.region || it.region_en || '');
     var prefLabel   = (lang==='en') ? (it.prefecture_en || it.prefecture || '') : (it.prefecture || it.prefecture_en || '');
-
-    if(lang==='en'){
-      if(!it.region_en && regionLabel) regionLabel = await ja2en(regionLabel);
-      if(!it.prefecture_en && prefLabel) prefLabel = await ja2en(prefLabel);
-    }
-
     var rp=el('span',{className:'badge',textContent:[regionLabel,prefLabel].filter(Boolean).join(' / ')});
+
     row1.appendChild(st); if(rp.textContent) row1.appendChild(rp);
     pad.appendChild(row1);
 
     pad.appendChild(el('div',{className:'artist',textContent:it.artist||'—'}));
 
-    var showTitle = (lang==='en')
-      ? (it.title_en || (it.title ? await ja2en(it.title) : ''))
-      : (it.title || '');
+    var showTitle = (lang==='en') ? (it.title_en || it.title || '') : (it.title || '');
     if(showTitle){ pad.appendChild(el('div',{className:'titleLive',textContent:showTitle})); }
 
     var metaParts=[];
@@ -436,17 +409,13 @@
     if(it.start_time){ var stt=formatTime(it.start_time); if(stt) metaParts.push('START '+stt); }
 
     var venueLabel = (lang==='en') ? (it.venue_en || it.venue || '') : (it.venue || it.venue_en || '');
-    if(lang==='en' && !it.venue_en && venueLabel) venueLabel = await ja2en(venueLabel);
-
     if(venueLabel) metaParts.push('@ '+venueLabel);
     if(metaParts.length){ pad.appendChild(el('div',{className:'meta',textContent:metaParts.join('  ')})); }
 
     var showPrice = (lang==='en') ? (it.price_en || it.price || '') : (it.price || it.price_en || '');
     if(showPrice){ pad.appendChild(el('div',{className:'price',textContent:showPrice})); }
 
-    var showDesc = (lang==='en')
-      ? (it.description_en || (it.description ? await ja2en(it.description) : ''))
-      : (it.description || '');
+    var showDesc = (lang==='en') ? (it.description_en || it.description || '') : (it.description || '');
     if(showDesc){ pad.appendChild(el('div',{className:'desc',textContent:showDesc})); }
 
     /* 編集フィールド */
@@ -468,7 +437,9 @@
       return wrap;
     }
 
-    ['title','title_en','venue','region','prefecture','price','description','description_en','status','date','open_time','start_time','youtube_url','image_url','artist','genre','author'].forEach(function(f){
+    ['title','title_en','venue','venue_en','region','region_en','prefecture','prefecture_en','price','price_en',
+     'description','description_en','status','date','open_time','start_time','youtube_url','image_url','artist','genre','author'
+    ].forEach(function(f){
       editBox.appendChild(makeInput(f.toUpperCase(), f));
     });
 
@@ -557,7 +528,7 @@
       document.getElementById('editMsg').textContent = I18N[lang].labels.saved;
 
       var fetched = await hydrateFromNetwork(rowIndex);
-      if(fetched){ current = fetched; await renderLive(current); }
+      if(fetched){ current = fetched; renderLive(current); }
     }catch(e){
       document.getElementById('editMsg').textContent = I18N[lang].labels.fail;
     }
@@ -619,7 +590,7 @@
       current = getSelectedFromSession();
     }
 
-    await renderLive(current);
+    renderLive(current);
   })();
 
 })();

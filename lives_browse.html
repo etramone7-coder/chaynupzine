@@ -18,9 +18,6 @@
   .titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 12px}
   .brand{background:#111;color:#fff;border-radius:8px;padding:7px 12px;font-weight:800;letter-spacing:.4px}
   .title{font-weight:800;letter-spacing:.3px;color:#fff;font-size:22px;margin:0}
-  .lang{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-  .lang button{border:1px solid #3a4254;background:#0e121a;color:#e7e9ee;padding:6px 10px;border-radius:10px;font-size:13px;cursor:pointer}
-  .lang button.active{background:#e7e9ee;color:#0e121a;border-color:#e7e9ee}
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 0}
   .btnA{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;font-size:16px}
   .btnA.ghost{background:#0e121a;color:#fff;border:1px solid var(--line)}
@@ -66,10 +63,6 @@
       <div class="brand">CHAYNUPZINE</div>
       <h1 id="pageTitle" class="title">Lives browse</h1>
     </div>
-    <div class="lang">
-      <button id="lang-ja" type="button">JP</button>
-      <button id="lang-en" type="button">EN</button>
-    </div>
   </div>
 
   <div class="actions">
@@ -79,7 +72,7 @@
 
   <div class="panel" style="margin-top:12px">
     <div id="chips" class="filters"></div>
-    <div class="small" id="summary"></div>
+    <div class="small" id="summary">条件に合致するライブを表示します。</div>
 
     <div class="toolbar">
       <span class="small" id="tool-cap">投稿を編集/削除</span>
@@ -112,120 +105,22 @@
     }
   }
 
-  /* lang: ?lang= → chay_lang → cz_lang → ja */
-  function resolveLang(){
-    try{
-      var q = (qs('lang')||'').toLowerCase();
-      if(q==='ja' || q==='en') return q;
-      var saved = (localStorage.getItem('chay_lang') || localStorage.getItem('cz_lang') || 'ja').trim().toLowerCase();
-      return (saved==='en') ? 'en' : 'ja';
-    }catch(_){
-      return 'ja';
-    }
-  }
-
-  var lang = resolveLang();
-
   var I18N = {
-    ja:{
-      subtitle:'Lives browse',
-      labels:{
-        top:'トップへ戻る',
-        toForm:'ライブ投稿フォームへ',
-        editCap:'投稿を編集/削除',
-        more:'もっと見る',
-        offi:'公式/イベントページ',
-        report:'通報',
-        edit:'編集',
-        hide:'非表示',
-        unhide:'再表示',
-        keyPh:'編集キー',
-        needKey:'編集キーを入力してください',
-        cond:'条件に合致するライブを表示します。',
-        nodata:'データを取得できませんでした。検索ページからもう一度お試しください。',
-        ok:'完了しました',
-        fail:'失敗しました',
-        saved:'保存しました',
-        by:'投稿者：'
-      },
-      status:{ scheduled:'開催予定', canceled:'中止', done:'終了' }
+    labels:{
+      needKey:'編集キーを入力してください',
+      nodata:'データを取得できませんでした。検索ページからもう一度お試しください。',
+      ok:'完了しました',
+      fail:'失敗しました',
+      saved:'保存しました'
     },
-    en:{
-      subtitle:'Lives browse',
-      labels:{
-        top:'Back to Top',
-        toForm:'Go to Live Post Form',
-        editCap:'Edit/Delete a Post',
-        more:'Load more',
-        offi:'Official/Event page',
-        report:'Report',
-        edit:'Edit',
-        hide:'Hide',
-        unhide:'Unhide',
-        keyPh:'Edit key',
-        needKey:'Please enter your edit key',
-        cond:'Showing lives matching your filters.',
-        nodata:'No data to show. Please open from the search page again.',
-        ok:'Done',
-        fail:'Failed',
-        saved:'Saved',
-        by:'by '
-      },
-      status:{ scheduled:'Scheduled', canceled:'Canceled', done:'Finished' }
-    }
-  };
-
-  function setLangUI(){
-    var t = I18N[lang], L = t.labels;
-
-    var ttl = document.getElementById('pageTitle'); if (ttl) ttl.textContent = t.subtitle;
-    var bTop  = document.getElementById('btn-top');   if (bTop)  bTop.textContent  = L.top;
-    var bForm = document.getElementById('btn-form');  if (bForm) bForm.textContent = L.toForm;
-    var cap   = document.getElementById('tool-cap');  if (cap)   cap.textContent   = L.editCap;
-    var more  = document.getElementById('moreBtn');   if (more)  more.textContent  = L.more;
-    var sum   = document.getElementById('summary');   if (sum)   sum.textContent   = L.cond;
-    var ed    = document.getElementById('btnEdit');   if (ed)    ed.textContent    = L.edit;
-    var hid   = document.getElementById('btnHide');   if (hid)   hid.textContent   = L.hide;
-    var unh   = document.getElementById('btnUnhide'); if (unh)   unh.textContent   = L.unhide;
-    var ek    = document.getElementById('editKey');   if (ek)    ek.placeholder    = L.keyPh;
-
-    var jpBtn = document.getElementById('lang-ja');
-    var enBtn = document.getElementById('lang-en');
-    if (jpBtn) jpBtn.classList.toggle('active', lang==='ja');
-    if (enBtn) enBtn.classList.toggle('active', lang==='en');
-
-    document.documentElement.lang = (lang==='en'?'en':'ja');
-
-    /* 画面間の統一：必ず保存 */
-    try{ localStorage.setItem('chay_lang', lang); }catch(_){}
-
-    /* 次ページへも lang を維持（リンクに付与） */
-    try{
-      var topUrl  = new URL(document.getElementById('btn-top').href, location.href);
-      var formUrl = new URL(document.getElementById('btn-form').href, location.href);
-      topUrl.searchParams.set('lang', lang);
-      formUrl.searchParams.set('lang', lang);
-      document.getElementById('btn-top').href  = topUrl.toString();
-      document.getElementById('btn-form').href = formUrl.toString();
-    }catch(_){}
-  }
-
-  document.getElementById('lang-ja').onclick = function(){
-    lang = 'ja';
-    setLangUI();
-    if (typeof renderLive==='function') renderLive(current);
-  };
-  document.getElementById('lang-en').onclick = function(){
-    lang = 'en';
-    setLangUI();
-    if (typeof renderLive==='function') renderLive(current);
+    status:{ scheduled:'開催予定', canceled:'中止', done:'終了' }
   };
 
   function el(tag,attrs){var e=document.createElement(tag);if(attrs)Object.assign(e,attrs);return e;}
 
   function toStatus(v){
     var key = (String(v||'scheduled')).toLowerCase();
-    var st = I18N[lang].status;
+    var st = I18N.status;
     return st[key] || st.scheduled;
   }
 
@@ -350,24 +245,21 @@
     }catch(_){ return String(s||''); }
   }
 
-  /* === 1件描画（編集UI付き） === */
+  /* === 1件描画（日本語固定） === */
   function renderLive(it){
     var root=document.getElementById('results'); root.innerHTML='';
     if(!it){
-      root.appendChild(el('div',{className:'small',textContent:I18N[lang].labels.nodata}));
+      root.appendChild(el('div',{className:'small',textContent:I18N.labels.nodata}));
       return;
     }
 
     it.image_url      = it.image_url      || pick(it,['image','cover','img']);
     it.description    = it.description    || pick(it,['desc','body','text']);
-    it.description_en = it.description_en || pick(it,['descriptionEN','desc_en','body_en','text_en']);
     it.title          = it.title          || pick(it,['titleLive','ttl']);
-    it.title_en       = it.title_en       || pick(it,['titleEN','ttl_en']);
-
-    it.venue_en       = it.venue_en       || pick(it, ['venueEN','venueEn','Venue_EN','VenueEN']);
-    it.region_en      = it.region_en      || pick(it, ['regionEN','regionEn','Region_EN','RegionEN']);
-    it.prefecture_en  = it.prefecture_en  || pick(it, ['prefectureEN','prefectureEn','pref_en','PrefectureEN']);
-    it.price_en       = it.price_en       || pick(it, ['priceEN','priceEn','PriceEN']);
+    it.venue          = it.venue          || pick(it,['venueJa','venue_jp']);
+    it.region         = it.region         || pick(it,['regionJa','region_jp']);
+    it.prefecture     = it.prefecture     || pick(it,['prefectureJa','prefecture_jp']);
+    it.price          = it.price          || pick(it,['priceJa','price_jp']);
 
     var c=el('div',{className:'card'});
 
@@ -391,31 +283,29 @@
     var row1=el('div',{className:'row'});
     var st=el('span',{className:'badge st',textContent:'［'+toStatus(it.status)+'］'});
 
-    var regionLabel = (lang==='en') ? (it.region_en || it.region || '') : (it.region || it.region_en || '');
-    var prefLabel   = (lang==='en') ? (it.prefecture_en || it.prefecture || '') : (it.prefecture || it.prefecture_en || '');
+    var regionLabel = (it.region || it.region_en || '');
+    var prefLabel   = (it.prefecture || it.prefecture_en || '');
     var rp=el('span',{className:'badge',textContent:[regionLabel,prefLabel].filter(Boolean).join(' / ')});
-
     row1.appendChild(st); if(rp.textContent) row1.appendChild(rp);
     pad.appendChild(row1);
 
     pad.appendChild(el('div',{className:'artist',textContent:it.artist||'—'}));
 
-    var showTitle = (lang==='en') ? (it.title_en || it.title || '') : (it.title || '');
+    var showTitle = it.title || '';
     if(showTitle){ pad.appendChild(el('div',{className:'titleLive',textContent:showTitle})); }
 
     var metaParts=[];
     if(it.date) metaParts.push(formatDate(it.date));
     if(it.open_time){ var ot=formatTime(it.open_time); if(ot) metaParts.push('OPEN '+ot); }
     if(it.start_time){ var stt=formatTime(it.start_time); if(stt) metaParts.push('START '+stt); }
-
-    var venueLabel = (lang==='en') ? (it.venue_en || it.venue || '') : (it.venue || it.venue_en || '');
+    var venueLabel = (it.venue || it.venue_en || '');
     if(venueLabel) metaParts.push('@ '+venueLabel);
     if(metaParts.length){ pad.appendChild(el('div',{className:'meta',textContent:metaParts.join('  ')})); }
 
-    var showPrice = (lang==='en') ? (it.price_en || it.price || '') : (it.price || it.price_en || '');
+    var showPrice = (it.price || it.price_en || '');
     if(showPrice){ pad.appendChild(el('div',{className:'price',textContent:showPrice})); }
 
-    var showDesc = (lang==='en') ? (it.description_en || it.description || '') : (it.description || '');
+    var showDesc = it.description || it.description_en || '';
     if(showDesc){ pad.appendChild(el('div',{className:'desc',textContent:showDesc})); }
 
     /* 編集フィールド */
@@ -427,7 +317,7 @@
       input.onchange = function(){
         var ek = document.getElementById('editKey').value.trim();
         if(!ek){
-          document.getElementById('editMsg').textContent = I18N[lang].labels.needKey;
+          document.getElementById('editMsg').textContent = I18N.labels.needKey;
           return;
         }
         var patch={}; patch[key]=input.value;
@@ -437,9 +327,7 @@
       return wrap;
     }
 
-    ['title','title_en','venue','venue_en','region','region_en','prefecture','prefecture_en','price','price_en',
-     'description','description_en','status','date','open_time','start_time','youtube_url','image_url','artist','genre','author'
-    ].forEach(function(f){
+    ['title','title_en','venue','region','prefecture','price','description','description_en','status','date','open_time','start_time','youtube_url','image_url','artist','genre','author'].forEach(function(f){
       editBox.appendChild(makeInput(f.toUpperCase(), f));
     });
 
@@ -525,12 +413,12 @@
       });
       var j = await r.json();
       if(!j || !j.ok){ throw new Error(j && j.error || 'fail'); }
-      document.getElementById('editMsg').textContent = I18N[lang].labels.saved;
+      document.getElementById('editMsg').textContent = I18N.labels.saved;
 
       var fetched = await hydrateFromNetwork(rowIndex);
       if(fetched){ current = fetched; renderLive(current); }
     }catch(e){
-      document.getElementById('editMsg').textContent = I18N[lang].labels.fail;
+      document.getElementById('editMsg').textContent = I18N.labels.fail;
     }
   }
 
@@ -547,20 +435,20 @@
       });
       var j = await r.json();
       if(!j || !j.ok){ throw new Error(j && j.error || 'fail'); }
-      document.getElementById('editMsg').textContent = I18N[lang].labels.ok;
+      document.getElementById('editMsg').textContent = I18N.labels.ok;
     }catch(e){
-      document.getElementById('editMsg').textContent = I18N[lang].labels.fail;
+      document.getElementById('editMsg').textContent = I18N.labels.fail;
     }
   }
 
   /* 初期化 */
-  setLangUI();
+  document.documentElement.lang = 'ja';
   document.getElementById("moreBtn").style.display = "none";
 
   document.getElementById("btnHide").onclick=function(){
     var key=document.getElementById("editKey").value.trim();
     if(!key){
-      document.getElementById("editMsg").textContent = I18N[lang].labels.needKey;
+      document.getElementById("editMsg").textContent = I18N.labels.needKey;
       return;
     }
     var row=current && current.rowIndex; if(row) hideLive(row,true,key);
@@ -568,7 +456,7 @@
   document.getElementById("btnUnhide").onclick=function(){
     var key=document.getElementById("editKey").value.trim();
     if(!key){
-      document.getElementById("editMsg").textContent = I18N[lang].labels.needKey;
+      document.getElementById("editMsg").textContent = I18N.labels.needKey;
       return;
     }
     var row=current && current.rowIndex; if(row) hideLive(row,false,key);

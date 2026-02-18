@@ -276,7 +276,27 @@ const I18N={
     faq_html:'<b>■ Guide</b><br>• Image recommended ≤10MB / long edge ≤3000px (preview may not show if exceeded; submission allowed).<br>• You need an <b>edit key</b> to edit/delete later.<br>• NG words are not allowed (artist/title/venue are excluded; display is truncated to 20 chars).<br>• Rate limit: roughly once every 5 minutes per device.<br><br>■ FAQ</b><br>Q. How to edit/delete?<br>A. On the browse page, choose "Edit/Delete", then enter row number (or link ID) and your edit key.<br><br>Q. Image won’t show.<br>A. Check size limits and Drive sharing permission (Anyone with the link).<br><br>Q. Is YouTube embedded?<br>A. Preview is embedded; URL is stored as a link.'
   }
 };
-let LANG = (localStorage.getItem('cz_lang') || 'ja');  /* ← 既定を常にJPに */
+
+/* ▼▼ 修正：言語キー統一（chay_lang）＋フォールバック（cz_lang）＋ ?lang= 優先 ▼▼ */
+(function initLang(){
+  try{
+    var q = new URLSearchParams(location.search);
+    var qlang = (q.get('lang')||'').trim().toLowerCase();
+    if(qlang==='ja' || qlang==='en'){
+      localStorage.setItem('chay_lang', qlang);
+      LANG = qlang;
+      return;
+    }
+    var saved = (localStorage.getItem('chay_lang') || localStorage.getItem('cz_lang') || 'ja').trim().toLowerCase();
+    if(saved!=='ja' && saved!=='en') saved='ja';
+    LANG = saved;
+  }catch(_){
+    LANG = 'ja';
+  }
+})();
+let LANG = (typeof LANG!=='undefined' ? LANG : 'ja');
+/* ▲▲ ここまで ▲▲ */
+
 function applyI18n(){
   const t=I18N[LANG]||I18N.ja;
   document.documentElement.lang = (LANG==='en'?'en':'ja');
@@ -324,11 +344,24 @@ function applyI18n(){
   document.getElementById('btnJP').classList.toggle('active', LANG==='ja');
   document.getElementById('btnEN').classList.toggle('active', LANG==='en');
 }
-document.getElementById('btnJP').onclick=()=>{ LANG='ja'; localStorage.setItem('cz_lang',LANG); applyI18n(); };
-document.getElementById('btnEN').onclick=()=>{ LANG='en'; localStorage.setItem('cz_lang',LANG); applyI18n(); };
+
+/* ▼▼ 修正：保存キーを chay_lang に統一（ただし旧 cz_lang も残っている場合に備える） ▼▼ */
+document.getElementById('btnJP').onclick=()=>{
+  LANG='ja';
+  try{ localStorage.setItem('chay_lang',LANG); }catch(_){}
+  applyI18n();
+};
+document.getElementById('btnEN').onclick=()=>{
+  LANG='en';
+  try{ localStorage.setItem('chay_lang',LANG); }catch(_){}
+  applyI18n();
+};
+/* ▲▲ ここまで ▲▲ */
+
 applyI18n();
 /* ▲▲ i18n ここまで ▲▲ */
 </script>
+
 <script>
 /* 背景は既に固定レイヤに設定済み（CSS/HTMLは無変更） */
 
@@ -444,14 +477,14 @@ applyI18n();
     try{
       var data=await fileToDataURL(file);
       var img=new Image();
-      await new Promise((res,rej)=>{ 
+      await new Promise((res,rej)=>{
         img.onload=function(){ res(); };
         img.onerror=function(){ rej(new Error('画像の読み込みに失敗しました')); };
         img.src=data;
       });
       return {ok:true,dataUrl:data};
-    }catch(e){ 
-      return {ok:false,reason:String(e.message||e)}; 
+    }catch(e){
+      return {ok:false,reason:String(e.message||e)};
     }
   }
   async function showFilePreview(file){

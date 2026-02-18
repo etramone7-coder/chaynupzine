@@ -86,6 +86,7 @@
     </details>
 
     <p class="sub" id="subtitle">ジャンル / 地方・県 / 月 / バンド頭文字 で絞り込みできます（複数可）。</p>
+
     <!-- フィルタ -->
     <div class="row"><div class="chips" id="chips-genre"></div><div class="sel" id="sel-genre"></div></div>
     <div class="row"><div class="chips" id="chips-region"></div><div class="sel" id="sel-region"></div></div>
@@ -105,52 +106,100 @@
     <div class="sel" id="foot-sel"></div>
   </div>
 </div>
+
 <script>
 (function(){
-  // ▼ ここだけ変更（保存は chay_lang、旧 cz_lang は読み取りフォールバック）
-  var lang ='ja';
+  /* =========================
+     言語：?lang= 優先 → chay_lang → cz_lang → ja
+     ========================= */
+  function resolveLang(){
+    try{
+      var q = new URLSearchParams(location.search);
+      var qlang = (q.get('lang')||'').trim().toLowerCase();
+      if(qlang==='ja' || qlang==='en') return qlang;
+      var saved = (localStorage.getItem('chay_lang') || localStorage.getItem('cz_lang') || 'ja').trim().toLowerCase();
+      return (saved==='en') ? 'en' : 'ja';
+    }catch(_){
+      return 'ja';
+    }
+  }
+
+  var lang = resolveLang();
 
   var TEXTS = {
-    ja:{titleSub:"Lives — search & listing",subtitle:"ジャンル / 地方・県 / 月 / バンド頭文字 で絞り込みできます（複数可）。",genre:"ジャンル",region:"地方",pref:"県",month:"月",initial:"バンド頭文字",reset:"条件リセット",search:"検索",none:"指定なし",reading:"読み込み中…",nohit:"該当データがありません。条件を変えて試してください。",fail:"読み込みに失敗しました。",backTop:"トップへ戻る",toForm:"ライブ投稿フォームへ",offi:"公式/イベントページ",status:{scheduled:"開催予定",canceled:"中止",done:"終了"}},
-    en:{titleSub:"Lives — search & listing",subtitle:"Filter by Genre / Region-Prefecture / Month / Band Initial (multiple selections allowed).",genre:"Genre",region:"Region",pref:"Prefecture",month:"Month",initial:"Band Initial",reset:"Reset",search:"Search",none:"None",reading:"Loading…",nohit:"No results. Please try different filters.",fail:"Failed to load.",backTop:"Back to Top",toForm:"Go to Live Post Form",offi:"Official/Event page",status:{scheduled:"Scheduled",canceled:"Canceled",done:"Done"}}
+    ja:{titleSub:"Lives — search & listing",subtitle:"ジャンル / 地方・県 / 月 / バンド頭文字 で絞り込みできます（複数可）。",genre:"ジャンル",region:"地方",pref:"県",month:"月",initial:"バンド頭文字",reset:"条件リセット",search:"検索",none:"指定なし",reading:"読み込み中…",nohit:"該当データがありません。条件を変えて試してください。",fail:"読み込みに失敗しました。",backTop:"トップへ戻る",toForm:"ライブ投稿フォームへ",status:{scheduled:"開催予定",canceled:"中止",done:"終了"}},
+    en:{titleSub:"Lives — search & listing",subtitle:"Filter by Genre / Region-Prefecture / Month / Band Initial (multiple selections allowed).",genre:"Genre",region:"Region",pref:"Prefecture",month:"Month",initial:"Band Initial",reset:"Reset",search:"Search",none:"None",reading:"Loading…",nohit:"No results. Please try different filters.",fail:"Failed to load.",backTop:"Back to Top",toForm:"Go to Live Post Form",status:{scheduled:"Scheduled",canceled:"Canceled",done:"Done"}}
   };
+
+  /* =========================
+     GENRE：submit と一致（Glam追加）
+     ========================= */
   var GENRES = [
     {code:"Punk",label:"Punk"},{code:"Hardcore",label:"Hardcore"},{code:"PowerPop",label:"PowerPop"},
     {code:"Indie",label:"Indie"},{code:"Garage",label:"Garage"},{code:"Mods",label:"Mods"},
     {code:"NeoMods",label:"NeoMods"},{code:"Metal",label:"Metal"},{code:"HardRock",label:"HardRock"},
     {code:"Reggae",label:"Reggae"},{code:"Rock",label:"Rock"},{code:"Pop",label:"Pop"},
-    {code:"Melodicore",label:"Melodicore"},{code:"Rockabilly",label:"Rockabilly"},{code:"Other",label:"Other"}
+    {code:"Melodicore",label:"Melodicore"},{code:"Rockabilly",label:"Rockabilly"},{code:"Other",label:"Other"},
+    {code:"Glam",label:"Glam"}
   ];
 
-  var REGION_MAP = {
-    ja:{
-      '北海道・東北':['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県'],
-      '関東':['茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県'],
-      '中部':['新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県'],
-      '近畿':['三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県'],
-      '中国':['鳥取県','島根県','岡山県','広島県','山口県'],
-      '四国':['徳島県','香川県','愛媛県','高知県'],
-      '九州・沖縄':['福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県']
-    },
-    en:{
-      'Hokkaido/Tohoku':['Hokkaido','Aomori','Iwate','Miyagi','Akita','Yamagata','Fukushima'],
-      'Kanto':['Ibaraki','Tochigi','Gunma','Saitama','Chiba','Tokyo','Kanagawa'],
-      'Chubu':['Niigata','Toyama','Ishikawa','Fukui','Yamanashi','Nagano','Gifu','Shizuoka','Aichi'],
-      'Kinki':['Mie','Shiga','Kyoto','Osaka','Hyogo','Nara','Wakayama'],
-      'Chugoku':['Tottori','Shimane','Okayama','Hiroshima','Yamaguchi'],
-      'Shikoku':['Tokushima','Kagawa','Ehime','Kochi'],
-      'Kyushu/Okinawa':['Fukuoka','Saga','Nagasaki','Kumamoto','Oita','Miyazaki','Kagoshima','Okinawa']
-    }
+  /* =========================
+     Region/Pref：内部値は常に日本語（保存値と一致）
+     表示だけ EN に切替
+     ========================= */
+  var REGION_MAP_JA = {
+    '北海道・東北':['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県'],
+    '関東':['茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県'],
+    '中部':['新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県'],
+    '近畿':['三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県'],
+    '中国':['鳥取県','島根県','岡山県','広島県','山口県'],
+    '四国':['徳島県','香川県','愛媛県','高知県'],
+    '九州・沖縄':['福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県']
   };
+
+  /* 表示用の英語ラベル（固定マップ） */
+  var REGION_EN_BY_JA = {
+    '北海道・東北':'Hokkaido/Tohoku',
+    '関東':'Kanto',
+    '中部':'Chubu',
+    '近畿':'Kinki',
+    '中国':'Chugoku',
+    '四国':'Shikoku',
+    '九州・沖縄':'Kyushu/Okinawa'
+  };
+
+  var PREF_EN_BY_JA = (function(){
+    /* REGION_MAP_JA と同じ順で英語配列を並べる（このファイル内で完結） */
+    var en = {
+      '北海道・東北':['Hokkaido','Aomori','Iwate','Miyagi','Akita','Yamagata','Fukushima'],
+      '関東':['Ibaraki','Tochigi','Gunma','Saitama','Chiba','Tokyo','Kanagawa'],
+      '中部':['Niigata','Toyama','Ishikawa','Fukui','Yamanashi','Nagano','Gifu','Shizuoka','Aichi'],
+      '近畿':['Mie','Shiga','Kyoto','Osaka','Hyogo','Nara','Wakayama'],
+      '中国':['Tottori','Shimane','Okayama','Hiroshima','Yamaguchi'],
+      '四国':['Tokushima','Kagawa','Ehime','Kochi'],
+      '九州・沖縄':['Fukuoka','Saga','Nagasaki','Kumamoto','Oita','Miyazaki','Kagoshima','Okinawa']
+    };
+    var map = {};
+    Object.keys(REGION_MAP_JA).forEach(function(r){
+      var jaList = REGION_MAP_JA[r] || [];
+      var enList = en[r] || [];
+      for(var i=0;i<jaList.length;i++){
+        map[jaList[i]] = enList[i] || jaList[i];
+      }
+    });
+    return map;
+  })();
+
+  function dispRegion(r){ return (lang==='en' ? (REGION_EN_BY_JA[r] || r) : r); }
+  function dispPref(p){ return (lang==='en' ? (PREF_EN_BY_JA[p] || p) : p); }
 
   var MONTHS = Array.from({length:12}, (_,i)=> (i+1));
   var INITIALS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
 
   var state = {genre:'', region:'', prefectures:[], months:[], initial:''};
-  // ▼ 追加：直近の検索結果を保持（言語切替時に再描画）
   var gLastResults = null;
 
-  /* ✅ 翻訳関数（そのまま） */
+  /* 翻訳（カード内のみで使用） */
   const enCache = new Map();
   async function ja2en(text){
     const key = (text||'').trim();
@@ -168,6 +217,7 @@
       return key;
     }
   }
+
   (function resolveExecUrl(){
     try{
       var injected = (window.EXEC_URL||'').trim();
@@ -179,6 +229,7 @@
       window.EXEC_URL = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
     }
   })();
+
   async function callListLives(payload, onOK, onNG){
     try{
       if (window.google && google.script && google.script.run){
@@ -225,6 +276,7 @@
       onOK(await r3.json());
     }catch(err){ onNG(err); }
   }
+
   function chipEl(label, active, onClick){
     var el=document.createElement('div');
     el.className='chip'+(active?' active':'');
@@ -248,14 +300,14 @@
   function drawRegion(){
     var wrap=document.getElementById('chips-region');
     wrap.innerHTML='';
-    Object.keys(REGION_MAP[lang]).forEach(function(r){
-      wrap.appendChild(chipEl(r, state.region===r, function(){
-        state.region=(state.region===r)?'':r;
+    Object.keys(REGION_MAP_JA).forEach(function(rJA){
+      wrap.appendChild(chipEl(dispRegion(rJA), state.region===rJA, function(){
+        state.region=(state.region===rJA)?'':rJA; /* 内部値は常に日本語 */
         state.prefectures=[];
         drawRegion(); drawPref(); updateSels(); updateSearchEnabled();
       }));
     });
-    document.getElementById('sel-region').textContent=TEXTS[lang].region+': '+(state.region||TEXTS[lang].none);
+    document.getElementById('sel-region').textContent = TEXTS[lang].region+': '+(state.region ? dispRegion(state.region) : TEXTS[lang].none);
   }
 
   function drawPref(){
@@ -265,15 +317,19 @@
     wrap.innerHTML='';
     if(!state.region){ row.style.display='none'; sel.textContent=''; return; }
     row.style.display='';
-    (REGION_MAP[lang][state.region]||[]).forEach(function(p){
-      var active=state.prefectures.includes(p);
-      wrap.appendChild(chipEl(p,active,function(){
-        var i=state.prefectures.indexOf(p);
-        if(i>=0) state.prefectures.splice(i,1); else state.prefectures.push(p);
+    (REGION_MAP_JA[state.region]||[]).forEach(function(pJA){
+      var active=state.prefectures.includes(pJA);
+      wrap.appendChild(chipEl(dispPref(pJA), active, function(){
+        var i=state.prefectures.indexOf(pJA);
+        if(i>=0) state.prefectures.splice(i,1); else state.prefectures.push(pJA);
         drawPref(); updateSels(); updateSearchEnabled();
       }));
     });
-    sel.text内容=TEXTS[lang].pref+': '+(state.prefectures.length?state.prefectures.join('/'):(TEXTS[lang].none+(lang==='ja'?'（地方のみで検索可）':'')));
+    sel.textContent =
+      TEXTS[lang].pref + ': ' +
+      (state.prefectures.length
+        ? state.prefectures.map(dispPref).join('/')
+        : (TEXTS[lang].none + (lang==='ja'?'（地方のみで検索可）':'')));
   }
 
   function drawMonth(){
@@ -305,8 +361,8 @@
   function updateSels(){
     var foot='条件: '
       + TEXTS[lang].genre+':' +(state.genre||TEXTS[lang].none)+'　'
-      + TEXTS[lang].region+':' +(state.region||TEXTS[lang].none)+'　'
-      + (state.region?(TEXTS[lang].pref+':' +(state.prefectures.length?state.prefectures.join('/') : TEXTS[lang].none)+'　'):'')
+      + TEXTS[lang].region+':' +(state.region ? dispRegion(state.region) : TEXTS[lang].none)+'　'
+      + (state.region ? (TEXTS[lang].pref+':' + (state.prefectures.length ? state.prefectures.map(dispPref).join('/') : TEXTS[lang].none) + '　') : '')
       + TEXTS[lang].month+':' +(state.months.length?state.months.join('/') : TEXTS[lang].none)+'　'
       + TEXTS[lang].initial+':' +(state.initial||TEXTS[lang].none);
     document.getElementById('foot-sel').textContent=foot;
@@ -315,13 +371,16 @@
   function hasAnySelection(){ return state.genre||state.region||state.prefectures.length||state.months.length||state.initial; }
   function updateSearchEnabled(){ document.getElementById('btn-search').disabled=!hasAnySelection(); }
 
-  function toJPStatus(v){ return v==='canceled'?(lang==='ja'?'中止':'Canceled'):(v==='done'?(lang==='ja'?'終了':'Done'):(lang==='ja'?'開催予定':'Scheduled')); }
+  function toStatusLabel(v){
+    var s = (TEXTS[lang].status && TEXTS[lang].status[v]) ? TEXTS[lang].status[v] : v;
+    return s;
+  }
 
   function formatDateTime(str){
     try{
       if(!str) return '';
       const d = new Date(str);
-      if(isNaN(d)) return str; // 無効ならそのまま返す
+      if(isNaN(d)) return str;
       const pad = n => String(n).padStart(2,'0');
       return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
         + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
@@ -330,70 +389,6 @@
     }
   }
 
-  function secureHttps(u){ try{ var s=String(u||'').trim(); return s.startsWith('https://') ? s : ''; }catch(_){ return ''; } }
-
-  // （既存の個別カード生成関数：残していますが、再描画互換のため新関数を使用します）
-  async function card(it){
-    var box = document.createElement('div');
-    box.className = 'resultbox';
-    box.style.cursor = 'pointer';
-
-    // ▼ row パラメータで遷移（修正点）
-    box.onclick = function(){
-      const row = encodeURIComponent(it.rowIndex || '');
-      location.href = 'lives_browse.html?row=' + row + '&lang=' + lang;
-    };
-
-    var st = document.createElement('div');
-    st.textContent = '[' + toJPStatus(it.status, lang) + ']'
-      + (it.region ? ' ' + it.region : '')
-      + (it.prefecture ? ' / ' + it.prefecture : '');
-    box.appendChild(st);
-
-    var ttl = document.createElement('div');
-    ttl.style.fontWeight='700';
-    ttl.style.fontSize='18px';
-    // ▼ 修正：英語表示は title_en を優先、無ければ必要時のみ翻訳
-    ttl.textContent = (lang==='en')
-      ? (it.title_en || (it.title ? await ja2en(it.title) : ''))
-      : it.title;
-    box.appendChild(ttl);
-
-    var bands = document.createElement('div');
-    // ▼ 修正：bands → artist
-    bands.textContent = it.artist || '';
-    box.appendChild(bands);
-
-    var meta = document.createElement('div');
-    meta.style.opacity = '.85';
-    var parts=[];
-    if(it.date) parts.push(formatDateTime(it.date));
-    if(it.open_time) parts.push('OPEN ' + formatDateTime(it.open_time));
-    if(it.start_time) parts.push('START ' + formatDateTime(it.start_time));
-    if(it.venue) parts.push('@ ' + ((lang==='en') ? await ja2en(it.venue) : it.venue));
-    meta.textContent = parts.join('  ');
-    box.appendChild(meta);
-
-    if(it.description || it.description_en){
-      var de = document.createElement('div');
-      de.style.marginTop = '6px';
-      // ▼ 修正：英語は description_en 優先、無ければ必要時のみ翻訳
-      try{
-        if(lang === 'en'){
-          de.textContent = it.description_en || (it.description ? await ja2en(it.description) : '');
-        }else{
-          de.textContent = it.description || '';
-        }
-      }catch(e){
-        de.textContent = it.description || '';
-      }
-      box.appendChild(de);
-    }
-
-    // ▼ 修正：reference_url は廃止のためリンク生成を削除
-
-    return box;
-  }
   function showAlert(msg){
     var box=document.getElementById('result-alert');
     box.textContent=msg;
@@ -401,7 +396,6 @@
   }
   function hideAlert(){ document.getElementById('result-alert').classList.add('hidden'); }
 
-  // ▼ 追加：まとめ描画（言語切替でも再利用）
   async function renderResultCards(items){
     var res = document.getElementById('results');
     res.innerHTML = '';
@@ -412,26 +406,26 @@
       box.className = 'resultbox';
       box.style.cursor = 'pointer';
 
-      // row で遷移（修正点）
       box.onclick = function(){
         const row = encodeURIComponent(it.rowIndex || '');
         location.href = 'lives_browse.html?row=' + row + '&lang=' + lang;
       };
 
-      // ステータス + 地域/県（EN時は簡易翻訳）
+      // ステータス + 地域/県（表示だけEN化）
       var regionLabel = it.region || '';
       var prefLabel   = it.prefecture || '';
       if(lang === 'en'){
-        if(regionLabel) regionLabel = await ja2en(regionLabel);
-        if(prefLabel)   prefLabel   = await ja2en(prefLabel);
+        if(regionLabel) regionLabel = REGION_EN_BY_JA[regionLabel] || await ja2en(regionLabel);
+        if(prefLabel)   prefLabel   = PREF_EN_BY_JA[prefLabel] || await ja2en(prefLabel);
       }
+
       var st = document.createElement('div');
-      st.textContent = '[' + toJPStatus(it.status, lang) + ']'
+      st.textContent = '[' + toStatusLabel(it.status) + ']'
         + (regionLabel ? ' ' + regionLabel : '')
         + (prefLabel ? ' / ' + prefLabel : '');
       box.appendChild(st);
 
-      // タイトル（修正：enは title_en 優先）
+      // タイトル（enは title_en 優先、無ければ翻訳）
       var ttl = document.createElement('div');
       ttl.style.fontWeight='700';
       ttl.style.fontSize='18px';
@@ -440,7 +434,7 @@
         : (it.title || '');
       box.appendChild(ttl);
 
-      // バンド（修正：bands → artist。EN時は従来同様の分割翻訳を維持）
+      // バンド（artist）
       var bands = document.createElement('div');
       if(it.artist && lang==='en'){
         const parts = String(it.artist).split(/[,/、／]| ・ /).map(s=>s.trim()).filter(Boolean);
@@ -451,7 +445,7 @@
       }
       box.appendChild(bands);
 
-      // メタ（会場はEN時に翻訳）
+      // メタ
       var meta = document.createElement('div');
       meta.style.opacity = '.85';
       var parts=[];
@@ -465,7 +459,7 @@
       meta.textContent = parts.join('  ');
       box.appendChild(meta);
 
-      // 説明（修正：enは description_en 優先）
+      // 説明（enは description_en 優先）
       if(it.description || it.description_en){
         var de = document.createElement('div');
         de.style.marginTop = '6px';
@@ -478,23 +472,23 @@
         box.appendChild(de);
       }
 
-      // ▼ 修正：reference_url ブロックは削除
-
       res.appendChild(box);
     }
   }
+
   async function doSearch(){
     document.getElementById('results').innerHTML='';
     hideAlert();
     showAlert(TEXTS[lang].reading);
 
+    /* payload は保存値に合わせる（region/pref は日本語のまま送る） */
     var payload={genre:state.genre,region:state.region,prefectures:state.prefectures,months:state.months,initial:state.initial};
+
     callListLives(payload, async function(out){
       hideAlert();
       if(!out||!out.ok){ showAlert(TEXTS[lang].fail); return; }
       if(!out.items||!out.items.length){ showAlert(TEXTS[lang].nohit); return; }
 
-      // ▼ 追加：結果を保持し、言語切替でも使い回す
       gLastResults = out.items.slice();
       await renderResultCards(gLastResults);
     }, function(){
@@ -509,23 +503,28 @@
     updateSels(); updateSearchEnabled();
     document.getElementById('results').innerHTML='';
     hideAlert();
-    gLastResults = null; // キャッシュもクリア
+    gLastResults = null;
   }
 
   function setLang(newLang){
-    lang=newLang;
-    // ▼ 保存は chay_lang に統一
+    lang = (newLang==='en') ? 'en' : 'ja';
+
     try{ localStorage.setItem('chay_lang', lang); }catch(_){}
+
     document.getElementById('lang-ja').classList.toggle('active', lang==='ja');
     document.getElementById('lang-en').classList.toggle('active', lang==='en');
+
+    document.documentElement.lang = (lang==='en'?'en':'ja');
+
     document.getElementById('title-sub').textContent=TEXTS[lang].titleSub;
     document.getElementById('subtitle').textContent=TEXTS[lang].subtitle;
     document.getElementById('btn-reset').textContent=TEXTS[lang].reset;
     document.getElementById('btn-search').textContent=TEXTS[lang].search;
-    document.querySelector('a.btn-link').textContent=TEXTS[lang].backTop;
-    document.querySelectorAll('a.btn-link')[1].textContent=TEXTS[lang].toForm;
 
-    // ▼ 追加：ガイドの言語切替
+    document.getElementById('btn-top').textContent  = TEXTS[lang].backTop;
+    document.getElementById('btn-form').textContent = TEXTS[lang].toForm;
+
+    // ガイド
     try{
       var guide = document.getElementById('guide');
       if(guide){
@@ -536,8 +535,10 @@
 
     drawGenre(); drawRegion(); drawPref(); drawMonth(); drawInitial();
     updateSels(); updateSearchEnabled();
-    // ▼ 直近結果があれば、現在言語で再描画
-    if (gLastResults && Array.isArray(gLastResults)) { renderResultCards(gLastResults); }
+
+    if (gLastResults && Array.isArray(gLastResults)) {
+      renderResultCards(gLastResults);
+    }
   }
 
   // 初期化
@@ -545,6 +546,7 @@
   document.getElementById('btn-search').onclick=doSearch;
   document.getElementById('lang-ja').onclick=function(){ setLang('ja'); };
   document.getElementById('lang-en').onclick=function(){ setLang('en'); };
+
   setLang(lang);
 
 })();

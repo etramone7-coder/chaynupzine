@@ -9,37 +9,23 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN",Meiryo,system-ui,sans-serif}
 
-  /* ▼ 背景（透過0.6）— 新ファイルに変更。背景は固定、ページ全体がスクロール */
   .bg{position:fixed;inset:0;
       background:#0f1115 url("https://etramone7-coder.github.io/chaynupzine/assets/bg_submit_feauture.webp") center/cover no-repeat;
       opacity:.6;filter:contrast(1) brightness(.95);z-index:0}
-  /* ★追加：白ベールで可読性UP */
   .bg::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.55)}
 
-  /* 上部余白はロゴ分だけ確保 */
   .wrap{max-width:1200px;margin:12px auto 32px;padding:70px 14px 0;position:relative;z-index:1}
 
-  /* 左上ロゴ（隅にぴったり固定） */
   .brand{position:fixed;top:10px;left:10px;z-index:5;
          background:#111;color:#fff;border-radius:8px;padding:7px 12px;
          font-weight:800;letter-spacing:.4px;line-height:1}
 
-  /* サブタイトル（言語切替対象） */
   .sub{font-weight:800;letter-spacing:.4px;color:var(--accent);
        font-size:20px;text-shadow:0 0 18px rgba(30,144,255,.15);
        display:block;margin:6px 0 6px}
 
-  /* 右上 JP/EN（縦並び・上に密着） */
-  .lang{position:fixed;top:10px;right:10px;z-index:5;
-        display:flex;flex-direction:column;gap:4px;align-items:flex-end}
-  .lang button{border:1px solid #3a4254;background:#0e121a;color:#e7e9ee;
-               padding:6px 10px;border-radius:10px;font-size:13px;cursor:pointer;line-height:1}
-  .lang button.active{background:#e7e9ee;color:#0e121a;border-color:#e7e9ee}
-
-  /* 単一カード（フォーム＋トップボタン＋プレビューを内包） */
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
 
-  /* トップへ戻る（フォームとプレビューの間） */
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0;align-items:center;justify-content:center}
   .btnA{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;font-size:16px;text-decoration:none}
   .btnA.ghost{background:#0e121a;color:#fff;border:1px solid var(--line)}
@@ -69,7 +55,6 @@
   details{margin-top:14px}
   summary{cursor:pointer;color:#cbd5e1}
 
-  /* ▼▼ 追加：ネイティブのfileボタンは隠し、カスタムボタンを使う */
   .hiddenfile{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
   .filebtn{
     display:inline-block;padding:10px 12px;border:1px solid var(--line);
@@ -79,21 +64,13 @@
 </style>
 </head>
 <body>
-<!-- 背景 -->
 <div class="bg"></div>
 
 <div class="wrap">
-  <!-- 固定ロゴ＆サブタイトル＆言語切替 -->
   <span class="brand">CHAYNUPZINE</span>
   <span id="pageSubtitle" class="sub">特集コラム投稿</span>
-  <div class="lang">
-    <button id="lang-ja" type="button">JP</button>
-    <button id="lang-en" type="button">EN</button>
-  </div>
 
-  <!-- 単一カード：免責 + 入力 + トップへ戻る + プレビュー -->
   <div class="panel" id="oneCard">
-    <!-- 免責／注意 -->
     <div id="disclaimer" class="muted">
       本サービスは投稿内容について一切の責任を負いません。誹謗中傷・差別・違法行為の助長は禁止です。<br>
       <b>※NGワード検知を行います（タイトル/ジャンル自由入力は対象外）。該当する場合、投稿はできません。</b><br>
@@ -104,7 +81,6 @@
       <label id="agreeLabel" for="agree" style="font-size:13px;color:#cbd5e1">免責事項と禁止事項に同意します</label>
     </div>
 
-    <!-- フォーム本体 -->
     <div class="row2" style="margin-top:14px">
       <div>
         <label class="label"><b id="genreLabel">GENRE（必須）</b></label>
@@ -163,23 +139,19 @@
     <label class="label"><b id="authorLabel">AUTHOR（必須）</b></label>
     <input id="author" type="text" placeholder="投稿者名">
 
-    <!-- EDIT KEY -->
     <label class="label"><b id="editKeyLabel">EDIT KEY（編集キー・必須）</b></label>
     <input id="edit_key" type="text" placeholder="半角英数のみ。後から編集/削除に必要"
            inputmode="latin" pattern="[A-Za-z0-9]{8,32}" minlength="8" maxlength="32" required>
 
-    <!-- paragraphs -->
     <div id="paras"></div>
 
     <button id="submitBtn" class="btn">投稿</button>
     <div id="msg" class="msg"></div>
 
-    <!-- 中央：トップへ戻る -->
     <div class="actions">
       <a class="btnA ghost" id="btn-top" href="https://etramone7-coder.github.io/chaynupzine/">トップへ戻る</a>
     </div>
 
-    <!-- プレビュー -->
     <div class="card">
       <div class="pad">
         <div class="chips">
@@ -195,7 +167,6 @@
       </div>
     </div>
 
-    <!-- 投稿ガイド / FAQ（ここは日本語固定のまま） -->
     <details>
       <summary>投稿ガイド / FAQ</summary>
       <div class="muted" style="margin-top:8px">
@@ -219,143 +190,10 @@
 </div>
 
 <script>
-/* GAS WebApp の実行URL（外部ホスティング時に使用） */
 const EXEC_URL = 'https://script.google.com/macros/s/AKfycbxZ9JsvX-BQUrFXLTBSkf9i_MgWxt-fyQygLDQfi2DQWy3qZ7dtc_IObvi3VMYoaCQAxw/exec';
 </script>
 
 <script>
-/* ===== 言語テキスト ===== */
-var TEXTS={
-  ja:{
-    subtitle:'特集コラム投稿',
-    top:'トップへ戻る',
-    agree:'免責事項と禁止事項に同意します',
-    disclaimer: '本サービスは投稿内容について一切の責任を負いません。誹謗中傷・差別・違法行為の助長は禁止です。<br><b>※NGワード検知を行います（タイトル/ジャンル自由入力は対象外）。該当する場合、投稿はできません。</b><br>画像は<b>目安：1枚 10MB以下 / 長辺 3000px以下</b>を推奨。超える場合、プレビューは表示されません（投稿は可能）。',
-    labels:{
-      genre:'GENRE（必須）', genre_other:'GENRE（OTHER の場合）',
-      era:'ERA（年代）', region:'REGION（任意）',
-      title:'TITLE（必須）', author:'AUTHOR（必須）', edit:'EDIT KEY（編集キー・必須）'
-    },
-    ph:{
-      genre_other:'自由入力', region_other:'地域名を入力',
-      title:'特集のタイトル（長文可。表示は必要に応じ自動省略）',
-      author:'投稿者名', yt:'https://youtu.be/xxxx',
-      para:'段落テキスト', img:'画像', ytOpen:'YouTubeリンクを開く',
-      pvEmpty:'段落と画像のプレビューがここに表示されます。',
-      choose:'ファイルを選択', selected:'選択済み: '
-    },
-    btnSubmit:'投稿'
-  },
-  en:{
-    subtitle:'Feature Column Submission',
-    top:'Back to Top',
-    agree:'I agree to the disclaimer and prohibited items',
-    disclaimer: 'We assume no responsibility for submitted content. Defamation, discrimination, and encouragement of illegal activity are prohibited.<br><b>NG-word detection is performed (free input for title/genre is excluded). If detected, the post cannot be submitted.</b><br>Images: <b>recommended up to 10MB / long edge ≤ 3000px</b>. If exceeded, preview is not shown (submission is allowed).',
-    labels:{
-      genre:'GENRE (required)', genre_other:'GENRE (when OTHER)',
-      era:'ERA', region:'REGION (optional)',
-      title:'TITLE (required)', author:'AUTHOR (required)', edit:'EDIT KEY (required)'
-    },
-    ph:{
-      genre_other:'Free input', region_other:'Enter region',
-      title:'Feature title (long text allowed; display may be truncated)',
-      author:'Author name', yt:'https://youtu.be/xxxx',
-      para:'Paragraph text', img:'Image', ytOpen:'Open YouTube link',
-      pvEmpty:'Preview of paragraphs and images will appear here.',
-      choose:'Choose file', selected:'Selected: '
-    },
-    btnSubmit:'Submit'
-  }
-};
-
-/* ===== 言語切替 ===== */
-(function(){
-  function getLang(){
-    var v='';
-    try{ v = localStorage.getItem('chay_lang') || ''; }catch(_){}
-    if (v === 'en') return 'en';
-    return 'ja';
-  }
-
-  function setLangUI(lang){
-    var t = TEXTS[lang] || TEXTS.ja;
-
-    document.getElementById('lang-ja')?.classList.toggle('active', lang==='ja');
-    document.getElementById('lang-en')?.classList.toggle('active', lang==='en');
-
-    var el;
-    el=document.getElementById('pageSubtitle'); if(el) el.textContent = t.subtitle;
-    el=document.getElementById('btn-top'); if(el) el.textContent = t.top;
-    el=document.getElementById('disclaimer'); if(el) el.innerHTML = t.disclaimer;
-    el=document.getElementById('agreeLabel'); if(el) el.textContent = t.agree;
-
-    const L = t.labels;
-    const map = { genreLabel:'genre', genreOtherLabel:'genre_other', eraLabel:'era', regionLabel:'region', titleLabel:'title', authorLabel:'author', editKeyLabel:'edit' };
-    Object.keys(map).forEach(id=>{
-      const x = document.getElementById(id);
-      if(x) x.textContent = L[map[id]];
-    });
-
-    const P = t.ph;
-    const setPH = (id, v)=>{ const x=document.getElementById(id); if(x) x.placeholder=v; };
-    setPH('genre_other', P.genre_other);
-    setPH('regionOther', P.region_other);
-    setPH('title',       P.title);
-    setPH('author',      P.author);
-
-    const sb = document.getElementById('submitBtn'); if(sb) sb.textContent = t.btnSubmit;
-
-    document.querySelectorAll('[data-i18n="para"]').forEach(span=>{ span.textContent = P.para; });
-    document.querySelectorAll('[data-i18n="img"]').forEach(b=>{
-      const idx = b.dataset.idx || '';
-      b.textContent = P.img + idx;
-    });
-    document.querySelectorAll('[data-i18n="ytOpen"]').forEach(a=>{ a.textContent = P.ytOpen; });
-    document.querySelectorAll('input[type="text"][data-i18n-ph="yt"]').forEach(inp=>{ inp.placeholder = P.yt; });
-
-    const pvEmpty = document.getElementById('pvEmpty');
-    if(pvEmpty) pvEmpty.textContent = P.pvEmpty;
-
-    document.querySelectorAll('.filebtn').forEach(function(btn){
-      var forId = btn.getAttribute('data-for');
-      var input = forId ? document.getElementById(forId) : null;
-      if (input && input.files && input.files[0]){
-        btn.textContent = P.selected + input.files[0].name;
-      }else{
-        btn.textContent = P.choose;
-      }
-    });
-
-    if (window.__updatePreviewOnce) window.__updatePreviewOnce();
-  }
-
-  function bindLangButtons(){
-    var ja=document.getElementById('lang-ja');
-    var en=document.getElementById('lang-en');
-    if(ja && !ja.__bound){
-      ja.addEventListener('click',function(e){ e.preventDefault(); localStorage.setItem('chay_lang','ja'); setLangUI('ja'); },false);
-      ja.__bound=true;
-    }
-    if(en && !en.__bound){
-      en.addEventListener('click',function(e){ e.preventDefault(); localStorage.setItem('chay_lang','en'); setLangUI('en'); },false);
-      en.__bound=true;
-    }
-  }
-
-  window.__setLangUI = setLangUI;
-  window.__getLang   = getLang;
-
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded', function(){ setLangUI(getLang()); bindLangButtons(); }, {once:true});
-  }else{
-    setLangUI(getLang()); bindLangButtons();
-  }
-  window.addEventListener('load', bindLangButtons, {once:true});
-})();
-</script>
-
-<script>
-/* ▼ EXEC_URL をテンプレ注入優先で解決（無い場合は既存定数をフォールバック） */
 (function resolveExecUrl(){
   try{
     var injected = (window.EXEC_URL||'').trim();
@@ -369,8 +207,6 @@ var TEXTS={
 </script>
 
 <script>
-/* GAS/外部 両対応ラッパー（submitFeature）
-   ★時間短縮：POST一本化（GETフォールバック削除） */
 async function callSubmitFeature(payload, onOK, onNG){
   try{
     if (window.google && google.script && google.script.run){
@@ -398,11 +234,9 @@ async function callSubmitFeature(payload, onOK, onNG){
 
 <script>
 (function(){
-  // -------- util --------
   function $(q){ return document.querySelector(q); }
   function el(tag, attrs){ var e=document.createElement(tag); if(attrs) Object.assign(e, attrs); return e; }
 
-  // ★短縮URL拒否
   const SHORTENERS_RE = /^(https:\/\/)(bit\.ly|tinyurl\.com|goo\.gl|is\.gd|t\.co|ow\.ly|buff\.ly|rb\.gy)\//i;
 
   function isAllowedHttpUrl(u){
@@ -413,7 +247,6 @@ async function callSubmitFeature(payload, onOK, onNG){
     if(!u) return true;
     return isAllowedHttpUrl(u);
   }
-
   function normalizeDriveUrl(url){
     try{
       if(!url) return '';
@@ -428,7 +261,6 @@ async function callSubmitFeature(payload, onOK, onNG){
     return /^(https:\/\/(?:www\.)?youtube\.com\/watch\?v=|https:\/\/youtu\.be\/)/i.test(s);
   }
 
-  // -------- state --------
   var els={}, lastVals={};
   var PARA_MAX = 5, IMG_PER = 3;
   var blobURLs = [];
@@ -453,39 +285,13 @@ async function callSubmitFeature(payload, onOK, onNG){
     }catch(_){ return ''; }
   }
 
-  // ===== 英訳（簡易 API） =====
-  const enCache = new Map();
-  async function translateJaToEn(text){
-    const key = text.trim();
-    if(!key) return '';
-    if(enCache.has(key)) return enCache.get(key);
-    try{
-      const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=en&dt=t&q=' + encodeURIComponent(key);
-      const r = await fetch(url, {cache:'no-store'});
-      const data = await r.json();
-      const out = (data && data[0]) ? data[0].map(x=>x[0]).join('') : key;
-      enCache.set(key, out);
-      return out;
-    }catch(_){
-      enCache.set(key, key);
-      return key;
-    }
-  }
-
-  // build paragraph inputs
   function buildParas(){
-    // ★依存排除：localStorageから直接読む（言語UIが壊れていても段落生成を止めない）
-    var saved = '';
-    try{ saved = localStorage.getItem('chay_lang') || ''; }catch(_){}
-    var lang = (saved === 'en') ? 'en' : 'ja';
-    var T = (TEXTS[lang] || TEXTS.ja).ph;
-
     var host = $('#paras'); host.innerHTML='';
     for(let i=1;i<=PARA_MAX;i++){
       var box = el('div', {className:'para'});
       var h = el('div');
       var hd = el('span',{className:'num'}); hd.textContent='§'+i+' ';
-      var ttl = el('span',{'data-i18n':'para'}); ttl.textContent=T.para;
+      var ttl = el('span'); ttl.textContent='段落テキスト';
       h.appendChild(hd); h.appendChild(ttl);
       box.appendChild(h);
 
@@ -493,7 +299,7 @@ async function callSubmitFeature(payload, onOK, onNG){
 
       for(let j=1;j<=IMG_PER;j++){
         var lab = el('label', {className:'label'});
-        var b = el('b', {'data-i18n':'img'}); b.dataset.idx=j; b.textContent=T.img + j;
+        var b = el('b'); b.textContent='画像' + j;
         lab.appendChild(b);
         lab.appendChild(document.createTextNode('（URL or アップロード）'));
         box.appendChild(lab);
@@ -506,14 +312,11 @@ async function callSubmitFeature(payload, onOK, onNG){
         const fileId = 'p'+i+'_img'+j+'_file';
         const file   = el('input',{type:'file', id:fileId, accept:'image/*', className:'hiddenfile'});
         const btn    = el('button', {type:'button', className:'filebtn', 'data-for':fileId, 'aria-controls':fileId, 'aria-label':'画像を選択'});
-        btn.textContent = T.choose;
+        btn.textContent = 'ファイルを選択';
         btn.addEventListener('click', ()=> file.click());
-        file.addEventListener('change', (e)=>{
-          const saved2 = (function(){ try{ return localStorage.getItem('chay_lang') || ''; }catch(_){ return ''; } })();
-          const lang2 = (saved2 === 'en') ? 'en' : 'ja';
-          const P = (TEXTS[lang2] || TEXTS.ja).ph;
+        file.addEventListener('change', function(e){
           const f = e.currentTarget;
-          btn.textContent = (f.files && f.files[0]) ? (P.selected + f.files[0].name) : P.choose;
+          btn.textContent = (f.files && f.files[0]) ? ('選択済み: ' + f.files[0].name) : 'ファイルを選択';
         });
 
         var fileWrap = el('div');
@@ -528,16 +331,11 @@ async function callSubmitFeature(payload, onOK, onNG){
       var ylab = el('label',{className:'label'});
       var yb = el('b'); yb.textContent='YouTube';
       ylab.appendChild(yb); ylab.appendChild(document.createTextNode('（任意・URL1本）'));
-      var yt = el('input',{type:'text', id:'youtube'+i, 'data-i18n-ph':'yt', placeholder:T.yt});
+      var yt = el('input',{type:'text', id:'youtube'+i, placeholder:'https://youtu.be/xxxx'});
       box.appendChild(ylab); box.appendChild(yt);
 
       host.appendChild(box);
     }
-
-    // ★安全化：例外で止めない
-    try{
-      if(window.__setLangUI) window.__setLangUI(lang);
-    }catch(_){}
   }
 
   function fileToDataURL(file){
@@ -549,6 +347,7 @@ async function callSubmitFeature(payload, onOK, onNG){
       fr.readAsDataURL(file);
     });
   }
+
   async function checkImageLimits(file){
     if(!file) return {ok:true};
     if(file.size > MAX_BYTES) return {ok:false, reason:'ファイルサイズが大きすぎます（10MB超）'};
@@ -568,7 +367,6 @@ async function callSubmitFeature(payload, onOK, onNG){
     }catch(e){ return {ok:false, reason:String(e.message||e)}; }
   }
 
-  // ===== クライアント圧縮（長辺1600px・WebP優先/品質0.82） =====
   async function compressImageFile(file, maxEdge=1600, quality=0.82){
     const typeWebP = 'image/webp';
     const fallback = 'image/jpeg';
@@ -610,7 +408,6 @@ async function callSubmitFeature(payload, onOK, onNG){
     return dataUrl;
   }
 
-  // refs
   function bindEls(){
     els = {
       genre:$('#genre'), genre_other:$('#genre_other'),
@@ -623,7 +420,7 @@ async function callSubmitFeature(payload, onOK, onNG){
     };
     for(let i=1;i<=PARA_MAX;i++){
       els['para'+i+'_text'] = $('#para'+i+'_text');
-      els['youtube'+i] = $('#youtube'+i');
+      els['youtube'+i] = $('#youtube'+i);
       for(let j=1;j<=IMG_PER;j++){
         els['p'+i+'_img'+j+'_url']  = $('#p'+i+'_img'+j+'_url');
         els['p'+i+'_img'+j+'_file'] = $('#p'+i+'_img'+j+'_file');
@@ -638,7 +435,6 @@ async function callSubmitFeature(payload, onOK, onNG){
     return sel || '';
   }
 
-  // ===== preview =====
   let __painting = false;
   async function updatePreview(){
     if(__painting) return;
@@ -651,18 +447,11 @@ async function callSubmitFeature(payload, onOK, onNG){
       var reg = getRegionValue();
       els.chipRegion.textContent= reg || '';
 
-      const lang = (window.__getLang && __getLang()) || 'ja';
-
       const rawTitle = (els.title.value || '').trim() || '—';
       const rawAuthor = (els.author.value || '').trim();
 
-      if(lang==='en'){
-        els.pvTitle.textContent  = await translateJaToEn(rawTitle);
-        els.pvAuthor.textContent = rawAuthor ? ('by ' + rawAuthor) : '—';
-      }else{
-        els.pvTitle.textContent  = rawTitle;
-        els.pvAuthor.textContent = rawAuthor ? ('by ' + rawAuthor) : '—';
-      }
+      els.pvTitle.textContent  = rawTitle;
+      els.pvAuthor.textContent = rawAuthor ? ('by ' + rawAuthor) : '—';
 
       var wrap = els.pvBody; wrap.innerHTML='';
       clearBlobURLs();
@@ -706,12 +495,7 @@ async function callSubmitFeature(payload, onOK, onNG){
 
         var sec = el('div', {className:'para'});
         var p = el('div');
-
-        if(lang==='en' && text){
-          p.textContent = await translateJaToEn(text);
-        }else{
-          p.textContent = text || '—';
-        }
+        p.textContent = text || '—';
         sec.appendChild(p);
 
         if(srcs.length){
@@ -721,26 +505,25 @@ async function callSubmitFeature(payload, onOK, onNG){
         }
 
         if(y){
-          var a = el('a',{href:y,target:'_blank',rel:'noopener','data-i18n':'ytOpen'});
-          a.textContent = TEXTS[(window.__getLang&&__getLang())||'ja'].ph.ytOpen;
+          var a = el('a',{href:y,target:'_blank',rel:'noopener'});
+          a.textContent = 'YouTubeリンクを開く';
           var yt = el('div',{className:'ytlink'}); yt.appendChild(a);
           sec.appendChild(yt);
         }
 
         wrap.appendChild(sec);
       }
+
       if(!hasAny){
         var em = el('div',{id:'pvEmpty',className:'ph'});
-        em.textContent = TEXTS[(window.__getLang&&__getLang())||'ja'].ph.pvEmpty;
+        em.textContent = '段落と画像のプレビューがここに表示されます。';
         wrap.appendChild(em);
       }
     } finally {
       __painting = false;
     }
   }
-  window.__updatePreviewOnce = ()=>{ updatePreview(); };
 
-  // NGチェック
   function clientNgCheck(){
     try{
       var text = [ els.author.value, els.era.value, getRegionValue() ].join('\n');
@@ -756,7 +539,6 @@ async function callSubmitFeature(payload, onOK, onNG){
     }catch(_){ return ''; }
   }
 
-  // bind events
   function bindAll(){
     els.genre.addEventListener('change', function(){
       els.genreOtherWrap.style.display = (els.genre.value==='other') ? '' : 'none';
@@ -798,7 +580,6 @@ async function callSubmitFeature(payload, onOK, onNG){
     }, 700);
   }
 
-  // submit
   function bindSubmit(){
     els.btn.addEventListener('click', async function(){
       els.msg.textContent=''; els.msg.className='msg'; els.btn.disabled=true;
@@ -882,25 +663,34 @@ async function callSubmitFeature(payload, onOK, onNG){
           function(res){
             if(res && res.ok){
               els.msg.className='msg ok';
-              els.msg.textContent='Posted!';
-              var keep = { genre:els.genre.value, era:els.era.value, regionSel:els.regionSel.value, regionOther:els.regionOther.value, edit_key:els.edit_key.value };
+              els.msg.textContent='投稿が完了しました。';
+
+              var keep = {
+                genre:els.genre.value,
+                era:els.era.value,
+                regionSel:els.regionSel.value,
+                regionOther:els.regionOther.value,
+                edit_key:els.edit_key.value
+              };
+
               document.querySelectorAll('input[type=text], textarea').forEach(function(i){ i.value=''; });
+
               for(let i=1;i<=PARA_MAX;i++){
                 for(let j=1;j<=IMG_PER;j++){
                   els['p'+i+'_img'+j+'_file'].value='';
                   els['p'+i+'_img'+j+'_warn'].style.display='none';
                   els['p'+i+'_img'+j+'_warn'].textContent='';
-                  // filebtnラベル復帰
                   var btn = document.querySelector('.filebtn[data-for="p'+i+'_img'+j+'_file"]');
-                  if(btn){
-                    var saved = '';
-                    try{ saved = localStorage.getItem('chay_lang') || ''; }catch(_){}
-                    var lang = (saved==='en')?'en':'ja';
-                    btn.textContent = (TEXTS[lang]||TEXTS.ja).ph.choose;
-                  }
+                  if(btn) btn.textContent = 'ファイルを選択';
                 }
               }
-              els.genre.value=keep.genre; els.era.value=keep.era; els.regionSel.value=keep.regionSel; els.regionOther.value=keep.regionOther; els.edit_key.value=keep.edit_key;
+
+              els.genre.value=keep.genre;
+              els.era.value=keep.era;
+              els.regionSel.value=keep.regionSel;
+              els.regionOther.value=keep.regionOther;
+              els.edit_key.value=keep.edit_key;
+
               els.genreOtherWrap.style.display = (els.genre.value==='other') ? '' : 'none';
               els.regionOther.style.display    = (els.regionSel.value==='__other') ? '' : 'none';
               updatePreview();
@@ -928,7 +718,6 @@ async function callSubmitFeature(payload, onOK, onNG){
     });
   }
 
-  // init
   buildParas();
   bindEls();
   bindAll();

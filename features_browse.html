@@ -40,10 +40,6 @@
   .top{display:flex; justify-content:space-between; align-items:center; gap:12px}
   .brand{display:inline-block; background:var(--brand); color:#fff; border-radius:8px; padding:7px 12px; font-weight:800; letter-spacing:.4px}
 
-  .lang{position:fixed; top:10px; right:10px; display:flex; flex-direction:column; gap:8px; z-index:10}
-  .lang button{border:1px solid #ddd; background:#fff; color:#111; border-radius:12px; padding:8px 12px; cursor:pointer; font-weight:800}
-  .lang button.active{background:#111; color:#fff; border-color:#111}
-
   .title{font-size:26px; font-weight:800; margin:14px 0 6px}
   .meta{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px}
   .chip{background:var(--chip); border-radius:999px; padding:8px 12px; font-weight:700; font-size:14px}
@@ -129,10 +125,6 @@
     <div class="top">
       <div>
         <span class="brand">CHAYNUPZINE</span>
-      </div>
-      <div class="lang">
-        <button id="lang-ja" type="button">JP</button>
-        <button id="lang-en" type="button">EN</button>
       </div>
     </div>
 
@@ -226,7 +218,7 @@
     <div class="divider"></div>
 
     <div class="tools">
-      <div class="back"><a id="backlink" href="#">← Back to Features</a></div>
+      <div class="back"><a id="backlink" href="./search_features.html">← 特集一覧へ戻る</a></div>
       <div class="id" id="idhint"></div>
     </div>
   </div>
@@ -241,58 +233,9 @@ function qs(k){
   return m ? decodeURIComponent(m[1]) : '';
 }
 
-var _qlang = (function(){
-  var q = qs('lang');
-  if(q==='en' || q==='ja'){ localStorage.setItem('chay_lang', q); return q; }
-  var saved = localStorage.getItem('chay_lang');
-  if(saved!=='en' && saved!=='ja'){ localStorage.setItem('chay_lang','ja'); return 'ja'; }
-  return saved;
-})();
-var curLang = _qlang;
 var gFeature = null;
 var gRowIndex = 0;
 var gIsEditOpen = false;
-
-var I18N = {
-  ja:{
-    by:'by',
-    back:'← 特集一覧へ戻る',
-    notFound:'対象の特集が見つかりません。',
-    hidden:'この特集は非公開です。',
-    top:'← トップへ戻る',
-    editStart:'編集開始',
-    save:'保存',
-    hide:'非表示',
-    unhide:'再表示',
-    cancel:'編集解除',
-    needKey:'editキーを入力してください。',
-    noRow:'rowIndex を取得できません。',
-    startEditOk:'編集欄に現在の内容を読み込みました。',
-    saveOk:'保存しました。',
-    hideOk:'非表示にしました。',
-    unhideOk:'再表示しました。',
-    fail:'処理に失敗しました。'
-  },
-  en:{
-    by:'by',
-    back:'← Back to Features',
-    notFound:'Feature not found.',
-    hidden:'This feature is not public.',
-    top:'← Back to Top',
-    editStart:'Edit',
-    save:'Save',
-    hide:'Hide',
-    unhide:'Unhide',
-    cancel:'Cancel',
-    needKey:'Enter edit key.',
-    noRow:'rowIndex is unavailable.',
-    startEditOk:'Loaded current data into edit form.',
-    saveOk:'Saved.',
-    hideOk:'Hidden.',
-    unhideOk:'Restored.',
-    fail:'Action failed.'
-  }
-};
 
 function esc(s){
   return String(s||'').replace(/[&<>"']/g, function(c){
@@ -365,41 +308,6 @@ function chip(text){
   s.className='chip';
   s.textContent=text;
   return s;
-}
-
-const _enCache = new Map();
-async function ja2en(s){
-  const key=(s||'').trim(); if(!key) return '';
-  if(_enCache.has(key)) return _enCache.get(key);
-  try{
-    const r=await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=ja&tl=en&dt=t&q='+encodeURIComponent(key),{cache:'no-store'});
-    const j=await r.json();
-    const out=(j&&j[0]) ? j[0].map(function(x){ return x[0]; }).join('') : key;
-    _enCache.set(key,out);
-    return out;
-  }catch(_){
-    _enCache.set(key,key);
-    return key;
-  }
-}
-
-function applyLang(){
-  var t = (curLang==='ja'?I18N.ja:I18N.en);
-  document.getElementById('backlink').textContent = t.back;
-  document.getElementById('btn-top').textContent = t.top;
-  document.getElementById('lang-ja').classList.toggle('active', curLang==='ja');
-  document.getElementById('lang-en').classList.toggle('active', curLang==='en');
-  document.getElementById('btnEditStart').textContent = t.editStart;
-  document.getElementById('btnSave').textContent = t.save;
-  document.getElementById('btnHide').textContent = t.hide;
-  document.getElementById('btnUnhide').textContent = t.unhide;
-  document.getElementById('btnCancelEdit').textContent = t.cancel;
-}
-
-async function rerender(){
-  if(!gFeature) return;
-  await renderHeader(gFeature);
-  await renderBody(gFeature);
 }
 
 (function resolveExecUrl(){
@@ -477,9 +385,7 @@ async function renderHeader(data){
 
   var title = document.createElement('div');
   title.className='title';
-  var titleText = data.title || '(No title)';
-  if(curLang==='en' && titleText){ titleText = await ja2en(titleText); }
-  title.innerHTML = esc(titleText);
+  title.innerHTML = esc(data.title || '(No title)');
   head.appendChild(title);
 
   var meta = document.createElement('div');
@@ -490,7 +396,7 @@ async function renderHeader(data){
 
   var author = document.createElement('span');
   author.className='author';
-  author.textContent = (I18N[curLang].by + ' ' + (data.author||''));
+  author.textContent = data.author ? ('by ' + data.author) : '';
   meta.appendChild(author);
   head.appendChild(meta);
 }
@@ -515,7 +421,6 @@ async function renderBody(data){
     sec.className='para';
 
     if(text){
-      if(curLang==='en'){ text = await ja2en(text); }
       var p = document.createElement('div');
       p.className='ptext';
       p.textContent = text;
@@ -572,10 +477,6 @@ function showErrorText(msg){
   document.getElementById('okbox').className='okbox';
 }
 
-function showError(msgKey){
-  showErrorText(I18N[curLang][msgKey] || 'Error');
-}
-
 function showOkText(msg){
   var o = document.getElementById('okbox');
   o.textContent = msg || '';
@@ -586,10 +487,6 @@ function showOkText(msg){
 function clearBanners(){
   document.getElementById('alert').className='alert';
   document.getElementById('okbox').className='okbox';
-}
-
-function backUrl(){
-  return './search_features.html';
 }
 
 function buildEditSections(data){
@@ -719,29 +616,14 @@ function refreshTargetInfo(){
 }
 
 (function init(){
-  applyLang();
-  document.getElementById('lang-ja').onclick = async function(){
-    curLang='ja';
-    localStorage.setItem('chay_lang','ja');
-    applyLang();
-    await rerender();
-  };
-  document.getElementById('lang-en').onclick = async function(){
-    curLang='en';
-    localStorage.setItem('chay_lang','en');
-    applyLang();
-    await rerender();
-  };
-  document.getElementById('backlink').href = backUrl();
-
   document.getElementById('btnEditStart').onclick = function(){
     clearBanners();
     if(!gFeature){
-      showError('notFound');
+      showErrorText('対象の特集が見つかりません。');
       return;
     }
     fillEditForm(gFeature);
-    showOkText(I18N[curLang].startEditOk);
+    showOkText('編集欄に現在の内容を読み込みました。');
   };
 
   document.getElementById('btnCancelEdit').onclick = function(){
@@ -753,16 +635,16 @@ function refreshTargetInfo(){
     clearBanners();
     var key = (document.getElementById('editKey').value || '').trim();
     if(!key){
-      showErrorText(I18N[curLang].needKey);
+      showErrorText('editキーを入力してください。');
       return;
     }
     if(!gRowIndex){
-      showErrorText(I18N[curLang].noRow);
+      showErrorText('rowIndex を取得できません。');
       return;
     }
     if(!gIsEditOpen){
       fillEditForm(gFeature || {});
-      showOkText(I18N[curLang].startEditOk);
+      showOkText('編集欄に現在の内容を読み込みました。');
       return;
     }
 
@@ -778,19 +660,20 @@ function refreshTargetInfo(){
         patch:patch
       }, async function(res){
         if(!res || !res.ok){
-          showErrorText((res && res.error) ? res.error : I18N[curLang].fail);
+          showErrorText((res && res.error) ? res.error : '処理に失敗しました。');
           return;
         }
 
         Object.assign(gFeature, patch);
-        await rerender();
+        await renderHeader(gFeature);
+        await renderBody(gFeature);
         fillEditForm(gFeature);
-        showOkText(I18N[curLang].saveOk);
+        showOkText('保存しました。');
       }, function(err){
-        showErrorText(err && err.message ? err.message : I18N[curLang].fail);
+        showErrorText(err && err.message ? err.message : '処理に失敗しました。');
       });
     }catch(e){
-      showErrorText(e && e.message ? e.message : I18N[curLang].fail);
+      showErrorText(e && e.message ? e.message : '処理に失敗しました。');
     }
   };
 
@@ -798,11 +681,11 @@ function refreshTargetInfo(){
     clearBanners();
     var key = (document.getElementById('editKey').value || '').trim();
     if(!key){
-      showErrorText(I18N[curLang].needKey);
+      showErrorText('editキーを入力してください。');
       return;
     }
     if(!gRowIndex){
-      showErrorText(I18N[curLang].noRow);
+      showErrorText('rowIndex を取得できません。');
       return;
     }
 
@@ -813,12 +696,12 @@ function refreshTargetInfo(){
       action:'delete'
     }, function(res){
       if(!res || !res.ok){
-        showErrorText((res && res.error) ? res.error : I18N[curLang].fail);
+        showErrorText((res && res.error) ? res.error : '処理に失敗しました。');
         return;
       }
-      showOkText(I18N[curLang].hideOk);
+      showOkText('非表示にしました。');
     }, function(err){
-      showErrorText(err && err.message ? err.message : I18N[curLang].fail);
+      showErrorText(err && err.message ? err.message : '処理に失敗しました。');
     });
   };
 
@@ -826,11 +709,11 @@ function refreshTargetInfo(){
     clearBanners();
     var key = (document.getElementById('editKey').value || '').trim();
     if(!key){
-      showErrorText(I18N[curLang].needKey);
+      showErrorText('editキーを入力してください。');
       return;
     }
     if(!gRowIndex){
-      showErrorText(I18N[curLang].noRow);
+      showErrorText('rowIndex を取得できません。');
       return;
     }
 
@@ -841,12 +724,12 @@ function refreshTargetInfo(){
       action:'restore'
     }, function(res){
       if(!res || !res.ok){
-        showErrorText((res && res.error) ? res.error : I18N[curLang].fail);
+        showErrorText((res && res.error) ? res.error : '処理に失敗しました。');
         return;
       }
-      showOkText(I18N[curLang].unhideOk);
+      showOkText('再表示しました。');
     }, function(err){
-      showErrorText(err && err.message ? err.message : I18N[curLang].fail);
+      showErrorText(err && err.message ? err.message : '処理に失敗しました。');
     });
   };
 
@@ -858,7 +741,7 @@ function refreshTargetInfo(){
     function(res){
       try{
         if(!res || !res.ok || !res.data){
-          showError('notFound');
+          showErrorText('対象の特集が見つかりません。');
           return;
         }
         var d = res.data || {};
@@ -867,19 +750,20 @@ function refreshTargetInfo(){
 
         var st = String(d.status||'').toLowerCase();
         if(st && st!=='published'){
-          showError('hidden');
+          showErrorText('この特集は非公開です。');
         }
 
-        rerender();
+        renderHeader(d);
+        renderBody(d);
         var idhint = document.getElementById('idhint');
         idhint.textContent = d.slug ? ('slug: '+d.slug+' / row: '+(gRowIndex||'')) : ('row: '+(gRowIndex||''));
         refreshTargetInfo();
       }catch(_){
-        showError('notFound');
+        showErrorText('対象の特集が見つかりません。');
       }
     },
     function(){
-      showError('notFound');
+      showErrorText('対象の特集が見つかりません。');
     }
   );
 })();

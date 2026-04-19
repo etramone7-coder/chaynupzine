@@ -25,33 +25,29 @@
     background:var(--panel); backdrop-filter:saturate(120%) blur(10px);
     border-radius:16px; box-shadow:0 10px 28px rgba(0,0,0,.6);
     padding:20px; min-height:720px;
-
-    /* ★ 追加：初期描画を軽くする */
     content-visibility:auto;
     contain-intrinsic-size: 1000px;
   }
 
-  /* ▼▼ 修正：ヘッダーを2カラムにして右上に言語ボタン ▼▼ */
   .topbar{
     display:grid;
-    grid-template-columns: 1fr auto; /* 左=ロゴ＆戻る / 右=言語トグル */
+    grid-template-columns: 1fr;
     align-items:start;
     gap:12px;
     position:relative;
   }
   .top-left{display:flex; flex-direction:column; gap:8px; align-items:flex-start;}
-  /* ▲▲ ここまで ▲▲ */
 
   .brand{background:#111; color:#fff; border-radius:8px; padding:7px 12px; font-weight:800}
 
   .btn{border:0; border-radius:14px; padding:10px 14px; font-size:18px; font-weight:800; cursor:pointer}
   .btn.ghost{background:#fff; color:#111; border:1px solid #ddd}
   .btn.warn{background:#fff0f0; color:#a33; border:1px solid #f3b9b9}
+  .btn.secondary{background:#3949ab;color:#fff}
 
   .grid{display:grid; gap:18px; margin-top:16px}
   @media(min-width:980px){ .grid{grid-template-columns:420px 1fr} }
 
-  /* 左カラム */
   .leftbox{display:flex; flex-direction:column; gap:14px}
   .jacket{
     width:100%; aspect-ratio:1/1; border-radius:14px; background:#f5f5f5;
@@ -60,7 +56,6 @@
   .jacket img{width:100%; height:100%; object-fit:cover; display:block}
 
   .ytwrap{position:relative; width:100%; padding-top:56.25%; border-radius:14px; overflow:hidden; background:#000}
-  /* ★ 追加：軽量サムネのプレイボタン */
   #ytPlaceholder{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; cursor:pointer}
   #ytPlaceholder img{width:100%; height:100%; object-fit:cover; display:block}
   #ytPlaceholder .playbtn{
@@ -69,7 +64,6 @@
     font-weight:800; color:#fff; font-size:18px;
   }
 
-  /* 右カラム */
   .head{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start}
   .title{min-width:0}
   .band{font-size:26px; font-weight:900; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
@@ -88,53 +82,13 @@
   .alert{margin-top:14px; padding:12px; border-radius:12px; border:1px solid #e6e6e6; background:#fff; font-size:16px; display:none}
   .alert.show{display:block}
 
-  /* 言語トグル（既存） */
-  .lang{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    align-items:flex-start;
-  }
-  .lang button{
-    border:1px solid #ddd;
-    background:#fff;
-    color:#111;
-    padding:6px 10px;
-    border-radius:10px;
-    font-size:15px;
-    cursor:pointer
-  }
-  .lang button.active{
-    background:#111;
-    color:#fff;
-    border-color:#111
-  }
-
-  /* ── 追加の見た目調整（右カラムの言語トグルを右寄せ） ── */
-  .topbar .actions{
-    display:flex !important;
-    flex-direction:column !important;
-    align-items:flex-end !important;
-    gap:8px !important;
-  }
-  .topbar .lang{ align-items:flex-end; }
-  .topbar .lang button{ min-width:52px; }
-
-  /* 戻るボタンは左寄せのまま */
-  #btn-back{ white-space:nowrap; align-self:flex-start; }
-
-  /* 横スクロール抑止とロゴ/見出しの自動縮小 */
   html,body{ max-width:100%; overflow-x:hidden; }
   .brand{ font-size:clamp(16px,5.2vw,22px); padding:6px 10px; }
   h1{ font-size:clamp(18px,4.6vw,24px); }
   #subtitle{ white-space:nowrap; }
 
-  /* ★★★ 追加：編集ツールバー（Livesと同等の最小スタイル） ★★★ */
   .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
   .in{background:#fff;border:1px solid #ddd;border-radius:10px;padding:8px 10px;font-size:16px}
-  .btn.secondary{background:#3949ab;color:#fff}
-
-  /* ★★★ 追加：編集パネル（遅延生成） ★★★ */
   #editPanel{display:none;margin-top:10px;border:1px dashed #ddd;background:#fff;padding:10px;border-radius:12px}
   .row2{display:grid;gap:10px}
   @media(min-width:720px){ .row2{grid-template-columns:1fr 1fr} }
@@ -148,39 +102,24 @@
 <div class="wrap">
   <div class="panel">
     <div class="topbar">
-      <!-- 左：ロゴ＋サブタイトル＋戻る -->
       <div class="top-left">
         <h1>
           <span class="brand">CHAYNUPZINE</span>
           <span id="subtitle" style="font-size:16px;color:#555">Record view</span>
         </h1>
-        <!-- ★ 修正：戻るは履歴→フォールバックで search_records.html?lang=.. -->
         <button id="btn-back" class="btn ghost" aria-label="検索へ戻る">検索へ戻る</button>
-        <!-- ★ 追加：トップページへ戻る（i18nに連動） -->
         <a class="btn ghost" id="btn-home" href="https://etramone7-coder.github.io/chaynupzine/" target="_top" rel="noopener noreferrer" aria-label="トップへ戻る">トップへ戻る</a>
-      </div>
-
-      <!-- 右：言語トグル（右上固定） -->
-      <div class="actions" style="display:flex;gap:10px;align-items:center">
-        <div class="lang">
-          <button id="lang-ja" type="button" aria-label="日本語表示">JP</button>
-          <button id="lang-en" type="button" aria-label="英語表示">EN</button>
-        </div>
       </div>
     </div>
 
     <div class="grid">
-      <!-- 左 -->
       <div class="leftbox">
         <div class="jacket" id="jacketBox">No image</div>
-        <!-- 既存の埋め込み枠（このページで使います） -->
         <div class="ytwrap" id="ytWrap" style="display:none">
-          <!-- ★ 変更：初期は軽量なサムネ（クリックでiframeを生成） -->
           <div id="ytPlaceholder" aria-label="Play YouTube"></div>
         </div>
       </div>
 
-      <!-- 右 -->
       <div>
         <div class="head">
           <div class="title">
@@ -205,7 +144,6 @@
         </div>
         <div id="msg" class="alert"></div>
 
-        <!-- ★★★ 追加：編集キー入力＋編集（非表示/再表示/更新） ★★★ -->
         <div class="toolbar">
           <span id="tool-cap">投稿を編集/削除</span>
           <button id="btnEdit" class="btn" type="button">編集</button>
@@ -217,21 +155,18 @@
           <span id="editMsg" class="alert"></span>
         </div>
 
-        <!-- ★★★ 追加：編集パネル（初回クリックで生成） ★★★ -->
         <div id="editPanel"></div>
-        <!-- ★★★ ここまで追加 ★★★ -->
       </div>
     </div>
   </div>
 </div>
+
 <script>
-/* 背景：JS も CSS と同じ URL で統一（相対パスでの上書きを防ぐ） */
 (function(){
   document.getElementById('bg').style.backgroundImage =
     'url(https://etramone7-coder.github.io/chaynupzine/assets/bg_records.webp)';
 })();
 
-/* ジャンルごとの色（バッジ） */
 var GENRE_STYLES = {
   Punk:{bg:'#111',fg:'#fff'},
   Hardcore:{bg:'#b00020',fg:'#fff'},
@@ -244,85 +179,73 @@ var GENRE_STYLES = {
   HardRock:{bg:'#6d4c41',fg:'#fff'},
   Reggae:{bg:'#2e7d32',fg:'#fff'},
   Rock:{bg:'#3949ab',fg:'#fff'},
-  Glam:{bg:'#9c27b0',fg:'#fff'}, /* ★ 追加：Glam */
+  Glam:{bg:'#9c27b0',fg:'#fff'},
   Pop:{bg:'#f06292',fg:'#fff'},
   Melodicore:{bg:'#ef6c00',fg:'#fff'},
   Rockabilly:{bg:'#7e57c2',fg:'#fff'},
   Other:{bg:'#9e9e9e',fg:'#fff'}
 };
 
-/* ===== i18n（JP/EN 切替） ===== */
-var I18N = {
-  ja:{
-    subtitle:'Record view',
-    labels:{ genre:'ジャンル', era:'年代', catalog:'型番', format:'フォーマット',
-             report:'通報する', back:'検索へ戻る', home:'トップへ戻る', by:'投稿者：',
-             editCap:'投稿を編集/削除', edit:'編集', hide:'非表示', unhide:'再表示', keyPh:'編集キー',
-             ok:'完了しました', fail:'失敗しました', needKey:'編集キーを入力してください',
-             editGuide:'※どれか一項目でも編集可能。片方の言語だけ埋めてもOK（サーバ側で相互補完）。',
-             save:'保存' }
-  },
-  en:{
-    subtitle:'Record view',
-    labels:{ genre:'Genre', era:'Era', catalog:'Catalog No.', format:'Format',
-             report:'Report', back:'Back to Search', home:'Back to Top', by:'by ',
-             editCap:'Edit/Delete this post', edit:'Edit', hide:'Hide', unhide:'Unhide', keyPh:'Edit key',
-             ok:'Done', fail:'Failed', needKey:'Please enter your edit key',
-             editGuide:'* You can edit any field. Filling only one language is OK (server will backfill the other).',
-             save:'Save' }
+var TEXT = {
+  subtitle:'Record view',
+  labels:{
+    genre:'ジャンル',
+    era:'年代',
+    catalog:'型番',
+    format:'フォーマット',
+    report:'通報する',
+    back:'検索へ戻る',
+    home:'トップへ戻る',
+    by:'投稿者：',
+    editCap:'投稿を編集/削除',
+    edit:'編集',
+    hide:'非表示',
+    unhide:'再表示',
+    keyPh:'編集キー',
+    ok:'完了しました',
+    fail:'失敗しました',
+    needKey:'編集キーを入力してください',
+    editGuide:'※どれか一項目でも編集可能です。',
+    save:'保存'
   }
 };
-/* ★ デフォルトは常に日本語（localStorage 未設定時） */
-var lang = (function(){ var s=localStorage.getItem('chay_lang'); return s?s:'ja'; })();
+
 var currentRecord = null;
 
-function setLangUI(){
-  var t = I18N[lang];
-  document.getElementById('subtitle').textContent = t.subtitle;
-  document.getElementById('label-genre').textContent   = t.labels.genre;
-  document.getElementById('label-era').textContent     = t.labels.era;
-  document.getElementById('label-catalog').textContent = t.labels.catalog;
-  document.getElementById('label-format').textContent  = t.labels.format;
-  document.getElementById('reportBtn').textContent     = t.labels.report;
-  document.getElementById('btn-back').textContent      = t.labels.back;
-  document.getElementById('btn-home').textContent      = t.labels.home;
-  document.getElementById('tool-cap').textContent      = t.labels.editCap;
-  document.getElementById('btnEdit').textContent       = t.labels.edit;
-  document.getElementById('btnHide').textContent       = t.labels.hide;
-  document.getElementById('btnUnhide').textContent     = t.labels.unhide;
-  var ek = document.getElementById('editKey'); if (ek) ek.placeholder = t.labels.keyPh;
+function setUI(){
+  document.getElementById('subtitle').textContent = TEXT.subtitle;
+  document.getElementById('label-genre').textContent   = TEXT.labels.genre;
+  document.getElementById('label-era').textContent     = TEXT.labels.era;
+  document.getElementById('label-catalog').textContent = TEXT.labels.catalog;
+  document.getElementById('label-format').textContent  = TEXT.labels.format;
+  document.getElementById('reportBtn').textContent     = TEXT.labels.report;
+  document.getElementById('btn-back').textContent      = TEXT.labels.back;
+  document.getElementById('btn-home').textContent      = TEXT.labels.home;
+  document.getElementById('tool-cap').textContent      = TEXT.labels.editCap;
+  document.getElementById('btnEdit').textContent       = TEXT.labels.edit;
+  document.getElementById('btnHide').textContent       = TEXT.labels.hide;
+  document.getElementById('btnUnhide').textContent     = TEXT.labels.unhide;
+  var ek = document.getElementById('editKey');
+  if (ek) ek.placeholder = TEXT.labels.keyPh;
 
-  document.getElementById('lang-ja').classList.toggle('active', lang==='ja');
-  document.getElementById('lang-en').classList.toggle('active', lang==='en');
-
-  // データ取得済みなら本文も切替
   if(currentRecord){
-    document.getElementById('description').textContent =
-      (lang==='en' && currentRecord.description_en) ? currentRecord.description_en : (currentRecord.description||'');
+    document.getElementById('description').textContent = currentRecord.description || '';
     document.getElementById('author').textContent =
-      currentRecord.author ? (t.labels.by + currentRecord.author) : '';
+      currentRecord.author ? (TEXT.labels.by + currentRecord.author) : '';
   }
 }
-document.getElementById('lang-ja').onclick = function(){ lang='ja'; localStorage.setItem('chay_lang',lang); setLangUI(); };
-document.getElementById('lang-en').onclick = function(){ lang='en'; localStorage.setItem('chay_lang',lang); setLangUI(); };
 
-/* ★ 追加：戻るボタン（履歴が無い/他ページからの直開きでも確実に戻る） */
 (function setupBackButton(){
-  function getLangParam(){
-    var u=new URL(location.href);
-    return u.searchParams.get('lang') || localStorage.getItem('chay_lang') || 'ja';
-    }
   document.getElementById('btn-back').addEventListener('click', function(){
     var cameFromSearch = document.referrer && /search_records\.html(\?|$)/.test(document.referrer);
     if (cameFromSearch && history.length > 1){
       history.back();
     } else {
-      location.href = 'search_records.html?lang=' + encodeURIComponent(getLangParam());
+      location.href = 'search_records.html';
     }
   });
 })();
 
-/* 画像フォールバック（Drive/HTTPS） */
 function normalizeHttps(u){
   try{
     if(!u) return '';
@@ -360,7 +283,6 @@ function setJacket(url){
   img.onerror=next; next(); box.appendChild(img);
 }
 
-/* YouTube 埋め込み（安全なID抽出＆サムネ→クリックでiframe） */
 function extractYouTubeId(u){
   u = String(u || '');
   if(!u) return '';
@@ -391,7 +313,6 @@ function setYouTube(u){
   };
 }
 
-/* レンダリング */
 function render(rec){
   currentRecord = rec;
 
@@ -406,7 +327,6 @@ function render(rec){
   badge.style.background = style.bg;
   badge.style.color = style.fg;
 
-  // 年代（release_year → 1970s 形式）
   var era = '';
   var yr = String(rec.release_year||'').match(/(\d{4})/);
   if(yr){ var y=parseInt(yr[1],10); if(!isNaN(y)) era = (Math.floor(y/10)*10) + 's'; }
@@ -415,16 +335,14 @@ function render(rec){
   document.getElementById('catalog').textContent = rec.catalog_no || '-';
   document.getElementById('format').textContent  = rec.format || '-';
 
-  document.getElementById('description').textContent =
-    (lang==='en' && rec.description_en) ? rec.description_en : (rec.description || '');
+  document.getElementById('description').textContent = rec.description || '';
   document.getElementById('author').textContent =
-    rec.author ? ((I18N[lang].labels.by) + rec.author) : '';
+    rec.author ? (TEXT.labels.by + rec.author) : '';
 
   setJacket(rec.image_url||'');
   setYouTube(rec.youtube_url||'');
 }
 
-/* 通報（GAS外でも動くフォールバック付き） */
 function ensureClientId(){
   try{
     var k='chaynup_cid';
@@ -474,7 +392,6 @@ function reportThis(rowIndex){
   }catch(e){ fail(e); }
 }
 
-/* ===== 追加：EXEC_URL解決 ＆ GET→POST フォールバック ===== */
 (function resolveExecUrl(){
   try{
     var viaQuery = new URL(location.href).searchParams.get('exec') || '';
@@ -487,7 +404,6 @@ function reportThis(rowIndex){
 async function fetchRecordByRow(row){
   if(!window.EXEC_URL) throw new Error('EXEC_URL missing');
 
-  // 1) GET を試す
   try{
     var url1 = window.EXEC_URL
       + (window.EXEC_URL.indexOf('?')>=0?'&':'?')
@@ -500,7 +416,6 @@ async function fetchRecordByRow(row){
     }
   }catch(_){}
 
-  // 2) 失敗時は POST フォールバック
   var url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
   var r2 = await fetch(url2, {
     method:'POST', mode:'cors', cache:'no-store',
@@ -511,13 +426,11 @@ async function fetchRecordByRow(row){
   return await r2.json();
 }
 
-/* ★★★ 追加：編集（update / hide / unhide） GAS呼び出しラッパー ★★★ */
 async function callEditEntry(action, rowIndex, editKey, patch){
   function done(res){
     var m=document.getElementById('editMsg'); m.className='alert show';
-    m.textContent = (res && res.ok) ? I18N[lang].labels.ok : (I18N[lang].labels.fail + (res && res.error ? ' : ' + res.error : ''));
+    m.textContent = (res && res.ok) ? TEXT.labels.ok : (TEXT.labels.fail + (res && res.error ? ' : ' + res.error : ''));
     if(res && res.ok && action==='update'){
-      // 極力即時反映（体感高速化）
       try{
         Object.assign(currentRecord, patch||{});
         render(currentRecord);
@@ -526,7 +439,7 @@ async function callEditEntry(action, rowIndex, editKey, patch){
   }
   function fail(err){
     var m=document.getElementById('editMsg'); m.className='alert show';
-    m.textContent = I18N[lang].labels.fail + ' : ' + (err && err.message ? err.message : String(err));
+    m.textContent = TEXT.labels.fail + ' : ' + (err && err.message ? err.message : String(err));
   }
 
   var payload = { sheetName:'Records', rowIndex:Number(rowIndex), edit_key:String(editKey||''), action:String(action||'') };
@@ -547,41 +460,36 @@ async function callEditEntry(action, rowIndex, editKey, patch){
     }
   }catch(e){ fail(e); }
 }
-/* ★★★ 追加：編集パネル（初回クリック時に動的生成） ★★★ */
+
 function ensureEditPanel(){
   var host = document.getElementById('editPanel');
   if (!host || host.__ready) return;
-  var t = I18N[lang].labels;
 
   host.innerHTML = ''
-    + '<div class="lab">'+t.editGuide+'</div>'
+    + '<div class="lab">'+TEXT.labels.editGuide+'</div>'
     + '<div class="row2">'
     + '  <div><div class="lab">BAND</div><input id="e_band" class="in" type="text"></div>'
     + '  <div><div class="lab">TRACK</div><input id="e_track" class="in" type="text"></div>'
     + '</div>'
     + '<div class="row2">'
-    + '  <div><div class="lab">'+t.genre+'</div><input id="e_genre" class="in" type="text" placeholder="Punk / Glam / ..."></div>'
+    + '  <div><div class="lab">'+TEXT.labels.genre+'</div><input id="e_genre" class="in" type="text" placeholder="Punk / Glam / ..."></div>'
     + '  <div><div class="lab">COUNTRY</div><input id="e_country" class="in" type="text" placeholder="Japan / USA / ..."></div>'
     + '</div>'
     + '<div class="row2">'
-    + '  <div><div class="lab">'+t.era+'</div><input id="e_release_year" class="in" type="text" placeholder="YYYY"></div>'
-    + '  <div><div class="lab">'+t.catalog+'</div><input id="e_catalog_no" class="in" type="text"></div>'
+    + '  <div><div class="lab">'+TEXT.labels.era+'</div><input id="e_release_year" class="in" type="text" placeholder="YYYY"></div>'
+    + '  <div><div class="lab">'+TEXT.labels.catalog+'</div><input id="e_catalog_no" class="in" type="text"></div>'
     + '</div>'
-    + '<div><div class="lab">'+t.format+'</div><input id="e_format" class="in" type="text" placeholder="7&quot;EP / LP / CD / ..."></div>'
-    + '<div class="row2">'
-    + '  <div><div class="lab">DESCRIPTION (JA)</div><textarea id="e_description" class="in ta" maxlength="500"></textarea></div>'
-    + '  <div><div class="lab">DESCRIPTION (EN)</div><textarea id="e_description_en" class="in ta" maxlength="500"></textarea></div>'
-    + '</div>'
+    + '<div><div class="lab">'+TEXT.labels.format+'</div><input id="e_format" class="in" type="text" placeholder="7&quot;EP / LP / CD / ..."></div>'
+    + '<div><div class="lab">DESCRIPTION</div><textarea id="e_description" class="in ta" maxlength="500"></textarea></div>'
     + '<div class="row2">'
     + '  <div><div class="lab">IMAGE URL</div><input id="e_image_url" class="in" type="url" placeholder="https://..."></div>'
     + '  <div><div class="lab">YOUTUBE URL</div><input id="e_youtube_url" class="in" type="url" placeholder="https://youtu.be/..."></div>'
     + '</div>'
-    + '<div><div class="lab">'+I18N[lang].labels.by+'</div><input id="e_author" class="in" type="text"></div>'
+    + '<div><div class="lab">'+TEXT.labels.by+'</div><input id="e_author" class="in" type="text"></div>'
     + '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'
-    + '  <button id="btnSave" class="btn secondary" type="button">'+t.save+'</button>'
+    + '  <button id="btnSave" class="btn secondary" type="button">'+TEXT.labels.save+'</button>'
     + '</div>';
 
-  // 現在の値を反映
   var r = currentRecord || {};
   function S(id, v){ var el=document.getElementById(id); if(el){ el.value = String(v||''); } }
   S('e_band', r.band);
@@ -592,26 +500,23 @@ function ensureEditPanel(){
   S('e_catalog_no', r.catalog_no);
   S('e_format', r.format);
   S('e_description', r.description);
-  S('e_description_en', r.description_en);
   S('e_image_url', r.image_url);
   S('e_youtube_url', r.youtube_url);
   S('e_author', r.author);
 
-  // 保存
   document.getElementById('btnSave').onclick = function(){
     var ek = (document.getElementById('editKey')||{}).value || '';
-    if(!ek){ alert(I18N[lang].labels.needKey); return; }
+    if(!ek){ alert(TEXT.labels.needKey); return; }
 
-    // パッチ（Code.gs の Records 許可キーに合わせる）
     var patch={};
     function P(key, id){ var v=(document.getElementById(id)||{}).value; if(v!=null && v!==currentRecord[key]) patch[key]=v; }
     P('band','e_band'); P('track','e_track'); P('genre','e_genre'); P('country','e_country');
     P('release_year','e_release_year'); P('catalog_no','e_catalog_no'); P('format','e_format');
-    P('description','e_description'); P('description_en','e_description_en');
+    P('description','e_description');
     P('image_url','e_image_url'); P('youtube_url','e_youtube_url'); P('author','e_author');
 
     if(Object.keys(patch).length===0){
-      var m=document.getElementById('editMsg'); m.className='alert show'; m.textContent=I18N[lang].labels.ok; return;
+      var m=document.getElementById('editMsg'); m.className='alert show'; m.textContent=TEXT.labels.ok; return;
     }
 
     callEditEntry('update', window.__rowIndex, ek, patch);
@@ -620,17 +525,13 @@ function ensureEditPanel(){
   host.__ready = true;
 }
 
-/* ★★★ ここまで追加 ★★★ */
-
-/* 起動 */
 (function(){
-  // 言語UI初期化
-  setLangUI();
+  setUI();
 
   function rowFromHref(){
     var m = (location.search || location.href).match(/[?&]row=(\d+)/);
     var n = m ? Number(m[1]) : 0;
-    return (Number.isInteger(n) && n>=2) ? n : 0; // row はシート2行目以降のみ許可
+    return (Number.isInteger(n) && n>=2) ? n : 0;
   }
   function showError(msg){
     var m=document.getElementById('msg');
@@ -639,32 +540,28 @@ function ensureEditPanel(){
   }
 
   async function start(row){
-    window.__rowIndex = row; /* ★ 追加：編集API用に保持 */
+    window.__rowIndex = row;
 
-    var t = I18N[lang] || I18N.ja;
-    if(!row){ showError(t.subtitle + '：' + 'レコードID（row）が指定されていません。'); return; }
+    if(!row){ showError(TEXT.subtitle + '：' + 'レコードID（row）が指定されていません。'); return; }
 
-    /* ★ 追加：まずは検索画面から渡されたキャッシュで即時描画 */
     try{
       var cached = sessionStorage.getItem('cz_selected_record');
       if (cached){
         var rec = JSON.parse(cached);
         if (rec && String(rec.__row||rec.rowIndex||rec.id) === String(row)){
-          render(rec); // 先に表示して体感を短縮
+          render(rec);
         }
       }
     }catch(_){}
 
-    // WebApp 内なら google.script.run、そうでなければ fetch フォールバック
     try{
       if (window.google && google.script && google.script.run){
         google.script.run
           .withSuccessHandler(function(res){
-            if(!res || !res.ok){ showError(t.subtitle + '：読み込みに失敗しました。'); return; }
+            if(!res || !res.ok){ showError(TEXT.subtitle + '：読み込みに失敗しました。'); return; }
             render(res.data || {});
             document.getElementById('reportBtn').onclick = function(){ reportThis(row); };
 
-            /* ★ 編集UIの動作 */
             document.getElementById('btnEdit').onclick = function(){
               var ec=document.getElementById('editControls'); ec.style.display='';
               var ep=document.getElementById('editPanel'); ep.style.display='';
@@ -672,12 +569,12 @@ function ensureEditPanel(){
             };
             document.getElementById('btnHide').onclick = function(){
               var ek=document.getElementById('editKey').value.trim();
-              if(!ek){ alert(I18N[lang].labels.needKey); return; }
+              if(!ek){ alert(TEXT.labels.needKey); return; }
               callEditEntry('delete', row, ek);
             };
             document.getElementById('btnUnhide').onclick = function(){
               var ek=document.getElementById('editKey').value.trim();
-              if(!ek){ alert(I18N[lang].labels.needKey); return; }
+              if(!ek){ alert(TEXT.labels.needKey); return; }
               callEditEntry('unhide', row, ek);
             };
 
@@ -697,7 +594,6 @@ function ensureEditPanel(){
       render(res.data || {});
       document.getElementById('reportBtn').onclick = function(){ reportThis(row); };
 
-      /* ★ 編集UIの動作（フォールバック時も同様） */
       document.getElementById('btnEdit').onclick = function(){
         var ec=document.getElementById('editControls'); ec.style.display='';
         var ep=document.getElementById('editPanel'); ep.style.display='';
@@ -705,12 +601,12 @@ function ensureEditPanel(){
       };
       document.getElementById('btnHide').onclick = function(){
         var ek=document.getElementById('editKey').value.trim();
-        if(!ek){ alert(I18N[lang].labels.needKey); return; }
+        if(!ek){ alert(TEXT.labels.needKey); return; }
         callEditEntry('delete', row, ek);
       };
       document.getElementById('btnUnhide').onclick = function(){
         var ek=document.getElementById('editKey').value.trim();
-        if(!ek){ alert(I18N[lang].labels.needKey); return; }
+        if(!ek){ alert(TEXT.labels.needKey); return; }
         callEditEntry('unhide', row, ek);
       };
 
@@ -720,7 +616,6 @@ function ensureEditPanel(){
     }
   }
 
-  // URL の ?row= を見て開始
   start(rowFromHref());
 })();
 </script>

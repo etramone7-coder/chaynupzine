@@ -32,12 +32,21 @@
 
   .label{font-size:12px;color:var(--muted);margin:14px 0 6px}
   .label b{color:var(--ink);font-size:13px;margin-right:6px}
-  input[type=text],select,textarea{width:100%;background:#0e121a;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:10px 12px;outline:none}
+  input[type=text],select,textarea{
+    width:100%;background:#0e121a;border:1px solid var(--line);color:var(--ink);
+    border-radius:8px;padding:10px 12px;outline:none
+  }
   textarea{min-height:120px;resize:vertical}
   input[type=file]{width:100%}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .btn{display:inline-block;width:100%;padding:12px 14px;border-radius:10px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:700;letter-spacing:.08em;cursor:pointer}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .btn{
+    display:inline-block;width:100%;padding:12px 14px;border-radius:10px;border:0;
+    background:var(--accent);color:var(--accent-ink);font-weight:700;letter-spacing:.08em;cursor:pointer
+  }
   .btn:disabled{opacity:.6;cursor:default}
+  .btn.secondary{background:#3949ab}
+  .btn.ghost2{background:#0e121a;color:#fff;border:1px solid var(--line)}
   .msg{margin-top:10px;font-size:13px}
   .msg.ok{color:#5dd39e}.msg.err{color:#e25555}
   .card{background:#0e121a;border:1px dashed #3a4254;border-radius:12px;overflow:hidden}
@@ -61,6 +70,42 @@
     border-radius:8px;background:#0e121a;color:#e7e9ee;font-size:14px;cursor:pointer;
     text-align:center
   }
+
+  .modebox{
+    border:1px solid #36527d;
+    background:rgba(11,19,34,.78);
+    border-radius:12px;
+    padding:12px;
+    margin:0 0 16px;
+  }
+  .modehead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+  }
+  .modebadge{
+    display:inline-block;
+    font-size:12px;
+    font-weight:800;
+    padding:4px 10px;
+    border-radius:999px;
+    border:1px solid #4d74ad;
+    color:#d7e7ff;
+  }
+  .smallnote{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:6px;
+  }
+  .statusline{
+    font-size:13px;
+    color:#cbd5e1;
+    margin-top:8px;
+    word-break:break-word;
+  }
 </style>
 </head>
 <body>
@@ -71,6 +116,39 @@
   <span id="pageSubtitle" class="sub">特集コラム投稿</span>
 
   <div class="panel" id="oneCard">
+
+    <div class="modebox">
+      <div class="modehead">
+        <div>
+          <div class="modebadge" id="modeBadge">現在: 新規投稿モード</div>
+          <div class="smallnote">既存の特集を編集する場合は、row または slug と編集キーを入力して読み込んでください。</div>
+        </div>
+      </div>
+
+      <div class="row3">
+        <div>
+          <label class="label"><b>編集対象 row</b></label>
+          <input id="edit_row" type="text" placeholder="例: 12">
+        </div>
+        <div>
+          <label class="label"><b>編集対象 slug</b></label>
+          <input id="edit_slug" type="text" placeholder="例: my-feature-slug">
+        </div>
+        <div>
+          <label class="label"><b>編集キー</b></label>
+          <input id="edit_loader_key" type="text" placeholder="投稿時の編集キー" inputmode="latin">
+        </div>
+      </div>
+
+      <div class="actions" style="justify-content:flex-start;margin-top:12px">
+        <button id="loadEditBtn" class="btn secondary" type="button" style="width:auto">編集データを読み込む</button>
+        <button id="clearEditBtn" class="btn ghost2" type="button" style="width:auto">編集モード解除</button>
+      </div>
+
+      <div id="editStatus" class="statusline">未読込です。</div>
+      <div class="smallnote">※ 編集モードでは画像の差し替えは URL 入力で対応します。ファイルアップロードでの画像差し替えは新規投稿のみ対応です。</div>
+    </div>
+
     <div id="disclaimer" class="muted">
       本サービスは投稿内容について一切の責任を負いません。誹謗中傷・差別・違法行為の助長は禁止です。<br>
       <b>※NGワード検知を行います（タイトル/ジャンル自由入力は対象外）。該当する場合、投稿はできません。</b><br>
@@ -179,7 +257,7 @@
 
         <b>■ よくある質問</b><br>
         Q. 編集/削除の方法は？<br>
-        A. 閲覧ページの「投稿を編集/削除」→ 行番号またはスラッグ/IDと編集キーを入力してください。<br><br>
+        A. このページ上部の編集読込欄で row または slug と編集キーを入力し、既存データを読み込んで保存してください。<br><br>
         Q. 画像が表示されません。<br>
         A. サイズ上限・Drive共有設定（リンク可視）をご確認ください。<br><br>
         Q. YouTubeは埋め込みですか？<br>
@@ -229,21 +307,7 @@ const EXEC_URL = 'https://script.google.com/macros/s/AKfycbxZ9JsvX-BQUrFXLTBSkf9
     setPH('author', '投稿者名');
 
     var sb = document.getElementById('submitBtn');
-    if(sb) sb.textContent = '投稿';
-
-    document.querySelectorAll('[data-i18n="para"]').forEach(function(span){
-      span.textContent = '段落テキスト';
-    });
-    document.querySelectorAll('[data-i18n="img"]').forEach(function(b){
-      var idx = b.dataset.idx || '';
-      b.textContent = '画像' + idx;
-    });
-    document.querySelectorAll('[data-i18n="ytOpen"]').forEach(function(a){
-      a.textContent = 'YouTubeリンクを開く';
-    });
-    document.querySelectorAll('input[type="text"][data-i18n-ph="yt"]').forEach(function(inp){
-      inp.placeholder = 'https://youtu.be/xxxx';
-    });
+    if(sb) sb.textContent = window.__featureEditMode && window.__featureEditMode.loaded ? '更新保存' : '投稿';
 
     var pvEmpty = document.getElementById('pvEmpty');
     if(pvEmpty) pvEmpty.textContent = '段落と画像のプレビューがここに表示されます。';
@@ -257,6 +321,13 @@ const EXEC_URL = 'https://script.google.com/macros/s/AKfycbxZ9JsvX-BQUrFXLTBSkf9
         btn.textContent = 'ファイルを選択';
       }
     });
+
+    var modeBadge = document.getElementById('modeBadge');
+    if(modeBadge){
+      modeBadge.textContent = (window.__featureEditMode && window.__featureEditMode.loaded)
+        ? '現在: 編集モード'
+        : '現在: 新規投稿モード';
+    }
 
     if(window.__updatePreviewOnce) window.__updatePreviewOnce();
   }
@@ -308,6 +379,73 @@ async function callSubmitFeature(payload, onOK, onNG){
     onNG(err);
   }
 }
+
+async function callGetFeatureById(payload, onOK, onNG){
+  try{
+    if (window.google && google.script && google.script.run){
+      google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).getFeatureById(payload);
+      return;
+    }
+  }catch(_){}
+
+  try{
+    const url1 = window.EXEC_URL
+      + (window.EXEC_URL.indexOf('?')>=0 ? '&' : '?')
+      + 'fn=getFeatureById&payload=' + encodeURIComponent(JSON.stringify(payload))
+      + '&v=' + Date.now();
+    const r1 = await fetch(url1, { method:'GET', mode:'cors', cache:'no-store' });
+    const ct = (r1.headers.get('content-type') || '');
+    if (r1.ok && ct.indexOf('application/json') >= 0){
+      onOK(await r1.json());
+      return;
+    }
+  }catch(_){}
+
+  try{
+    const url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0 ? '&' : '?') + 'v=' + Date.now();
+    const r2 = await fetch(url2, {
+      method:'POST',
+      mode:'cors',
+      cache:'no-store',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn:'getFeatureById', payload, csrf:(window.__CZ_CSRF||'') })
+    });
+    if(!r2.ok){
+      const t = await r2.text().catch(()=> '');
+      throw new Error('HTTP '+r2.status+' '+t);
+    }
+    onOK(await r2.json());
+  }catch(err){
+    onNG(err);
+  }
+}
+
+async function callEditFeature(payload, onOK, onNG){
+  try{
+    if (window.google && google.script && google.script.run){
+      google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).editEntry(payload);
+      return;
+    }
+  }catch(_){}
+
+  try{
+    const url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
+    const r = await fetch(url, {
+      method:'POST',
+      mode:'cors',
+      cache:'no-store',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn:'editEntry', payload, csrf:(window.__CZ_CSRF||'') })
+    });
+    if(!r.ok){
+      const t = await r.text().catch(()=> '');
+      throw new Error('HTTP '+r.status+' '+t);
+    }
+    onOK(await r.json());
+  }catch(err){
+    onNG(err);
+  }
+}
 </script>
 
 <script>
@@ -317,10 +455,18 @@ async function callSubmitFeature(payload, onOK, onNG){
 
   const SHORTENERS_RE = /^(https:\/\/)(bit\.ly|tinyurl\.com|goo\.gl|is\.gd|t\.co|ow\.ly|buff\.ly|rb\.gy)\//i;
 
+  window.__featureEditMode = {
+    loaded:false,
+    rowIndex:0,
+    slug:'',
+    original:null
+  };
+
   function isAllowedHttpUrl(u){
     try{ var s=String(u||'').trim(); if(!/^https:\/\//i.test(s)) return false; return !SHORTENERS_RE.test(s); }
     catch(_){ return false; }
   }
+
   function isAllowedImageUrl(u){
     if(!u) return true;
     if(!isAllowedHttpUrl(u)) return false;
@@ -331,18 +477,20 @@ async function callSubmitFeature(payload, onOK, onNG){
         'i.imgur.com','imgur.com','githubusercontent.com','raw.githubusercontent.com',
         'upload.wikimedia.org','static.wikia.nocookie.net'
       ];
-      if(okHosts.some(h=> host===h || host.endsWith('.'+h))) return true;
+      if(okHosts.some(function(h){ return host===h || host.endsWith('.'+h); })) return true;
       return /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(u);
     }catch(_){ return false; }
   }
+
   function normalizeDriveUrl(url){
     try{
       if(!url) return '';
       var m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
-      m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);        if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
+      m = url.match(/[?&]id=([a-zA-Z0-9_-]+)/); if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
       return url;
     }catch(_){ return url; }
   }
+
   function isYouTubeUrl(u){
     const s = String(u||'').trim();
     if(!/^https:\/\//i.test(s)) return false;
@@ -357,7 +505,7 @@ async function callSubmitFeature(payload, onOK, onNG){
   var NG_TERMS = ["kill","die","rape","suicide","terror","bomb","fuck","cunt","asshole","nazi","kkk","white power","retard","spic","chink","gook","fag"];
 
   function clearBlobURLs(){
-    try{ blobURLs.forEach(u=>URL.revokeObjectURL(u)); }catch(_){}
+    try{ blobURLs.forEach(function(u){ URL.revokeObjectURL(u); }); }catch(_){}
     blobURLs=[];
   }
 
@@ -371,6 +519,54 @@ async function callSubmitFeature(payload, onOK, onNG){
       }
       return id;
     }catch(_){ return ''; }
+  }
+
+  function setStatusLine(msg){
+    var el = document.getElementById('editStatus');
+    if(el) el.textContent = msg;
+  }
+
+  function resetAllFileButtons(){
+    document.querySelectorAll('.filebtn').forEach(function(btn){
+      btn.textContent = 'ファイルを選択';
+    });
+  }
+
+  function clearFormValues(keepMeta){
+    document.querySelectorAll('input[type=text], textarea').forEach(function(i){
+      if(
+        i.id === 'edit_row' ||
+        i.id === 'edit_slug' ||
+        i.id === 'edit_loader_key'
+      ){
+        return;
+      }
+      i.value='';
+    });
+
+    for(let i=1;i<=PARA_MAX;i++){
+      for(let j=1;j<=IMG_PER;j++){
+        if(els['p'+i+'_img'+j+'_file']){
+          els['p'+i+'_img'+j+'_file'].value='';
+        }
+        if(els['p'+i+'_img'+j+'_warn']){
+          els['p'+i+'_img'+j+'_warn'].style.display='none';
+          els['p'+i+'_img'+j+'_warn'].textContent='';
+        }
+      }
+    }
+
+    resetAllFileButtons();
+
+    if(!keepMeta){
+      els.genre.value='';
+      els.genre_other.value='';
+      els.era.value='';
+      els.regionSel.value='';
+      els.regionOther.value='';
+      els.regionOther.style.display='none';
+      els.genreOtherWrap.style.display='none';
+    }
   }
 
   function buildParas(){
@@ -401,7 +597,7 @@ async function callSubmitFeature(payload, onOK, onNG){
         const file   = el('input',{type:'file', id:fileId, accept:'image/*', className:'hiddenfile'});
         const btn    = el('button', {type:'button', className:'filebtn', 'data-for':fileId, 'aria-controls':fileId, 'aria-label':'画像を選択'});
         btn.textContent = 'ファイルを選択';
-        btn.addEventListener('click', ()=> file.click());
+        btn.addEventListener('click', function(){ file.click(); });
         file.addEventListener('change', function(e){
           const f = e.currentTarget;
           btn.textContent = (f.files && f.files[0]) ? ('選択済み: ' + f.files[0].name) : 'ファイルを選択';
@@ -413,14 +609,16 @@ async function callSubmitFeature(payload, onOK, onNG){
         row.appendChild(fileWrap);
 
         var warn = el('div',{className:'warn', id:'p'+i+'_img'+j+'_warn', style:'display:none'});
-        box.appendChild(row); box.appendChild(warn);
+        box.appendChild(row);
+        box.appendChild(warn);
       }
 
       var ylab = el('label',{className:'label'});
       var yb = el('b'); yb.textContent='YouTube';
       ylab.appendChild(yb); ylab.appendChild(document.createTextNode('（任意・URL1本）'));
       var yt = el('input',{type:'text', id:'youtube'+i, 'data-i18n-ph':'yt', placeholder:'https://youtu.be/xxxx'});
-      box.appendChild(ylab); box.appendChild(yt);
+      box.appendChild(ylab);
+      box.appendChild(yt);
 
       host.appendChild(box);
     }
@@ -470,9 +668,9 @@ async function callSubmitFeature(payload, onOK, onNG){
     if(!bmp){
       const url = URL.createObjectURL(file);
       try{
-        bmp = await new Promise((res,rej)=>{
+        bmp = await new Promise(function(res,rej){
           const img = new Image();
-          img.onload = ()=> res(img);
+          img.onload = function(){ res(img); };
           img.onerror = rej;
           img.src = url;
         });
@@ -500,13 +698,28 @@ async function callSubmitFeature(payload, onOK, onNG){
 
   function bindEls(){
     els = {
-      genre:$('#genre'), genre_other:$('#genre_other'),
+      genre:$('#genre'),
+      genre_other:$('#genre_other'),
       era:$('#era'),
-      regionSel:$('#regionSel'), regionOther:$('#regionOther'),
-      title:$('#title'), author:$('#author'), edit_key:$('#edit_key'),
-      chipGenre:$('#chipGenre'), chipEra:$('#chipEra'), chipRegion:$('#chipRegion'),
-      pvTitle:$('#pvTitle'), pvAuthor:$('#pvAuthor'), pvBody:$('#pvBody'),
-      btn:$('#submitBtn'), msg:$('#msg'), genreOtherWrap:$('#genreOtherWrap')
+      regionSel:$('#regionSel'),
+      regionOther:$('#regionOther'),
+      title:$('#title'),
+      author:$('#author'),
+      edit_key:$('#edit_key'),
+      chipGenre:$('#chipGenre'),
+      chipEra:$('#chipEra'),
+      chipRegion:$('#chipRegion'),
+      pvTitle:$('#pvTitle'),
+      pvAuthor:$('#pvAuthor'),
+      pvBody:$('#pvBody'),
+      btn:$('#submitBtn'),
+      msg:$('#msg'),
+      genreOtherWrap:$('#genreOtherWrap'),
+      editRow:$('#edit_row'),
+      editSlug:$('#edit_slug'),
+      editLoaderKey:$('#edit_loader_key'),
+      loadEditBtn:$('#loadEditBtn'),
+      clearEditBtn:$('#clearEditBtn')
     };
     for(let i=1;i<=PARA_MAX;i++){
       els['para'+i+'_text'] = $('#para'+i+'_text');
@@ -523,6 +736,35 @@ async function callSubmitFeature(payload, onOK, onNG){
     var sel = els.regionSel.value;
     if(sel === '__other') return (els.regionOther.value||'').trim();
     return sel || '';
+  }
+
+  function setRegionValue(region){
+    var known = Array.prototype.slice.call(els.regionSel.options).map(function(o){ return o.value; });
+    if(region && known.indexOf(region) >= 0){
+      els.regionSel.value = region;
+      els.regionOther.value = '';
+      els.regionOther.style.display = 'none';
+    }else if(region){
+      els.regionSel.value = '__other';
+      els.regionOther.value = region;
+      els.regionOther.style.display = '';
+    }else{
+      els.regionSel.value = '';
+      els.regionOther.value = '';
+      els.regionOther.style.display = 'none';
+    }
+  }
+
+  function setGenreValue(genre, genreOther){
+    if(genre === 'other'){
+      els.genre.value = 'other';
+      els.genre_other.value = genreOther || '';
+      els.genreOtherWrap.style.display = '';
+    }else{
+      els.genre.value = genre || '';
+      els.genre_other.value = genreOther || '';
+      els.genreOtherWrap.style.display = (els.genre.value === 'other') ? '' : 'none';
+    }
   }
 
   let __painting = false;
@@ -543,21 +785,35 @@ async function callSubmitFeature(payload, onOK, onNG){
       els.pvTitle.textContent  = rawTitle;
       els.pvAuthor.textContent = rawAuthor ? ('by ' + rawAuthor) : '—';
 
-      var wrap = els.pvBody; wrap.innerHTML='';
+      var wrap = els.pvBody;
+      wrap.innerHTML='';
       clearBlobURLs();
       var hasAny = false;
 
       for(let i=1;i<=PARA_MAX;i++){
         var text = (els['para'+i+'_text'].value||'').trim();
         var srcs=[];
+
         for(let j=1;j<=IMG_PER;j++){
-          var warnEl = els['p'+i+'_img'+j+'_warn']; if(warnEl){ warnEl.style.display='none'; warnEl.textContent=''; }
+          var warnEl = els['p'+i+'_img'+j+'_warn'];
+          if(warnEl){
+            warnEl.style.display='none';
+            warnEl.textContent='';
+          }
 
           var u = (els['p'+i+'_img'+j+'_url'].value||'').trim();
           if(u){
-            if(!isAllowedImageUrl(u)){ if(warnEl){ warnEl.textContent='画像URLは https 必須・短縮URL不可・画像拡張子または許可ドメインのみ'; warnEl.style.display=''; } u=''; }
-            else { u = normalizeDriveUrl(u); }
+            if(!isAllowedImageUrl(u)){
+              if(warnEl){
+                warnEl.textContent='画像URLは https 必須・短縮URL不可・画像拡張子または許可ドメインのみ';
+                warnEl.style.display='';
+              }
+              u='';
+            }else{
+              u = normalizeDriveUrl(u);
+            }
           }
+
           if(!u){
             var fEl = els['p'+i+'_img'+j+'_file'];
             if(fEl && fEl.files && fEl.files[0]){
@@ -566,12 +822,16 @@ async function callSubmitFeature(payload, onOK, onNG){
                 u = URL.createObjectURL(fEl.files[0]);
                 blobURLs.push(u);
               }else{
-                if(warnEl){ warnEl.textContent='プレビュー不可：'+chk.reason; warnEl.style.display=''; }
+                if(warnEl){
+                  warnEl.textContent='プレビュー不可：'+chk.reason;
+                  warnEl.style.display='';
+                }
               }
             }
           }
           if(u) srcs.push(u);
         }
+
         var y = (els['youtube'+i].value||'').trim();
         if(y && !isYouTubeUrl(y)){ y = ''; }
 
@@ -585,19 +845,25 @@ async function callSubmitFeature(payload, onOK, onNG){
 
         if(srcs.length){
           var t = el('div', {className:'thumbs'});
-          srcs.forEach(function(u){ var img=el('img'); img.src=u; t.appendChild(img); });
+          srcs.forEach(function(u){
+            var img = el('img');
+            img.src = u;
+            t.appendChild(img);
+          });
           sec.appendChild(t);
         }
 
         if(y){
-          var a = el('a',{href:y,target:'_blank',rel:'noopener','data-i18n':'ytOpen'});
+          var a = el('a',{href:y,target:'_blank',rel:'noopener'});
           a.textContent = 'YouTubeリンクを開く';
-          var yt = el('div',{className:'ytlink'}); yt.appendChild(a);
+          var yt = el('div',{className:'ytlink'});
+          yt.appendChild(a);
           sec.appendChild(yt);
         }
 
         wrap.appendChild(sec);
       }
+
       if(!hasAny){
         var em = el('div',{id:'pvEmpty',className:'ph'});
         em.textContent = '段落と画像のプレビューがここに表示されます。';
@@ -607,7 +873,7 @@ async function callSubmitFeature(payload, onOK, onNG){
       __painting = false;
     }
   }
-  window.__updatePreviewOnce = ()=>{ updatePreview(); };
+  window.__updatePreviewOnce = function(){ updatePreview(); };
 
   function clientNgCheck(){
     try{
@@ -630,6 +896,93 @@ async function callSubmitFeature(payload, onOK, onNG){
     }catch(_){ return ''; }
   }
 
+  function buildEditPatch(){
+    var patch = {
+      status:'published',
+      title:(els.title.value||'').trim(),
+      author:(els.author.value||'').trim(),
+      genre:(els.genre.value||'').trim(),
+      genre_other:(els.genre_other.value||'').trim(),
+      era:(els.era.value||'').trim(),
+      region:getRegionValue()
+    };
+
+    if(window.__featureEditMode.slug){
+      patch.slug = window.__featureEditMode.slug;
+    }
+
+    for(let i=1;i<=PARA_MAX;i++){
+      patch['para'+i+'_text'] = (els['para'+i+'_text'].value||'').trim();
+      patch['youtube'+i] = (els['youtube'+i].value||'').trim();
+
+      for(let j=1;j<=IMG_PER;j++){
+        var fileEl = els['p'+i+'_img'+j+'_file'];
+        if(fileEl && fileEl.files && fileEl.files[0]){
+          throw new Error('編集モードでは画像アップロード差し替えは未対応です。画像URL欄で差し替えてください。');
+        }
+
+        var rawUrl = (els['p'+i+'_img'+j+'_url'].value||'').trim();
+        if(rawUrl){
+          if(!isAllowedImageUrl(rawUrl)){
+            throw new Error('画像URLが無効です（§'+i+' 画像'+j+'）');
+          }
+          rawUrl = normalizeDriveUrl(rawUrl);
+        }
+        patch['p'+i+'_img'+j+'_url'] = rawUrl;
+      }
+    }
+
+    return patch;
+  }
+
+  function populateFromFeature(data, rowIndex){
+    clearFormValues(true);
+
+    setGenreValue(data.genre || '', data.genre_other || '');
+    els.era.value = data.era || '';
+    setRegionValue(data.region || '');
+    els.title.value = data.title || '';
+    els.author.value = data.author || '';
+    els.edit_key.value = els.editLoaderKey.value || '';
+
+    for(let i=1;i<=PARA_MAX;i++){
+      els['para'+i+'_text'].value = data['para'+i+'_text'] || '';
+      els['youtube'+i].value = data['youtube'+i] || '';
+      for(let j=1;j<=IMG_PER;j++){
+        els['p'+i+'_img'+j+'_url'].value = data['p'+i+'_img'+j+'_url'] || '';
+      }
+    }
+
+    window.__featureEditMode.loaded = true;
+    window.__featureEditMode.rowIndex = Number(rowIndex || 0);
+    window.__featureEditMode.slug = data.slug || '';
+    window.__featureEditMode.original = data;
+
+    setStatusLine('読込完了: row=' + window.__featureEditMode.rowIndex + (window.__featureEditMode.slug ? (' / slug=' + window.__featureEditMode.slug) : ''));
+    if(window.__setFeatureUI) window.__setFeatureUI();
+    updatePreview();
+  }
+
+  function exitEditMode(){
+    window.__featureEditMode.loaded = false;
+    window.__featureEditMode.rowIndex = 0;
+    window.__featureEditMode.slug = '';
+    window.__featureEditMode.original = null;
+
+    clearFormValues(false);
+
+    els.editRow.value = '';
+    els.editSlug.value = '';
+    els.editLoaderKey.value = '';
+    els.edit_key.value = '';
+    setStatusLine('未読込です。');
+    els.msg.textContent = '';
+    els.msg.className = 'msg';
+
+    if(window.__setFeatureUI) window.__setFeatureUI();
+    updatePreview();
+  }
+
   function bindAll(){
     els.genre.addEventListener('change', function(){
       els.genreOtherWrap.style.display = (els.genre.value==='other') ? '' : 'none';
@@ -649,9 +1002,13 @@ async function callSubmitFeature(payload, onOK, onNG){
       ids.push('para'+i+'_text','youtube'+i);
       for(let j=1;j<=IMG_PER;j++){ ids.push('p'+i+'_img'+j+'_url'); }
     }
+
     ids.forEach(function(id){
-      var e = $('#'+id); if(!e) return;
-      ['input','change','keyup','paste','blur'].forEach(function(ev){ e.addEventListener(ev, updatePreview, false); });
+      var e = $('#'+id);
+      if(!e) return;
+      ['input','change','keyup','paste','blur'].forEach(function(ev){
+        e.addEventListener(ev, updatePreview, false);
+      });
     });
 
     for(let i=1;i<=PARA_MAX;i++){
@@ -664,16 +1021,73 @@ async function callSubmitFeature(payload, onOK, onNG){
     setInterval(function(){
       try{
         var now = {};
-        ids.forEach(function(id){ var e=$('#'+id); now[id]=e?e.value:''; });
+        ids.forEach(function(id){
+          var e = $('#'+id);
+          now[id] = e ? e.value : '';
+        });
         var changed = JSON.stringify(now)!==JSON.stringify(lastVals);
-        if(changed){ lastVals=now; updatePreview(); }
+        if(changed){
+          lastVals = now;
+          updatePreview();
+        }
       }catch(_){}
     }, 700);
   }
 
+  function bindEditLoader(){
+    els.loadEditBtn.addEventListener('click', function(){
+      els.msg.textContent = '';
+      els.msg.className = 'msg';
+
+      var row = (els.editRow.value || '').trim();
+      var slug = (els.editSlug.value || '').trim();
+      var key = (els.editLoaderKey.value || '').trim();
+
+      if(!key){
+        setStatusLine('編集キーを入力してください。');
+        return;
+      }
+      if(!row && !slug){
+        setStatusLine('row または slug のどちらかを入力してください。');
+        return;
+      }
+
+      var payload = row ? { rowIndex:Number(row) } : { slug:slug };
+
+      setStatusLine('読込中...');
+      callGetFeatureById(payload, function(res){
+        try{
+          if(!res || !res.ok || !res.data){
+            setStatusLine('対象データが見つかりません。');
+            return;
+          }
+
+          var data = res.data || {};
+          var storedKey = String(data.edit_key || '');
+          if(storedKey !== key){
+            setStatusLine('編集キーが一致しません。');
+            return;
+          }
+
+          populateFromFeature(data, res.rowIndex || data.rowIndex || row);
+        }catch(_){
+          setStatusLine('読込に失敗しました。');
+        }
+      }, function(err){
+        setStatusLine('読込に失敗しました: ' + (err && err.message ? err.message : String(err)));
+      });
+    });
+
+    els.clearEditBtn.addEventListener('click', function(){
+      exitEditMode();
+    });
+  }
+
   function bindSubmit(){
     els.btn.addEventListener('click', async function(){
-      els.msg.textContent=''; els.msg.className='msg'; els.btn.disabled=true;
+      els.msg.textContent='';
+      els.msg.className='msg';
+      els.btn.disabled=true;
 
       try{
         if(!document.getElementById('agree').checked){
@@ -686,6 +1100,7 @@ async function callSubmitFeature(payload, onOK, onNG){
         if(els.genre.value==='other' && !(els.genre_other.value||'').trim()){
           throw new Error('GENRE が OTHER の場合は自由入力も必須です');
         }
+
         var ek = (els.edit_key.value||'').trim();
         if(!/^[A-Za-z0-9]{8,32}$/.test(ek)){
           throw new Error('編集キーは半角英数字のみ・8〜32文字で入力してください');
@@ -701,8 +1116,39 @@ async function callSubmitFeature(payload, onOK, onNG){
           }
         }
 
-        var regionVal = getRegionValue();
+        if(window.__featureEditMode.loaded){
+          var patch = buildEditPatch();
 
+          callEditFeature(
+            {
+              sheetName:'Features',
+              rowIndex:window.__featureEditMode.rowIndex,
+              edit_key:ek,
+              action:'update',
+              patch:patch
+            },
+            function(res){
+              if(res && res.ok){
+                els.msg.className='msg ok';
+                els.msg.textContent='更新が完了しました。';
+                setStatusLine('更新完了: row=' + window.__featureEditMode.rowIndex + (window.__featureEditMode.slug ? (' / slug=' + window.__featureEditMode.slug) : ''));
+              }else{
+                els.msg.className='msg err';
+                els.msg.textContent='Error: ' + (res && res.error ? res.error : 'server error');
+              }
+              els.btn.disabled=false;
+            },
+            function(err){
+              els.msg.className='msg err';
+              els.msg.textContent='Error: ' + (err && err.message ? err.message : String(err));
+              els.btn.disabled=false;
+            }
+          );
+
+          return;
+        }
+
+        var regionVal = getRegionValue();
         var payload = {
           status:'published',
           title:(els.title.value||'').trim(),
@@ -712,14 +1158,14 @@ async function callSubmitFeature(payload, onOK, onNG){
           era:(els.era.value||'').trim(),
           region: regionVal,
           edit_key: ek,
-          client_id: (function(){ try{ return getClientId(); }catch(_){ return ''; } })()
+          client_id:(function(){ try{ return getClientId(); }catch(_){ return ''; } })()
         };
 
         const imgTasks = [];
 
         for(let i=1;i<=PARA_MAX;i++){
           payload['para'+i+'_text'] = (els['para'+i+'_text'].value||'').trim();
-          payload['youtube'+i]     = (els['youtube'+i].value||'').trim();
+          payload['youtube'+i] = (els['youtube'+i].value||'').trim();
 
           for(let j=1;j<=IMG_PER;j++){
             var urlEl  = els['p'+i+'_img'+j+'_url'];
@@ -729,7 +1175,10 @@ async function callSubmitFeature(payload, onOK, onNG){
             var rawUrl = (urlEl.value||'').trim();
             if(rawUrl){
               if(!isAllowedImageUrl(rawUrl)){
-                if(warnEl){ warnEl.textContent='画像URLは https 必須・短縮URL不可・画像拡張子または許可ドメインのみ'; warnEl.style.display=''; }
+                if(warnEl){
+                  warnEl.textContent='画像URLは https 必須・短縮URL不可・画像拡張子または許可ドメインのみ';
+                  warnEl.style.display='';
+                }
                 rawUrl = '';
               }else{
                 rawUrl = normalizeDriveUrl(rawUrl);
@@ -739,7 +1188,7 @@ async function callSubmitFeature(payload, onOK, onNG){
 
             if(!payload['p'+i+'_img'+j+'_url'] && fileEl && fileEl.files && fileEl.files[0]){
               const f = fileEl.files[0];
-              imgTasks.push((async()=>{
+              imgTasks.push((async function(){
                 const dataUrl = await compressImageFile(f, 1600, 0.82);
                 payload['p'+i+'_img'+j+'_data'] = dataUrl;
               })());
@@ -754,13 +1203,25 @@ async function callSubmitFeature(payload, onOK, onNG){
           function(res){
             if(res && res.ok){
               els.msg.className='msg ok';
-              els.msg.textContent='Posted!';
-              var keep = { genre:els.genre.value, era:els.era.value, regionSel:els.regionSel.value, regionOther:els.regionOther.value, edit_key:els.edit_key.value };
-              document.querySelectorAll('input[type=text], textarea').forEach(function(i){ i.value=''; });
-              for(let i=1;i<=PARA_MAX;i++){ for(let j=1;j<=IMG_PER;j++){ els['p'+i+'_img'+j+'_file'].value=''; els['p'+i+'_img'+j+'_warn'].style.display='none'; els['p'+i+'_img'+j+'_warn'].textContent=''; } }
-              els.genre.value=keep.genre; els.era.value=keep.era; els.regionSel.value=keep.regionSel; els.regionOther.value=keep.regionOther; els.edit_key.value=keep.edit_key;
+              els.msg.textContent='投稿が完了しました。';
+              var keep = {
+                genre:els.genre.value,
+                era:els.era.value,
+                regionSel:els.regionSel.value,
+                regionOther:els.regionOther.value,
+                edit_key:els.edit_key.value
+              };
+
+              clearFormValues(false);
+
+              els.genre.value=keep.genre;
+              els.era.value=keep.era;
+              els.regionSel.value=keep.regionSel;
+              els.regionOther.value=keep.regionOther;
+              els.edit_key.value=keep.edit_key;
               els.genreOtherWrap.style.display = (els.genre.value==='other') ? '' : 'none';
-              els.regionOther.style.display    = (els.regionSel.value==='__other') ? '' : 'none';
+              els.regionOther.style.display = (els.regionSel.value==='__other') ? '' : 'none';
+
               if(window.__setFeatureUI) window.__setFeatureUI();
               updatePreview();
             }else{
@@ -790,6 +1251,7 @@ async function callSubmitFeature(payload, onOK, onNG){
   buildParas();
   bindEls();
   bindAll();
+  bindEditLoader();
   bindSubmit();
   if(window.__setFeatureUI) window.__setFeatureUI();
   updatePreview();

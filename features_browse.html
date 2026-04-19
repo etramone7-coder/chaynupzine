@@ -88,12 +88,8 @@
   .edittitle{font-weight:800; font-size:16px}
   .editrow{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px}
   .editrow3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px}
-  @media(max-width:900px){
-    .editrow3{grid-template-columns:1fr}
-  }
-  @media(max-width:780px){
-    .editrow{grid-template-columns:1fr}
-  }
+  @media(max-width:900px){ .editrow3{grid-template-columns:1fr} }
+  @media(max-width:780px){ .editrow{grid-template-columns:1fr} }
 
   .lab{font-size:12px; color:#666; margin:0 0 6px; font-weight:700}
   .in,.ta{
@@ -263,9 +259,6 @@ var I18N = {
     back:'← 特集一覧へ戻る',
     notFound:'対象の特集が見つかりません。',
     hidden:'この特集は非公開です。',
-    genre:'ジャンル',
-    era:'年代',
-    region:'地域',
     top:'← トップへ戻る',
     editStart:'編集開始',
     save:'保存',
@@ -285,9 +278,6 @@ var I18N = {
     back:'← Back to Features',
     notFound:'Feature not found.',
     hidden:'This feature is not public.',
-    genre:'Genre',
-    era:'Era',
-    region:'Region',
     top:'← Back to Top',
     editStart:'Edit',
     save:'Save',
@@ -365,6 +355,11 @@ function ytId(u){
   return m2 ? m2[1] : '';
 }
 
+function isAllowedYouTube(u){
+  if(!u) return true;
+  return /^(https:\/\/(?:www\.)?youtube\.com\/watch\?v=|https:\/\/youtu\.be\/)/i.test(String(u).trim());
+}
+
 function chip(text){
   var s=document.createElement('span');
   s.className='chip';
@@ -394,7 +389,6 @@ function applyLang(){
   document.getElementById('btn-top').textContent = t.top;
   document.getElementById('lang-ja').classList.toggle('active', curLang==='ja');
   document.getElementById('lang-en').classList.toggle('active', curLang==='en');
-
   document.getElementById('btnEditStart').textContent = t.editStart;
   document.getElementById('btnSave').textContent = t.save;
   document.getElementById('btnHide').textContent = t.hide;
@@ -678,11 +672,11 @@ function clearEditForm(){
 
 function collectPatch(){
   var patch = {
-    title: document.getElementById('e_title').value || '',
-    author: document.getElementById('e_author').value || '',
-    genre: document.getElementById('e_genre').value || '',
-    era: document.getElementById('e_era').value || '',
-    region: document.getElementById('e_region').value || ''
+    title: (document.getElementById('e_title').value || '').trim(),
+    author: (document.getElementById('e_author').value || '').trim(),
+    genre: (document.getElementById('e_genre').value || '').trim(),
+    era: (document.getElementById('e_era').value || '').trim(),
+    region: (document.getElementById('e_region').value || '').trim()
   };
 
   if(gFeature && gFeature.slug){
@@ -691,15 +685,13 @@ function collectPatch(){
   if(gFeature && Object.prototype.hasOwnProperty.call(gFeature, 'genre_other')){
     patch.genre_other = gFeature.genre_other || '';
   }
-  if(gFeature && Object.prototype.hasOwnProperty.call(gFeature, 'status')){
-    patch.status = gFeature.status || 'published';
-  }
+  patch.status = (gFeature && gFeature.status) ? gFeature.status : 'published';
 
   for(var i=1;i<=5;i++){
-    patch['para'+i+'_text'] = (document.getElementById('e_para'+i+'_text') || {}).value || '';
-    patch['youtube'+i] = (document.getElementById('e_youtube'+i) || {}).value || '';
+    patch['para'+i+'_text'] = ((document.getElementById('e_para'+i+'_text') || {}).value || '').trim();
+    patch['youtube'+i] = ((document.getElementById('e_youtube'+i) || {}).value || '').trim();
     for(var j=1;j<=3;j++){
-      patch['p'+i+'_img'+j+'_url'] = (document.getElementById('e_p'+i+'_img'+j+'_url') || {}).value || '';
+      patch['p'+i+'_img'+j+'_url'] = ((document.getElementById('e_p'+i+'_img'+j+'_url') || {}).value || '').trim();
     }
   }
 
@@ -709,14 +701,12 @@ function collectPatch(){
 function validatePatch(patch){
   Object.keys(patch).forEach(function(k){
     if(/^p\d+_img\d+_url$/.test(k) && patch[k]){
-      var u = String(patch[k]).trim();
-      if(!/^https:\/\//i.test(u)){
+      if(!/^https:\/\//i.test(String(patch[k]).trim())){
         throw new Error('画像URLは https のみ対応です: ' + k);
       }
     }
     if(/^youtube\d+$/.test(k) && patch[k]){
-      var y = String(patch[k]).trim();
-      if(y && !/^(https:\/\/(?:www\.)?youtube\.com\/watch\?v=|https:\/\/youtu\.be\/)/i.test(y)){
+      if(!isAllowedYouTube(String(patch[k]).trim())){
         throw new Error('YouTube URL が無効です: ' + k);
       }
     }

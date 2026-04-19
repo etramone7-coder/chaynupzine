@@ -18,9 +18,6 @@
   .titlebar{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 12px}
   .brand{background:#111;color:#fff;border-radius:8px;padding:7px 12px;font-weight:800;letter-spacing:.4px}
   .title{font-weight:800;letter-spacing:.3px;color:#fff;font-size:22px;margin:0}
-  .lang{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-  .lang button{border:1px solid #3a4254;background:#0e121a;color:#e7e9ee;padding:6px 10px;border-radius:10px;font-size:13px;cursor:pointer}
-  .lang button.active{background:#e7e9ee;color:#0e121a;border-color:#e7e9ee}
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 0}
   .btnA{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;font-size:16px}
   .btnA.ghost{background:#0e121a;color:#fff;border:1px solid var(--line)}
@@ -28,12 +25,47 @@
   .filters{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 6px}
   .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--chip-ink);font-size:12px;border:1px solid #3a4254}
   .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
-  .card{background:#0e121a;border:1px solid #273045;border-radius:12px;overflow:hidden;
-        display:grid;grid-template-columns:minmax(220px,42%) 1fr;gap:12px}
-  .leftcol{display:flex;flex-direction:column;gap:12px;padding:10px 12px}
-  .ph{aspect-ratio:16/9;background:#0b0e14;color:#2c3343;display:flex;align-items:center;justify-content:center}
-  .cover{width:100%;height:auto;display:block;object-fit:cover}
-  .pad{padding:10px 12px}
+
+  .card{
+    background:#0e121a;
+    border:1px solid #273045;
+    border-radius:12px;
+    overflow:hidden;
+    display:grid;
+    grid-template-columns:minmax(280px,40%) 1fr;
+    grid-template-rows:auto auto;
+    gap:0;
+    align-items:stretch;
+  }
+
+  .flyerWrap{
+    grid-column:1;
+    grid-row:1 / 3;
+    border-right:1px solid #273045;
+    background:#05070c;
+    padding:12px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+  }
+
+  .flyerBox{width:100%}
+
+  .infoWrap{
+    grid-column:2;
+    grid-row:1;
+    padding:12px 16px 10px;
+  }
+
+  .videoWrap{
+    grid-column:2;
+    grid-row:2;
+    border-top:1px solid #273045;
+    padding:12px 16px 16px;
+  }
+
+  .ph{aspect-ratio:16/9;background:#0b0e14;color:#2c3343;display:flex;align-items:center;justify-content:center;border-radius:8px;overflow:hidden}
+  .cover{width:100%;height:auto;display:block;object-fit:cover;border-radius:8px}
   .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .artist{font-weight:800}
   .titleLive{opacity:.92}
@@ -47,14 +79,34 @@
   .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 0}
   .in{background:#0e121a;border:1px solid var(--line);border-radius:8px;color:#fff;padding:8px 10px}
   .small{font-size:12px;color:#9aa3af}
-  .yt{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-top:1px solid #273045}
+  .yt{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden}
   .yt iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
   .msg{margin:6px 0 0;font-size:12px}
   .ok{color:#5dd39e}.err{color:var(--danger)}
-  .linkOffi{display:inline-block;margin-top:6px;text-decoration:none;color:#8ab4ff}
   .bg::after{content:"";position:absolute;inset:0;background:rgba(255,255,255,.35)}
   .card .artist,.card .titleLive,.card .meta,.card .price,.card .desc,.card .small{color:var(--ink);}
-  .pad,.desc,.titleLive,.artist{word-break:break-word;overflow-wrap:anywhere;}
+  .infoWrap,.desc,.titleLive,.artist{word-break:break-word;overflow-wrap:anywhere;}
+
+  @media (max-width:820px){
+    .card{
+      grid-template-columns:1fr;
+      grid-template-rows:auto auto auto;
+    }
+    .flyerWrap{
+      grid-column:1;
+      grid-row:1;
+      border-right:0;
+      border-bottom:1px solid #273045;
+    }
+    .infoWrap{
+      grid-column:1;
+      grid-row:2;
+    }
+    .videoWrap{
+      grid-column:1;
+      grid-row:3;
+    }
+  }
 </style>
 </head>
 <body>
@@ -64,11 +116,7 @@
   <div class="titlebar">
     <div>
       <div class="brand">CHAYNUPZINE</div>
-      <h1 id="pageTitle" class="title">Lives browse</h1>
-    </div>
-    <div class="lang">
-      <button id="lang-ja" type="button">JP</button>
-      <button id="lang-en" type="button">EN</button>
+      <h1 id="pageTitle" class="title">ライブ詳細</h1>
     </div>
   </div>
 
@@ -79,7 +127,7 @@
 
   <div class="panel" style="margin-top:12px">
     <div id="chips" class="filters"></div>
-    <div class="small" id="summary"></div>
+    <div class="small" id="summary">条件に合致するライブを表示します。</div>
 
     <div class="toolbar">
       <span class="small" id="tool-cap">投稿を編集/削除</span>
@@ -97,27 +145,23 @@
   <div class="morewrap"><button id="moreBtn" class="btn" type="button" style="display:none">もっと見る</button></div>
   <div id="foot" class="small"></div>
 </div>
+
 <script>
 (function(){
-  let current = null; /* ← 修正：ここに移動（以外は変更なし） */
+  let current = null;
 
-  var lang = (function(){ var s=localStorage.getItem('chay_lang'); return s?s:'ja'; })();
-
-var I18N = {
-  ja:{
-    subtitle:'Lives browse',
+  var TEXT = {
+    subtitle:'ライブ詳細',
     labels:{
       top:'トップへ戻る',
       toForm:'ライブ投稿フォームへ',
       editCap:'投稿を編集/削除',
       more:'もっと見る',
-      offi:'公式/イベントページ',
-      report:'通報',
       edit:'編集',
       hide:'非表示',
       unhide:'再表示',
       keyPh:'編集キー',
-      needKey:'編集キーを入力してください',   // ← records と同等のキーを追加
+      needKey:'編集キーを入力してください',
       cond:'条件に合致するライブを表示します。',
       nodata:'データを取得できませんでした。検索ページからもう一度お試しください。',
       ok:'完了しました',
@@ -126,95 +170,27 @@ var I18N = {
       by:'投稿者：'
     },
     status:{ scheduled:'開催予定', canceled:'中止', done:'終了' }
-  },
-  en:{
-    subtitle:'Lives browse',
-    labels:{
-      top:'Back to Top',
-      toForm:'Go to Live Post Form',
-      editCap:'Edit/Delete a Post',
-      more:'Load more',
-      offi:'Official/Event page',
-      report:'Report',
-      edit:'Edit',
-      hide:'Hide',
-      unhide:'Unhide',
-      keyPh:'Edit key',
-      needKey:'Please enter your edit key',  // ← 追加
-      cond:'Showing lives matching your filters.',
-      nodata:'No data to show. Please open from the search page again.',
-      ok:'Done',
-      fail:'Failed',
-      saved:'Saved',
-      by:'by '
-    },
-    status:{ scheduled:'Scheduled', canceled:'Canceled', done:'Finished' }
+  };
+
+  function setUI(){
+    var ttl = document.getElementById('pageTitle'); if (ttl) ttl.textContent = TEXT.subtitle;
+    var bTop  = document.getElementById('btn-top');   if (bTop)  bTop.textContent  = TEXT.labels.top;
+    var bForm = document.getElementById('btn-form');  if (bForm) bForm.textContent = TEXT.labels.toForm;
+    var cap   = document.getElementById('tool-cap');  if (cap)   cap.textContent   = TEXT.labels.editCap;
+    var more  = document.getElementById('moreBtn');   if (more)  more.textContent  = TEXT.labels.more;
+    var sum   = document.getElementById('summary');   if (sum)   sum.textContent   = TEXT.labels.cond;
+    var ed    = document.getElementById('btnEdit');   if (ed)    ed.textContent    = TEXT.labels.edit;
+    var hid   = document.getElementById('btnHide');   if (hid)   hid.textContent   = TEXT.labels.hide;
+    var unh   = document.getElementById('btnUnhide'); if (unh)   unh.textContent   = TEXT.labels.unhide;
+    var ek    = document.getElementById('editKey');   if (ek)    ek.placeholder    = TEXT.labels.keyPh;
   }
-};
-  function setLangUI(){
-  var t = I18N[lang], L = t.labels;
-
-  // 固定文言（records と同じ流儀で一括適用）
-  var ttl = document.getElementById('pageTitle'); if (ttl) ttl.textContent = t.subtitle; // ← subtitleを使う
-  var bTop  = document.getElementById('btn-top');   if (bTop)  bTop.textContent  = L.top;
-  var bForm = document.getElementById('btn-form');  if (bForm) bForm.textContent = L.toForm;
-  var cap   = document.getElementById('tool-cap');  if (cap)   cap.textContent   = L.editCap;
-  var more  = document.getElementById('moreBtn');   if (more)  more.textContent  = L.more;
-  var sum   = document.getElementById('summary');   if (sum)   sum.textContent   = L.cond;
-  var ed    = document.getElementById('btnEdit');   if (ed)    ed.textContent    = L.edit;
-  var hid   = document.getElementById('btnHide');   if (hid)   hid.textContent   = L.hide;
-  var unh   = document.getElementById('btnUnhide'); if (unh)   unh.textContent   = L.unhide;
-  var ek    = document.getElementById('editKey');   if (ek)    ek.placeholder    = L.keyPh;
-
-  // 言語トグルの見た目
-  var jpBtn = document.getElementById('lang-ja');
-  var enBtn = document.getElementById('lang-en');
-  if (jpBtn) jpBtn.classList.toggle('active', lang==='ja');
-  if (enBtn) enBtn.classList.toggle('active', lang==='en');
-
-  // 動的生成ボタン（例：通報）
-  document.querySelectorAll('.btn-report').forEach(function(b){ b.textContent = L.report; });
-
-  // 既に1件データが読み込まれている場合は本文側も反映
-  if (typeof current !== 'undefined' && current){
-    // タイトル
-    var titleText = (lang==='en' && current.title_en) ? current.title_en : current.title;
-    var titleEl = document.querySelector('.titleLive'); if (titleEl && titleText) titleEl.textContent = titleText;
-
-    // 説明
-    var descText = (lang==='en' && current.description_en) ? current.description_en : current.description;
-    var descEl = document.querySelector('.desc'); if (descEl && descText) descEl.textContent = descText;
-
-    // 会場・日付
-    var venue = (lang==='en' ? (current.venue_en||current.venue) : (current.venue||current.venue_en));
-    var metaEl = document.querySelector('.meta');
-    if (metaEl){
-      var date = current.date ? formatDate(current.date) : '';
-      var ot = current.open_time ? 'OPEN '+formatTime(current.open_time) : '';
-      var st = current.start_time ? 'START '+formatTime(current.start_time) : '';
-      metaEl.textContent = [date, ot, st, venue?('@ '+venue):''].filter(Boolean).join('  ');
-    }
-  }
-}
-  document.getElementById('lang-ja').onclick = function(){
-  lang = 'ja';
-  localStorage.setItem('chay_lang', lang);
-  setLangUI();
-  if (typeof renderLive==='function' && typeof current!=='undefined') renderLive(current);
-};
-document.getElementById('lang-en').onclick = function(){
-  lang = 'en';
-  localStorage.setItem('chay_lang', lang);
-  setLangUI();
-  if (typeof renderLive==='function' && typeof current!=='undefined') renderLive(current);
-};
 
   function el(tag,attrs){var e=document.createElement(tag);if(attrs)Object.assign(e,attrs);return e;}
   function toStatus(v){
-  var key = (String(v||'scheduled')).toLowerCase();
-  var st = I18N[lang].status;
-  return st[key] || st.scheduled;
-}
+    var key = (String(v||'scheduled')).toLowerCase();
+    var st = TEXT.status;
+    return st[key] || st.scheduled;
+  }
   function qs(k){ var m=location.search.match(new RegExp('[?&]'+k+'=([^&]+)')); return m?decodeURIComponent(m[1]):''; }
 
   function firstUrlFromCell(s){
@@ -230,16 +206,21 @@ document.getElementById('lang-en').onclick = function(){
       return parts[0]||'';
     }catch(_){ return ''; }
   }
+
   function normalizeDrive(u){
     try{
       var raw=firstUrlFromCell(u);
       var s=String(raw||'').trim(); if(!s) return '';
-      var m=s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      var m=s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+           || s.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+           || s.match(/uc\?export=view&id=([a-zA-Z0-9_-]+)/);
       if(m) return 'https://drive.google.com/uc?export=view&id='+m[1];
       return s.startsWith('http')?s:'';
     }catch(_){ return ''; }
   }
+
   function pick(v, arr){ for(var i=0;i<arr.length;i++){ if(v[arr[i]]) return v[arr[i]]; } return ''; }
+
   function ytId(u){
     try{
       var s=String(u||'').trim(); if(!s) return '';
@@ -255,6 +236,7 @@ document.getElementById('lang-en').onclick = function(){
     var m2=String(u||'').match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{6,})/);
     return m2?m2[1]:'';
   }
+
   function createImgWithFallback(src){
     var img=document.createElement('img');
     img.className='cover';
@@ -268,48 +250,50 @@ document.getElementById('lang-en').onclick = function(){
     };
     return img;
   }
-  function resolveImageSrc(item){
-  try{
-    var u = item.image_url || pick(item,['image','cover','img','imageUrl','coverUrl']);
-    u = (u||'').trim();
-    var arr=[];
 
-    // Drive ID 抽出
-    var m = u.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) 
-         || u.match(/[?&]id=([a-zA-Z0-9_-]+)/)
-         || u.match(/uc\?export=view&id=([a-zA-Z0-9_-]+)/);
-    if(m){
-      var id=m[1];
-      // uc?export=view を最優先に
-      arr.push('https://drive.google.com/uc?export=view&id='+id);
-      arr.push('https://drive.google.com/thumbnail?id='+id+'&sz=w900');
-    }
-if(!arr.length && u.includes('drive.google.com')){
-  return normalizeDrive(u);
-}
-    if(/^https:\/\//i.test(u)) arr.push(u);
+  function resolveImageCandidates(item){
+    try{
+      var u = item.image_url || pick(item,['image','cover','img','imageUrl','coverUrl']);
+      u = String(u || '').trim();
 
-    if(arr.length){
       var ver = String(item.image_updated_at || item.updated_at || item.timestamp || '').trim();
-      // 先頭候補（uc?export=view）を必ず返す
-      var url = arr[0];
-      if(ver) url += (url.indexOf('?')>=0 ? '&':'?')+'v='+encodeURIComponent(ver);
-      return url;
-    }
+      var candidates = [];
+      var seen = {};
 
-    // DataURL fallback
-    var d = item.image_data || pick(item,['imageData','img_data','dataUrl']);
-    if(d && /^data:image\//i.test(d)) return d;
+      function pushUrl(x){
+        x = String(x || '').trim();
+        if(!x) return;
+        x = x + (ver ? ((x.indexOf('?')>=0?'&':'?')+'v='+encodeURIComponent(ver)) : '');
+        if(seen[x]) return;
+        seen[x] = true;
+        candidates.push(x);
+      }
 
-    // exec 経由 fallback
-    if(item.rowIndex && window.EXEC_URL){
-      return window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'fn=getImage&row=' + encodeURIComponent(item.rowIndex);
+      var m = u.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)
+           || u.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+           || u.match(/uc\?export=view&id=([a-zA-Z0-9_-]+)/);
+
+      if(m){
+        var id = m[1];
+        pushUrl('https://drive.google.com/uc?export=view&id='+id);
+        pushUrl('https://drive.google.com/thumbnail?id='+id+'&sz=w1200');
+        pushUrl('https://lh3.googleusercontent.com/d/'+id);
+      }else if(u && u.indexOf('drive.google.com') >= 0){
+        var normalized = normalizeDrive(u);
+        if(normalized) pushUrl(normalized);
+      }
+
+      if(/^https:\/\//i.test(u)) pushUrl(u);
+
+      var d = item.image_data || pick(item,['imageData','img_data','dataUrl']);
+      if(d && /^data:image\//i.test(d)) pushUrl(d);
+
+      return candidates;
+    }catch(_){
+      return [];
     }
-    return '';
-  }catch(e){
-    return '';
   }
-}
+
   function formatDate(s){
     try{
       if(!s) return '';
@@ -325,6 +309,7 @@ if(!arr.length && u.includes('drive.google.com')){
       return y+'/'+m+'/'+dd;
     }catch(_){ return String(s||''); }
   }
+
   function formatTime(s){
     try{
       if(!s) return '';
@@ -339,70 +324,51 @@ if(!arr.length && u.includes('drive.google.com')){
     }catch(_){ return String(s||''); }
   }
 
-  /* === 1件描画（編集UI付き） === */
   function renderLive(it){
     var root=document.getElementById('results'); root.innerHTML='';
-    if(!it){ 
-      root.appendChild(el('div',{className:'small',textContent:I18N[lang].labels.nodata}));
+    if(!it){
+      root.appendChild(el('div',{className:'small',textContent:TEXT.labels.nodata}));
       return;
     }
-    it.image_url    = it.image_url    || pick(it,['image','cover','img']);
-    it.description  = it.description  || pick(it,['desc','body','text']);
-    it.description_en = it.description_en || pick(it,['descriptionEN','desc_en','body_en','text_en']);
-    it.title        = it.title        || pick(it,['titleLive','ttl']);
-    it.title_en     = it.title_en     || pick(it,['titleEN','ttl_en']);
-it.venue_en       = it.venue_en       || pick(it, ['venueEN','venueEn','Venue_EN','VenueEN']);
-it.region_en      = it.region_en      || pick(it, ['regionEN','regionEn','Region_EN','RegionEN']);
-it.prefecture_en  = it.prefecture_en  || pick(it, ['prefectureEN','prefectureEn','pref_en','PrefectureEN']);
-it.price_en       = it.price_en       || pick(it, ['priceEN','priceEn','PriceEN']);
 
-    var c=el('div',{className:'card'});
+    it.image_url = it.image_url || pick(it,['image','cover','img']);
+    it.description = it.description || pick(it,['desc','body','text']);
+    it.title = it.title || pick(it,['titleLive','ttl']);
 
-    var left=el('div',{className:'leftcol'});
-    var imgSrc = resolveImageSrc(it);
-    if(imgSrc){ left.appendChild(createImgWithFallback(imgSrc)); }
-    else{ left.appendChild(el('div',{className:'ph',textContent:'flyer'})); }
+    var c = el('div',{className:'card'});
 
-    if(it.youtube_url){
-      var id=ytId(it.youtube_url);
-      if(id){
-        var y=el('div',{className:'yt'});
-        y.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
-        left.appendChild(y);
-      }
+    var flyerWrap = el('div',{className:'flyerWrap'});
+    var flyerBox = el('div',{className:'flyerBox'});
+    var imageCandidates = resolveImageCandidates(it);
+    if(imageCandidates.length){
+      flyerBox.appendChild(createImgWithFallback(imageCandidates[0]));
+    }else{
+      flyerBox.appendChild(el('div',{className:'ph',textContent:'flyer'}));
     }
-    c.appendChild(left);
+    flyerWrap.appendChild(flyerBox);
+    c.appendChild(flyerWrap);
 
-    var pad=el('div',{className:'pad'}); c.appendChild(pad);
+    var infoWrap = el('div',{className:'infoWrap'});
 
     var row1=el('div',{className:'row'});
-    var st=el('span',{className:'badge st',textContent:'［'+toStatus(it.status)+ '］'});
-    var regionLabel = (lang==='en' ? (it.region_en||it.region||'') : (it.region||it.region_en||''));
-    var prefLabel   = (lang==='en' ? (it.prefecture_en||it.prefecture||'') : (it.prefecture||it.prefecture_en||''));
-    var rp=el('span',{className:'badge',textContent:[regionLabel,prefLabel].filter(Boolean).join(' / ')});
+    var st=el('span',{className:'badge st',textContent:'［'+toStatus(it.status)+'］'});
+    var rp=el('span',{className:'badge',textContent:[it.region||'',it.prefecture||''].filter(Boolean).join(' / ')});
     row1.appendChild(st); if(rp.textContent) row1.appendChild(rp);
-    pad.appendChild(row1);
+    infoWrap.appendChild(row1);
 
-    pad.appendChild(el('div',{className:'artist',textContent:it.artist||'—'}));
-// 言語に応じてタイトルを切替
-var showTitle = (lang==='en' && it.title_en) ? it.title_en : it.title;
-if(showTitle){ pad.appendChild(el('div',{className:'titleLive',textContent:showTitle})); }
+    infoWrap.appendChild(el('div',{className:'artist',textContent:it.artist||'—'}));
+    if(it.title){ infoWrap.appendChild(el('div',{className:'titleLive',textContent:it.title})); }
 
     var metaParts=[];
     if(it.date) metaParts.push(formatDate(it.date));
     if(it.open_time){ var ot=formatTime(it.open_time); if(ot) metaParts.push('OPEN '+ot); }
     if(it.start_time){ var stt=formatTime(it.start_time); if(stt) metaParts.push('START '+stt); }
-    var venueLabel = (lang==='en' ? (it.venue_en||it.venue) : (it.venue||it.venue_en));
-    if(venueLabel) metaParts.push('@ '+venueLabel);
-    if(metaParts.length){ pad.appendChild(el('div',{className:'meta',textContent:metaParts.join('  ')})); }
+    if(it.venue) metaParts.push('@ '+it.venue);
+    if(metaParts.length){ infoWrap.appendChild(el('div',{className:'meta',textContent:metaParts.join('  ')})); }
 
-    var showPrice = (lang==='en' ? (it.price_en||it.price) : (it.price||it.price_en));
-    if(showPrice){ pad.appendChild(el('div',{className:'price',textContent:showPrice})); }
+    if(it.price){ infoWrap.appendChild(el('div',{className:'price',textContent:it.price})); }
+    if(it.description){ infoWrap.appendChild(el('div',{className:'desc',textContent:it.description})); }
 
-    var showDesc = (lang==='en' && it.description_en) ? it.description_en : it.description;
-if(showDesc){ pad.appendChild(el('div',{className:'desc',textContent:showDesc})); }
-
-    /* === 編集フィールド（records_browse 同様の項目群） === */
     var editBox = el('div',{style:'margin-top:8px;display:none;flex-direction:column;gap:6px'});
 
     function makeInput(label, key){
@@ -411,9 +377,9 @@ if(showDesc){ pad.appendChild(el('div',{className:'desc',textContent:showDesc}))
       input.onchange = function(){
         var ek = document.getElementById('editKey').value.trim();
         if(!ek){
-  document.getElementById('editMsg').textContent = I18N[lang].labels.needKey;
-  return;
-}
+          document.getElementById('editMsg').textContent = TEXT.labels.needKey;
+          return;
+        }
         var patch={}; patch[key]=input.value;
         updateLive(it.rowIndex, patch, ek);
       };
@@ -421,42 +387,39 @@ if(showDesc){ pad.appendChild(el('div',{className:'desc',textContent:showDesc}))
       return wrap;
     }
 
-    ['title','title_en','venue','region','prefecture','price','description','description_en','status','date','open_time','start_time','youtube_url','image_url','artist','genre','author'].forEach(function(f){
-  editBox.appendChild(makeInput(f.toUpperCase(), f));
-});
+    ['title','venue','region','prefecture','price','description','status','date','open_time','start_time','youtube_url','image_url','artist','genre','author'].forEach(function(f){
+      editBox.appendChild(makeInput(f.toUpperCase(), f));
+    });
 
-    // reference_url は廃止済みのため削除
-pad.appendChild(editBox);
+    infoWrap.appendChild(editBox);
+    c.appendChild(infoWrap);
+
+    var videoWrap = el('div',{className:'videoWrap'});
+    if(it.youtube_url){
+      var id=ytId(it.youtube_url);
+      if(id){
+        var y=el('div',{className:'yt'});
+        y.innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+        videoWrap.appendChild(y);
+      }
+    }
+    c.appendChild(videoWrap);
+
     document.getElementById('results').appendChild(c);
 
-    /* 編集表示トグル（既存ボタン活用） */
     document.getElementById('btnEdit').onclick=function(){
       var ec = document.getElementById('editControls');
       ec.style.display = (ec.style.display==='none' ? 'inline-flex' : 'none');
       editBox.style.display=(editBox.style.display==='none'?'flex':'none');
     };
   }
-  /* === セッションから選択を取得 & サーバ補完 === */
+
   function getSelectedFromSession(){
     var raw = sessionStorage.getItem('cz_selected_live') || sessionStorage.getItem('cz_selected_record') || '';
     if(!raw) return null;
     try{ return JSON.parse(raw); }catch(_){ return null; }
   }
-  async function tryHydrateFromServer(stub){
-    try{
-      if(!window.google || !google.script || !google.script.run) return stub;
-      if(!stub || !stub.rowIndex) return stub;
-      const res = await new Promise((resolve,reject)=>{
-        google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)
-          .listLives({limit:2000, offset:0});
-      });
-      if(!res || !res.ok || !res.items) return stub;
-      const hit = res.items.find(x=> Number(x.rowIndex)===Number(stub.rowIndex));
-      return hit ? Object.assign({}, hit, stub) : stub;
-    }catch(_){ return stub; }
-  }
 
-  /* === EXEC_URL 解決（テンプレ注入 or 既定フォールバック） === */
   (function resolveExecUrl(){
     try{
       var injected = (window.EXEC_URL||'').trim();
@@ -468,7 +431,6 @@ pad.appendChild(editBox);
     }
   })();
 
-  /* === ネットから “最新” を 1件だけ取得（画像更新も反映） === */
   async function callListLives(payload, onOK, onNG){
     try{
       if (window.google && google.script && google.script.run){
@@ -476,7 +438,6 @@ pad.appendChild(editBox);
         return;
       }
     }catch(_){}
-    // GET優先
     try{
       var url1 = window.EXEC_URL
         + (window.EXEC_URL.indexOf('?')>=0?'&':'?')
@@ -488,7 +449,6 @@ pad.appendChild(editBox);
         onOK(await r1.json()); return;
       }
     }catch(_){}
-    // POST(text/plain)
     try{
       var url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
       var r2 = await fetch(url2, {
@@ -500,20 +460,19 @@ pad.appendChild(editBox);
       onOK(await r2.json()); return;
     }catch(err){ onNG(err); }
   }
+
   async function hydrateFromNetwork(rowIndex){
     return await new Promise((resolve)=>{
       callListLives({limit:2000, offset:0}, function(res){
         try{
           if(!res || !res.ok || !res.items){ resolve(null); return; }
-          var hit = res.items.find(x=> Number(x.rowIndex)===Number(rowIndex));
-console.log('LIVE ITEM', hit);
+          var hit = res.items.find(function(x){ return Number(x.rowIndex)===Number(rowIndex); });
           resolve(hit || null);
         }catch(_){ resolve(null); }
       }, function(){ resolve(null); });
     });
   }
 
-  /* === 編集API（Code.gs: editEntry に一致） === */
   async function updateLive(rowIndex, patch, editKey){
     try{
       var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
@@ -527,15 +486,15 @@ console.log('LIVE ITEM', hit);
       });
       var j = await r.json();
       if(!j || !j.ok){ throw new Error(j && j.error || 'fail'); }
-      document.getElementById('editMsg').textContent = I18N[lang].labels.saved;
+      document.getElementById('editMsg').textContent = TEXT.labels.saved;
 
-      // 保存後は最新データで再取得→再描画（画像更新や翻訳補完を反映）
       var fetched = await hydrateFromNetwork(rowIndex);
       if(fetched){ current = fetched; renderLive(current); }
     }catch(e){
-      document.getElementById('editMsg').textContent = I18N[lang].labels.fail;
+      document.getElementById('editMsg').textContent = TEXT.labels.fail;
     }
   }
+
   async function hideLive(rowIndex, hide, editKey){
     try{
       var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
@@ -549,60 +508,52 @@ console.log('LIVE ITEM', hit);
       });
       var j = await r.json();
       if(!j || !j.ok){ throw new Error(j && j.error || 'fail'); }
-      document.getElementById('editMsg').textContent = I18N[lang].labels.ok;
+      document.getElementById('editMsg').textContent = TEXT.labels.ok;
     }catch(e){
-      document.getElementById('editMsg').textContent = I18N[lang].labels.fail;
+      document.getElementById('editMsg').textContent = TEXT.labels.fail;
     }
   }
 
-  /* === 初期化 & イベント === */
-  setLangUI();
-  document.getElementById("moreBtn").style.display = "none"; // 単票表示なので非表示
+  setUI();
+  document.getElementById("moreBtn").style.display = "none";
+
   document.getElementById("btnHide").onclick=function(){
-  var key=document.getElementById("editKey").value.trim();
-  if(!key){
-    document.getElementById("editMsg").textContent = I18N[lang].labels.needKey;
-    return;
-  }
-  var row=current && current.rowIndex; if(row) hideLive(row,true,key);
-};
+    var key=document.getElementById("editKey").value.trim();
+    if(!key){
+      document.getElementById("editMsg").textContent = TEXT.labels.needKey;
+      return;
+    }
+    var row=current && current.rowIndex; if(row) hideLive(row,true,key);
+  };
+
   document.getElementById("btnUnhide").onclick=function(){
-  var key=document.getElementById("editKey").value.trim();
-  if(!key){
-    document.getElementById("editMsg").textContent = I18N[lang].labels.needKey;
-    return;
-  }
-  var row=current && current.rowIndex;
-  if(row) hideLive(row,false,key);
-};
+    var key=document.getElementById("editKey").value.trim();
+    if(!key){
+      document.getElementById("editMsg").textContent = TEXT.labels.needKey;
+      return;
+    }
+    var row=current && current.rowIndex;
+    if(row) hideLive(row,false,key);
+  };
 
   var rowHint = qs('row');
 
-// 旧: sessionStorage優先のロジックは削除
-// let current = getSelectedFromSession();
-// if(rowHint){
-//   if(!current) current = {};
-//   current.rowIndex = Number(rowHint) || current.rowIndex || 0;
-// }
+  (async function(){
+    var keyRow = rowHint ? Number(rowHint) : 0;
 
-(async function(){
-  var keyRow = rowHint ? Number(rowHint) : 0;
-
-  if(keyRow){
-    // ★ rowIndex が分かっている場合はサーバから必ず取得
-    var fetched = await hydrateFromNetwork(keyRow);
-    if(fetched){
-      current = fetched;
+    if(keyRow){
+      var fetched = await hydrateFromNetwork(keyRow);
+      if(fetched){
+        current = fetched;
+      }
     }
-  }
 
-  // fallback: sessionStorage の値を描画用に使う（失敗したときのみ）
-  if(!current){
-    current = getSelectedFromSession();
-  }
+    if(!current){
+      current = getSelectedFromSession();
+    }
 
-  renderLive(current);
-})();
+    renderLive(current);
+  })();
 
 })();
 </script>

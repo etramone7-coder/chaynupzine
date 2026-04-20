@@ -318,12 +318,12 @@ function setYouTube(u){
 }
 
 function render(rec){
-  currentRecord = rec;
+  currentRecord = rec || {};
 
-  document.getElementById('band').textContent  = rec.band || '(Band)';
-  document.getElementById('track').textContent = rec.track|| '(Track)';
+  document.getElementById('band').textContent  = currentRecord.band || '(Band)';
+  document.getElementById('track').textContent = currentRecord.track || '(Track)';
 
-  var g = rec.genre || 'Other';
+  var g = currentRecord.genre || 'Other';
   document.getElementById('genre').textContent = g;
   var style = GENRE_STYLES[g] || GENRE_STYLES.Other;
   var badge = document.getElementById('genreBadge');
@@ -332,18 +332,26 @@ function render(rec){
   badge.style.color = style.fg;
 
   var era = '';
-  var yr = String(rec.release_year||'').match(/(\d{4})/);
-  if(yr){ var y=parseInt(yr[1],10); if(!isNaN(y)) era = (Math.floor(y/10)*10) + 's'; }
+  var yr = String(currentRecord.release_year||'').match(/(\d{4})/);
+  if(yr){
+    var y=parseInt(yr[1],10);
+    if(!isNaN(y)) era = (Math.floor(y/10)*10) + 's';
+  }
   document.getElementById('era').textContent = era || '-';
 
-  document.getElementById('catalog').textContent = rec.catalog_no || '-';
-  document.getElementById('format').textContent  = rec.format || '-';
+  document.getElementById('catalog').textContent = currentRecord.catalog_no || '-';
+  document.getElementById('format').textContent  = currentRecord.format || '-';
+  document.getElementById('description').textContent = currentRecord.description || '';
+  document.getElementById('author').textContent = currentRecord.author ? (LABELS.by + currentRecord.author) : '';
 
-  document.getElementById('description').textContent = rec.description || '';
-  document.getElementById('author').textContent = rec.author ? (LABELS.by + rec.author) : '';
+  setJacket(currentRecord.image_url||'');
+  setYouTube(currentRecord.youtube_url||'');
+}
 
-  setJacket(rec.image_url||'');
-  setYouTube(rec.youtube_url||'');
+function persistCurrentRecord(row){
+  try{
+    sessionStorage.setItem('cz_selected_record', JSON.stringify(Object.assign({__row:row}, currentRecord || {})));
+  }catch(_){}
 }
 
 function ensureClientId(){
@@ -354,6 +362,7 @@ function ensureClientId(){
     return v;
   }catch(_){ return ''; }
 }
+
 async function postReportFallback(payload){
   var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
   var r = await fetch(url, {
@@ -364,11 +373,13 @@ async function postReportFallback(payload){
   if(!r.ok){ throw new Error('HTTP '+r.status); }
   return await r.json();
 }
+
 function reportThis(rowIndex){
   var reason = prompt('通報理由を入力してください（例：権利侵害、スパム等）');
   if(!reason) return;
   var msg=document.getElementById('msg');
-  msg.className='alert'; msg.textContent='通報送信中…'; msg.classList.add('show');
+  msg.className='alert show';
+  msg.textContent='通報送信中…';
 
   function done(res){
     if(res && res.ok){
@@ -430,39 +441,78 @@ async function fetchRecordByRow(row){
   return await r2.json();
 }
 
-async function callEditEntry(action, rowIndex, editKey, patch){
-  function done(res){
-    var m=document.getElementById('editMsg'); m.className='alert show';
-    m.textContent = (res && res.ok) ? LABELS.ok : (LABELS.fail + (res && res.error ? ' : ' + res.error : ''));
-    if(res && res.ok && action==='update'){
-      try{
-        Object.assign(currentRecord, patch||{});
-        render(currentRecord);
-      }catch(_){}
-    }
+function showEditMessage(text, ok){
+  var m=document.getElementById('editMsg');
+  m.className='alert show';
+  m.textContent=text;
+  if(ok){
+    m.style.borderColor = '#c6ecd1';
+    m.style.background = '#eefcf1';
+    m.style.color = '#0a7a32';
+  }else{
+    m.style.borderColor = '#f6bcbc';
+    m.style.background = '#ffe9e9';
+    m.style.color = '#a33';
   }
-  function fail(err){
-    var m=document.getElementById('editMsg'); m.className='alert show';
-    m.textContent = LABELS.fail + ' : ' + (err && err.message ? err.message : String(err));
-  }
+}
 
+async function reloadAndRender(rowIndex){
+  var res = await fetchRecordByRow(rowIndex);
+  if(!res || !res.ok || !res.data) throw new Error('reload failed');
+  render(res.data);
+  persistCurrentRecord(rowIndex);
+
+  var host = document.getElementById('editPanel');
+  if (host && host.__ready){
+    host.__ready = false;
+    host.innerHTML = '';
+    ensureEditPanel();
+  }
+}
+
+async function callEditEntry(action, rowIndex, editKey, patch){
   var payload = { sheetName:'Records', rowIndex:Number(rowIndex), edit_key:String(editKey||''), action:String(action||'') };
   if (action==='update'){ payload.patch = patch || {}; }
 
   try{
+    var res;
     if (window.google && google.script && google.script.run){
-      google.script.run.withSuccessHandler(done).withFailureHandler(fail).editEntry(payload);
+      res = await new Promise(function(resolve, reject){
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .editEntry(payload);
+      });
     }else{
       var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
       var r = await fetch(url, {
         method:'POST', mode:'cors', cache:'no-store',
         headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ fn:'editEntry', payload, csrf:(window.__CZ_CSRF||'') })
+        body: JSON.stringify({ fn:'editEntry', payload:payload, csrf:(window.__CZ_CSRF||'') })
       });
       if(!r.ok){ throw new Error('HTTP '+r.status); }
-      done(await r.json());
+      res = await r.json();
     }
-  }catch(e){ fail(e); }
+
+    if(!res || !res.ok){
+      showEditMessage(LABELS.fail + (res && res.error ? ' : ' + res.error : ''), false);
+      return;
+    }
+
+    await reloadAndRender(rowIndex);
+
+    if(action === 'update'){
+      showEditMessage('保存して再読込しました。', true);
+    }else if(action === 'delete'){
+      showEditMessage('非表示にして再読込しました。', true);
+    }else if(action === 'restore'){
+      showEditMessage('再表示して再読込しました。', true);
+    }else{
+      showEditMessage(LABELS.ok, true);
+    }
+  }catch(e){
+    showEditMessage(LABELS.fail + ' : ' + (e && e.message ? e.message : String(e)), false);
+  }
 }
 
 function ensureEditPanel(){
@@ -514,9 +564,11 @@ function ensureEditPanel(){
 
     var patch={};
     function P(key, id){
-      var v=(document.getElementById(id)||{}).value;
-      if(v != null && v !== currentRecord[key]) patch[key]=v;
+      var el = document.getElementById(id);
+      var v = el ? el.value : '';
+      if(String(v) !== String(currentRecord[key] || '')) patch[key]=v;
     }
+
     P('band','e_band');
     P('track','e_track');
     P('genre','e_genre');
@@ -530,7 +582,8 @@ function ensureEditPanel(){
     P('author','e_author');
 
     if(Object.keys(patch).length===0){
-      var m=document.getElementById('editMsg'); m.className='alert show'; m.textContent=LABELS.ok; return;
+      showEditMessage('変更はありません。', true);
+      return;
     }
 
     callEditEntry('update', window.__rowIndex, ek, patch);
@@ -547,6 +600,7 @@ function ensureEditPanel(){
     var n = m ? Number(m[1]) : 0;
     return (Number.isInteger(n) && n>=2) ? n : 0;
   }
+
   function showError(msg){
     var m=document.getElementById('msg');
     m.textContent = msg;
@@ -555,8 +609,10 @@ function ensureEditPanel(){
 
   async function start(row){
     window.__rowIndex = row;
-
-    if(!row){ showError('レコードID（row）が指定されていません。'); return; }
+    if(!row){
+      showError('レコードID（row）が指定されていません。');
+      return;
+    }
 
     try{
       var cached = sessionStorage.getItem('cz_selected_record');
@@ -574,6 +630,8 @@ function ensureEditPanel(){
           .withSuccessHandler(function(res){
             if(!res || !res.ok){ showError('読み込みに失敗しました。'); return; }
             render(res.data || {});
+            persistCurrentRecord(row);
+
             document.getElementById('reportBtn').onclick = function(){ reportThis(row); };
 
             document.getElementById('btnEdit').onclick = function(){
@@ -591,13 +649,11 @@ function ensureEditPanel(){
               if(!ek){ alert(LABELS.needKey); return; }
               callEditEntry('restore', row, ek);
             };
-
-            try{ sessionStorage.setItem('cz_selected_record', JSON.stringify(Object.assign({__row:row}, res.data||{}))); }catch(_){}
           })
           .withFailureHandler(function(err){
             showError('読み込みに失敗しました：' + (err && err.message ? err.message : String(err)));
           })
-          .getRecordByRow(Number(row));
+          .getRecordByRow({rowIndex:Number(row)});
         return;
       }
     }catch(_){}
@@ -606,6 +662,8 @@ function ensureEditPanel(){
       var res = await fetchRecordByRow(row);
       if(!res || !res.ok){ showError('読み込みに失敗しました。'); return; }
       render(res.data || {});
+      persistCurrentRecord(row);
+
       document.getElementById('reportBtn').onclick = function(){ reportThis(row); };
 
       document.getElementById('btnEdit').onclick = function(){
@@ -623,8 +681,6 @@ function ensureEditPanel(){
         if(!ek){ alert(LABELS.needKey); return; }
         callEditEntry('restore', row, ek);
       };
-
-      try{ sessionStorage.setItem('cz_selected_record', JSON.stringify(Object.assign({__row:row}, res.data||{}))); }catch(_){}
     }catch(err){
       showError('読み込みに失敗しました：' + (err && err.message ? err.message : 'Load failed'));
     }

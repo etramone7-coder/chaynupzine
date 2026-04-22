@@ -130,11 +130,22 @@ function readAll(name){
   });
 }
 
+function _normalizeHeaderName_(s){
+  return String(s == null ? '' : s).replace(/\u00A0/g, ' ').trim();
+}
+
 function appendRowByHeader(name, obj){
   const sh = getSheet(name);
   const head = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
-  const row = head.map(h => Object.prototype.hasOwnProperty.call(obj, h) ? obj[h] : '');
+  const row = head.map(h => {
+    const raw = String(h || '');
+    const norm = _normalizeHeaderName_(raw);
+    if (Object.prototype.hasOwnProperty.call(obj, raw)) return obj[raw];
+    if (Object.prototype.hasOwnProperty.call(obj, norm)) return obj[norm];
+    return '';
+  });
   sh.appendRow(row);
+  SpreadsheetApp.flush();
   return sh.getLastRow();
 }
 
@@ -142,12 +153,30 @@ function updateRowByHeader(name, rowIndex, patch){
   const sh = getSheet(name);
   const head = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
   const cur = sh.getRange(rowIndex,1,1,head.length).getValues()[0];
-  const map = {};
-  head.forEach((h,i)=>map[String(h||'')] = i);
-  Object.keys(patch).forEach(k=>{
-    if (Object.prototype.hasOwnProperty.call(map, k)) cur[map[k]] = patch[k];
+
+  const mapRaw = {};
+  const mapNorm = {};
+  head.forEach((h,i)=>{
+    const raw = String(h || '');
+    const norm = _normalizeHeaderName_(raw);
+    mapRaw[raw] = i;
+    mapNorm[norm] = i;
   });
+
+  Object.keys(patch).forEach(k=>{
+    const rawKey = String(k || '');
+    const normKey = _normalizeHeaderName_(rawKey);
+    if (Object.prototype.hasOwnProperty.call(mapRaw, rawKey)) {
+      cur[mapRaw[rawKey]] = patch[k];
+      return;
+    }
+    if (Object.prototype.hasOwnProperty.call(mapNorm, normKey)) {
+      cur[mapNorm[normKey]] = patch[k];
+    }
+  });
+
   sh.getRange(rowIndex,1,1,head.length).setValues([cur]);
+  SpreadsheetApp.flush();
 }
 
 function ensureFolder_(...names){
@@ -974,27 +1003,34 @@ function editEntry(p){
         const safePatch = {};
         Object.keys(patch).forEach(k=>{
           if (protectedCols[k]) return;
-          if (!Object.prototype.hasOwnProperty.call(map, k)) return;
-          safePatch[k] = patch[k];
+          const rawKey = String(k || '');
+          const normKey = _normalizeHeaderName_(rawKey);
+          const hasRaw = Object.prototype.hasOwnProperty.call(map, rawKey);
+          const hasNorm = info.head.some(h => _normalizeHeaderName_(h) === normKey);
+          if (!hasRaw && !hasNorm) return;
+          safePatch[rawKey] = patch[k];
         });
 
         if (safePatch.image_url) safePatch.image_url = normalizeDriveUrl_(safePatch.image_url);
         if (safePatch.youtube_url) safePatch.youtube_url = _normalizeYouTube(safePatch.youtube_url);
 
         try{
-          if (safePatch.description != null && String(safePatch.description).trim() !== '' && !safePatch.description_en && Object.prototype.hasOwnProperty.call(map, 'description_en')){
+          if (safePatch.description != null && String(safePatch.description).trim() !== '' && !safePatch.description_en){
             safePatch.description_en = LanguageApp.translate(String(safePatch.description),'ja','en');
-          }else if ((safePatch.description == null || String(safePatch.description).trim() === '') && safePatch.description_en && Object.prototype.hasOwnProperty.call(map, 'description')){
+          }else if ((safePatch.description == null || String(safePatch.description).trim() === '') && safePatch.description_en){
             safePatch.description = LanguageApp.translate(String(safePatch.description_en),'en','ja');
           }
         }catch(_){}
 
         if (Object.prototype.hasOwnProperty.call(safePatch, 'band')){
           const bandVal = String(safePatch.band || '').trim();
-          if (Object.prototype.hasOwnProperty.call(map, 'band_sort')){
+          const hasBandSort = info.head.some(h => _normalizeHeaderName_(h) === 'band_sort');
+          const hasBandInitial = info.head.some(h => _normalizeHeaderName_(h) === 'band_initial');
+
+          if (hasBandSort){
             safePatch.band_sort = bandVal.replace(/^(the)\s+/i, '').toLowerCase();
           }
-          if (Object.prototype.hasOwnProperty.call(map, 'band_initial')){
+          if (hasBandInitial){
             const t = bandVal.replace(/^(the)\s+/i, '');
             const ch = (t[0] || '').toUpperCase();
             safePatch.band_initial = /[A-Z]/.test(ch) ? ch : '#';
@@ -1002,12 +1038,40 @@ function editEntry(p){
         }
 
         if (Object.keys(safePatch).length === 0){
-          return {ok:false, error:'no valid fields'};
+          return {
+            ok:false,
+            error:'no valid fields',
+            debug:{
+              sheetName:sheetName,
+              rowIndex:rowIndex,
+              incomingPatch:patch,
+              header:info.head
+            }
+          };
         }
 
+        const beforeRow = getRecordByRow({rowIndex: rowIndex});
         updateRowByHeader(sheetName, rowIndex, safePatch);
+        SpreadsheetApp.flush();
+        const afterRow = getRecordByRow({rowIndex: rowIndex});
         _bumpCacheVersion_();
-        return {ok:true, updated:true, saved:safePatch};
+
+        return {
+          ok:true,
+          updated:true,
+          saved:safePatch,
+          debug:{
+            sheetName:sheetName,
+            rowIndex:rowIndex,
+            descriptionBefore: beforeRow && beforeRow.data ? beforeRow.data.description : '',
+            descriptionIncoming: Object.prototype.hasOwnProperty.call(safePatch,'description') ? safePatch.description : null,
+            descriptionAfter: afterRow && afterRow.data ? afterRow.data.description : '',
+            bandBefore: beforeRow && beforeRow.data ? beforeRow.data.band : '',
+            bandIncoming: Object.prototype.hasOwnProperty.call(safePatch,'band') ? safePatch.band : null,
+            bandAfter: afterRow && afterRow.data ? afterRow.data.band : '',
+            header: info.head
+          }
+        };
       }
 
       else if (sheetName === SHEETS.Lives){
@@ -1069,6 +1133,7 @@ function editEntry(p){
         }
 
         updateRowByHeader(sheetName, rowIndex, safePatch);
+        SpreadsheetApp.flush();
         _bumpCacheVersion_();
         return {ok:true, updated:true, saved: safePatch};
       }
@@ -1126,6 +1191,7 @@ function editEntry(p){
         }
 
         updateRowByHeader(sheetName, rowIndex, safePatch);
+        SpreadsheetApp.flush();
         _bumpCacheVersion_();
         return {ok:true, updated:true, saved: safePatch};
       }
@@ -1168,6 +1234,7 @@ function submitReport(p){
     let autoHidden = false;
     if (all.length >= REPORT_AUTOHIDE_THRESHOLD){
       updateRowByHeader(sheetName, rowIndex, {is_hidden:true});
+      SpreadsheetApp.flush();
       autoHidden = true;
       _bumpCacheVersion_();
     }
@@ -1237,6 +1304,7 @@ function backfillDescriptionEn(){
 
   if (!DRY_RUN){
     sh.getRange(2,1,vals.length, head.length).setValues(vals);
+    SpreadsheetApp.flush();
   }
 
   Logger.log('処理完了：翻訳して埋めた件数=' + translated + '（DRY_RUN=' + DRY_RUN + '）');
@@ -1285,6 +1353,7 @@ function restoreLivesHeader() {
   if (!looksLikeHeader) {
     sh.insertRowBefore(1);
     sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+    SpreadsheetApp.flush();
   }
 }
 
@@ -1312,6 +1381,7 @@ function normalizeLivesImageUrls(){
   }
   if (changed){
     sh.getRange(2,1,vals.length, head.length).setValues(vals);
+    SpreadsheetApp.flush();
   }
   Logger.log('Lives.image_url 正規化件数 = ' + changed);
 }
@@ -1330,6 +1400,7 @@ function ensureLivesExtraHeaders(){
       head.push(h);
     }
   });
+  SpreadsheetApp.flush();
 }
 
 function backfillLivesEn(){
@@ -1387,6 +1458,7 @@ function backfillLivesEn(){
 
   if (touched){
     sh.getRange(2,1,vals.length, head.length).setValues(vals);
+    SpreadsheetApp.flush();
   }
   Logger.log('backfillLivesEn touched rows: ' + touched);
 }

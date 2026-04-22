@@ -368,7 +368,6 @@
         </div>
 
         <div id="editPanel"></div>
-
         <div id="debugBox" class="debug" style="display:none"></div>
       </div>
     </div>
@@ -710,17 +709,51 @@ async function postEditFallback(payload){
   debugLog('postEditFallback url', url);
   debugLog('postEditFallback body', body);
 
-  var r = await fetch(url, {
-    method:'POST',
-    mode:'cors',
-    cache:'no-store',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(body)
+  let r;
+  try{
+    r = await fetch(url, {
+      method:'POST',
+      mode:'cors',
+      cache:'no-store',
+      redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(body)
+    });
+  }catch(e){
+    debugLog('postEditFallback fetch err', String(e));
+    throw e;
+  }
+
+  debugLog('postEditFallback status', {
+    ok: r.ok,
+    status: r.status,
+    statusText: r.statusText,
+    redirected: r.redirected,
+    type: r.type,
+    url: r.url
   });
-  if(!r.ok) throw new Error('HTTP ' + r.status);
-  var j = await r.json();
-  debugLog('postEditFallback res', j);
-  return j;
+
+  let raw = '';
+  try{
+    raw = await r.text();
+    debugLog('postEditFallback raw text', raw);
+  }catch(e){
+    debugLog('postEditFallback text err', String(e));
+    throw e;
+  }
+
+  if(!r.ok){
+    throw new Error('HTTP ' + r.status + ' / ' + raw);
+  }
+
+  try{
+    const j = JSON.parse(raw);
+    debugLog('postEditFallback res', j);
+    return j;
+  }catch(e){
+    debugLog('postEditFallback json parse err', String(e));
+    throw new Error('JSON parse failed: ' + raw);
+  }
 }
 
 async function postReportFallback(payload){
@@ -820,14 +853,20 @@ async function callEditEntry(action, rowIndex, editKey, patch){
 
   try{
     var res;
+
     if (window.google && google.script && google.script.run){
       res = await new Promise(function(resolve, reject){
         google.script.run
-          .withSuccessHandler(resolve)
-          .withFailureHandler(reject)
+          .withSuccessHandler(function(v){
+            debugLog('google.script.run editEntry res', v);
+            resolve(v);
+          })
+          .withFailureHandler(function(err){
+            debugLog('google.script.run editEntry err', String(err));
+            reject(err);
+          })
           .editEntry(payload);
       });
-      debugLog('google.script.run editEntry res', res);
     }else{
       res = await postEditFallback(payload);
     }
@@ -836,6 +875,8 @@ async function callEditEntry(action, rowIndex, editKey, patch){
       showEditMessage(LABELS.fail + (res && res.error ? ' : ' + res.error : ''), false);
       return;
     }
+
+    debugLog('callEditEntry accepted res', res);
 
     await reloadAndRender(rowIndex);
 

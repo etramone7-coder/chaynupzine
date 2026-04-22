@@ -207,7 +207,7 @@ function _isPrivateHost(host){
   const h = host.toLowerCase();
   if (h === 'localhost' || h.startsWith('127.')) return true;
   if (/^10\.\d+\.\d+\.\d+$/.test(h)) return true;
-  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+\$/.test(h)) return true;
+  if (/^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(h)) return true;
   if (/^192\.168\.\d+\.\d+$/.test(h)) return true;
   return false;
 }
@@ -438,11 +438,17 @@ function submitFromClient(p){
 
     const imgUrl = p.image_url ? normalizeDriveUrl_(p.image_url) : '';
 
+    const bandVal = p.band || '';
+    const bandSortVal = String(bandVal).trim().replace(/^(the)\s+/i, '').toLowerCase();
+    const t = String(bandVal).trim().replace(/^(the)\s+/i, '');
+    const ch = (t[0] || '').toUpperCase();
+    const bandInitialVal = /[A-Z]/.test(ch) ? ch : '#';
+
     const row = {
       timestamp: new Date(),
       genre: p.genre||'',
       country: p.country||'',
-      band: p.band||'',
+      band: bandVal,
       track: p.track||'',
       release_year: p.release_year||'',
       catalog_no: p.catalog_no||'',
@@ -452,8 +458,9 @@ function submitFromClient(p){
       image_url: imgUrl || (p.image_data ? saveDataUrl(p.image_data, 'Records') : ''),
       youtube_url: yt,
       author: p.author||'',
+      band_sort: bandSortVal,
+      band_initial: bandInitialVal,
       edit_key: p.edit_key||'',
-      client_id: p.client_id||'',
       is_hidden: false
     };
 
@@ -514,6 +521,7 @@ function listRecords(q){
       country: r.country,
       genre: r.genre,
       image_url: r.image_url,
+      youtube_url: r.youtube_url,
       author: r.author,
       release_year: r.release_year || '',
       catalog_no: r.catalog_no || '',
@@ -916,7 +924,6 @@ function editEntry(p){
     const map = info.map;
     const vals = sh.getRange(rowIndex,1,1,head.length).getValues()[0];
 
-    /* edit_key check */
     if (sheetName === SHEETS.Features){
       const hasHash = Object.prototype.hasOwnProperty.call(map, 'edit_key_hash');
       const hasPlain = Object.prototype.hasOwnProperty.call(map, 'edit_key');
@@ -956,28 +963,55 @@ function editEntry(p){
 
     if (action === 'update'){
       let patch = _normalizePatchKeys_(sheetName, p.patch || {});
-      let allow = [];
 
       if (sheetName === SHEETS.Records){
-        allow = [
-          'genre','country','band','track','release_year','catalog_no','format',
-          'description','description_en','image_url','youtube_url','author','is_hidden'
-        ];
+        const protectedCols = {
+          rowIndex:true,
+          timestamp:true,
+          edit_key:true
+        };
 
-        if (patch.image_url) patch.image_url = normalizeDriveUrl_(patch.image_url);
-        if (patch.youtube_url) patch.youtube_url = _normalizeYouTube(patch.youtube_url);
+        const safePatch = {};
+        Object.keys(patch).forEach(k=>{
+          if (protectedCols[k]) return;
+          if (!Object.prototype.hasOwnProperty.call(map, k)) return;
+          safePatch[k] = patch[k];
+        });
+
+        if (safePatch.image_url) safePatch.image_url = normalizeDriveUrl_(safePatch.image_url);
+        if (safePatch.youtube_url) safePatch.youtube_url = _normalizeYouTube(safePatch.youtube_url);
 
         try{
-          if (patch.description != null && String(patch.description).trim() !== '' && !patch.description_en){
-            patch.description_en = LanguageApp.translate(String(patch.description),'ja','en');
-          }else if ((patch.description == null || String(patch.description).trim() === '') && patch.description_en){
-            patch.description = LanguageApp.translate(String(patch.description_en),'en','ja');
+          if (safePatch.description != null && String(safePatch.description).trim() !== '' && !safePatch.description_en && Object.prototype.hasOwnProperty.call(map, 'description_en')){
+            safePatch.description_en = LanguageApp.translate(String(safePatch.description),'ja','en');
+          }else if ((safePatch.description == null || String(safePatch.description).trim() === '') && safePatch.description_en && Object.prototype.hasOwnProperty.call(map, 'description')){
+            safePatch.description = LanguageApp.translate(String(safePatch.description_en),'en','ja');
           }
         }catch(_){}
+
+        if (Object.prototype.hasOwnProperty.call(safePatch, 'band')){
+          const bandVal = String(safePatch.band || '').trim();
+          if (Object.prototype.hasOwnProperty.call(map, 'band_sort')){
+            safePatch.band_sort = bandVal.replace(/^(the)\s+/i, '').toLowerCase();
+          }
+          if (Object.prototype.hasOwnProperty.call(map, 'band_initial')){
+            const t = bandVal.replace(/^(the)\s+/i, '');
+            const ch = (t[0] || '').toUpperCase();
+            safePatch.band_initial = /[A-Z]/.test(ch) ? ch : '#';
+          }
+        }
+
+        if (Object.keys(safePatch).length === 0){
+          return {ok:false, error:'no valid fields'};
+        }
+
+        updateRowByHeader(sheetName, rowIndex, safePatch);
+        _bumpCacheVersion_();
+        return {ok:true, updated:true, saved:safePatch};
       }
 
       else if (sheetName === SHEETS.Lives){
-        allow = [
+        const allow = [
           'artist','title','title_en','genre','date','open_time','start_time',
           'venue','venue_en','region','region_en','prefecture','prefecture_en',
           'price','price_en','description','description_en',
@@ -1024,10 +1058,23 @@ function editEntry(p){
             patch.price = LanguageApp.translate(String(patch.price_en),'en','ja');
           }
         }catch(_){}
+
+        const safePatch = {};
+        allow.forEach(k=>{
+          if (Object.prototype.hasOwnProperty.call(patch, k)) safePatch[k] = patch[k];
+        });
+
+        if (Object.keys(safePatch).length === 0){
+          return {ok:false, error:'no valid fields'};
+        }
+
+        updateRowByHeader(sheetName, rowIndex, safePatch);
+        _bumpCacheVersion_();
+        return {ok:true, updated:true, saved: safePatch};
       }
 
       else if (sheetName === SHEETS.Features){
-        allow = [
+        const allow = [
           'status','title','title_en','author','genre','genre_other','era','region',
           'slug','updated_at',
           'para1_text','para2_text','para3_text','para4_text','para5_text',
@@ -1068,24 +1115,24 @@ function editEntry(p){
         }catch(_){}
 
         patch.updated_at = new Date().toISOString();
+
+        const safePatch = {};
+        allow.forEach(k=>{
+          if (Object.prototype.hasOwnProperty.call(patch, k)) safePatch[k] = patch[k];
+        });
+
+        if (Object.keys(safePatch).length === 0){
+          return {ok:false, error:'no valid fields'};
+        }
+
+        updateRowByHeader(sheetName, rowIndex, safePatch);
+        _bumpCacheVersion_();
+        return {ok:true, updated:true, saved: safePatch};
       }
 
       else {
         return {ok:false, error:'unknown sheet'};
       }
-
-      const safePatch = {};
-      allow.forEach(k=>{
-        if (Object.prototype.hasOwnProperty.call(patch, k)) safePatch[k] = patch[k];
-      });
-
-      if (Object.keys(safePatch).length === 0){
-        return {ok:false, error:'no valid fields'};
-      }
-
-      updateRowByHeader(sheetName, rowIndex, safePatch);
-      _bumpCacheVersion_();
-      return {ok:true, updated:true, saved: safePatch};
     }
 
     return {ok:false, error:'unknown action'};

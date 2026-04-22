@@ -294,18 +294,6 @@
     white-space:pre-wrap;
     resize:vertical;
   }
-
-  .debug{
-    margin-top:16px;
-    padding:12px;
-    border:1px dashed #bbb;
-    border-radius:12px;
-    background:rgba(255,255,255,.8);
-    font-size:13px;
-    line-height:1.4;
-    white-space:pre-wrap;
-    word-break:break-word;
-  }
 </style>
 </head>
 <body>
@@ -368,7 +356,6 @@
         </div>
 
         <div id="editPanel"></div>
-        <div id="debugBox" class="debug" style="display:none"></div>
       </div>
     </div>
   </div>
@@ -423,22 +410,6 @@ var LABELS = {
 
 var currentRecord = null;
 var currentRow = 0;
-var DEBUG = true;
-
-function debugLog(title, value){
-  if(!DEBUG) return;
-  var box = document.getElementById('debugBox');
-  if(!box) return;
-  box.style.display = 'block';
-  var line = '--- ' + title + ' ---\n';
-  try{
-    line += (typeof value === 'string') ? value : JSON.stringify(value, null, 2);
-  }catch(_){
-    line += String(value);
-  }
-  line += '\n\n';
-  box.textContent = line + box.textContent;
-}
 
 function setAlertState(el, text, ok){
   if(!el) return;
@@ -588,7 +559,6 @@ function setYouTube(u){
 
 function render(rec){
   currentRecord = rec || {};
-  debugLog('render currentRecord', currentRecord);
 
   document.getElementById('band').textContent  = currentRecord.band || '(Band)';
   document.getElementById('track').textContent = currentRecord.track || '(Track)';
@@ -650,7 +620,6 @@ function ensureClientId(){
   }catch(_){
     window.EXEC_URL = 'https://script.google.com/macros/s/AKfycbzkQN0yd6DLoImgNdI0877buJU56w6G-ewWlNfZOVuVmKmRlEeGElI6p4QHnL5glSHK1A/exec';
   }
-  debugLog('EXEC_URL', window.EXEC_URL);
 })();
 
 async function fetchRecordByRow(row){
@@ -662,18 +631,12 @@ async function fetchRecordByRow(row){
       + 'fn=getRecordByRow&payload=' + encodeURIComponent(JSON.stringify({rowIndex:Number(row)}))
       + '&v=' + Date.now();
 
-    debugLog('fetchRecordByRow GET url', url1);
-
     var r1 = await fetch(url1, {method:'GET', mode:'cors', cache:'no-store'});
     var ctype = (r1.headers && r1.headers.get && r1.headers.get('content-type')) || '';
     if (r1.ok && ctype.indexOf('application/json') >= 0){
-      var j1 = await r1.json();
-      debugLog('fetchRecordByRow GET res', j1);
-      return j1;
+      return await r1.json();
     }
-  }catch(e){
-    debugLog('fetchRecordByRow GET err', String(e));
-  }
+  }catch(_){}
 
   var url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0 ? '&' : '?') + 'v=' + Date.now();
   var body = {
@@ -681,9 +644,6 @@ async function fetchRecordByRow(row){
     payload:{rowIndex:Number(row)},
     csrf:(window.__CZ_CSRF||'')
   };
-
-  debugLog('fetchRecordByRow POST url', url2);
-  debugLog('fetchRecordByRow POST body', body);
 
   var r2 = await fetch(url2, {
     method:'POST',
@@ -693,9 +653,7 @@ async function fetchRecordByRow(row){
     body: JSON.stringify(body)
   });
   if(!r2.ok) throw new Error('HTTP ' + r2.status);
-  var j2 = await r2.json();
-  debugLog('fetchRecordByRow POST res', j2);
-  return j2;
+  return await r2.json();
 }
 
 async function postEditFallback(payload){
@@ -706,52 +664,24 @@ async function postEditFallback(payload){
     csrf:(window.__CZ_CSRF||'')
   };
 
-  debugLog('postEditFallback url', url);
-  debugLog('postEditFallback body', body);
-
-  let r;
-  try{
-    r = await fetch(url, {
-      method:'POST',
-      mode:'cors',
-      cache:'no-store',
-      redirect:'follow',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify(body)
-    });
-  }catch(e){
-    debugLog('postEditFallback fetch err', String(e));
-    throw e;
-  }
-
-  debugLog('postEditFallback status', {
-    ok: r.ok,
-    status: r.status,
-    statusText: r.statusText,
-    redirected: r.redirected,
-    type: r.type,
-    url: r.url
+  let r = await fetch(url, {
+    method:'POST',
+    mode:'cors',
+    cache:'no-store',
+    redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(body)
   });
 
-  let raw = '';
-  try{
-    raw = await r.text();
-    debugLog('postEditFallback raw text', raw);
-  }catch(e){
-    debugLog('postEditFallback text err', String(e));
-    throw e;
-  }
+  let raw = await r.text();
 
   if(!r.ok){
     throw new Error('HTTP ' + r.status + ' / ' + raw);
   }
 
   try{
-    const j = JSON.parse(raw);
-    debugLog('postEditFallback res', j);
-    return j;
-  }catch(e){
-    debugLog('postEditFallback json parse err', String(e));
+    return JSON.parse(raw);
+  }catch(_){
     throw new Error('JSON parse failed: ' + raw);
   }
 }
@@ -849,22 +779,14 @@ async function callEditEntry(action, rowIndex, editKey, patch){
     payload.patch = patch || {};
   }
 
-  debugLog('callEditEntry payload', payload);
-
   try{
     var res;
 
     if (window.google && google.script && google.script.run){
       res = await new Promise(function(resolve, reject){
         google.script.run
-          .withSuccessHandler(function(v){
-            debugLog('google.script.run editEntry res', v);
-            resolve(v);
-          })
-          .withFailureHandler(function(err){
-            debugLog('google.script.run editEntry err', String(err));
-            reject(err);
-          })
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
           .editEntry(payload);
       });
     }else{
@@ -875,8 +797,6 @@ async function callEditEntry(action, rowIndex, editKey, patch){
       showEditMessage(LABELS.fail + (res && res.error ? ' : ' + res.error : ''), false);
       return;
     }
-
-    debugLog('callEditEntry accepted res', res);
 
     await reloadAndRender(rowIndex);
 
@@ -890,7 +810,6 @@ async function callEditEntry(action, rowIndex, editKey, patch){
       showEditMessage(LABELS.ok, true);
     }
   }catch(e){
-    debugLog('callEditEntry err', String(e));
     showEditMessage(LABELS.fail + ' : ' + (e && e.message ? e.message : String(e)), false);
   }
 }
@@ -975,8 +894,6 @@ function ensureEditPanel(force){
     pick('youtube_url', 'e_youtube_url');
     pick('author', 'e_author');
 
-    debugLog('edit patch', patch);
-
     if(Object.keys(patch).length === 0){
       showEditMessage('変更はありません。', true);
       return;
@@ -1037,20 +954,15 @@ function attachPageHandlers(row){
       return;
     }
 
-    debugLog('start row', row);
-
     try{
       var cached = sessionStorage.getItem('cz_selected_record');
       if (cached){
         var rec = JSON.parse(cached);
         if (rec && String(rec.__row || rec.rowIndex || rec.id) === String(row)){
-          debugLog('sessionStorage cached record', rec);
           render(rec);
         }
       }
-    }catch(e){
-      debugLog('sessionStorage err', String(e));
-    }
+    }catch(_){}
 
     attachPageHandlers(row);
 
@@ -1058,7 +970,6 @@ function attachPageHandlers(row){
       if (window.google && google.script && google.script.run){
         google.script.run
           .withSuccessHandler(function(res){
-            debugLog('google.script.run getRecordByRow res', res);
             if(!res || !res.ok){
               showError('読み込みに失敗しました。');
               return;
@@ -1067,15 +978,12 @@ function attachPageHandlers(row){
             persistCurrentRecord(row);
           })
           .withFailureHandler(function(err){
-            debugLog('google.script.run getRecordByRow err', String(err));
             showError('読み込みに失敗しました：' + (err && err.message ? err.message : String(err)));
           })
           .getRecordByRow({rowIndex:Number(row)});
         return;
       }
-    }catch(e){
-      debugLog('google.script.run init err', String(e));
-    }
+    }catch(_){}
 
     try{
       var res = await fetchRecordByRow(row);
@@ -1086,7 +994,6 @@ function attachPageHandlers(row){
       render(res.data || {});
       persistCurrentRecord(row);
     }catch(err){
-      debugLog('start fallback err', String(err));
       showError('読み込みに失敗しました：' + (err && err.message ? err.message : 'Load failed'));
     }
   }

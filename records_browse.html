@@ -5,27 +5,51 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CHAYNUPZINE — Record View</title>
 <style>
-  :root{ --ink:#222; --panel:rgba(255,255,255,.6); }
+  :root{
+    --ink:#222;
+    --panel:rgba(255,255,255,.72);
+    --ok-bg:#eefcf1;
+    --ok-bd:#c6ecd1;
+    --ok-fg:#0a7a32;
+    --ng-bg:#ffe9e9;
+    --ng-bd:#f6bcbc;
+    --ng-fg:#a33;
+  }
   html,body{
-    margin:0; background:transparent; color:var(--ink);
+    margin:0;
+    background:transparent;
+    color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    font-size:20px; line-height:1.5;
-    max-width:100%; overflow-x:hidden;
+    font-size:20px;
+    line-height:1.5;
+    max-width:100%;
+    overflow-x:hidden;
   }
   .bg{
-    position:fixed; inset:0;
+    position:fixed;
+    inset:0;
     background-color:#f3f5f7;
     background-image:url("https://etramone7-coder.github.io/chaynupzine/assets/bg_records.webp");
-    background-size:cover; background-position:center;
-    filter:brightness(.88); z-index:0;
+    background-size:cover;
+    background-position:center;
+    filter:brightness(.88);
+    z-index:0;
   }
 
-  .wrap{max-width:1080px; margin:28px auto; padding:0 16px}
+  .wrap{
+    max-width:1080px;
+    margin:28px auto;
+    padding:0 16px;
+  }
   .panel{
-    position:relative; z-index:1;
-    background:var(--panel); backdrop-filter:saturate(120%) blur(10px);
-    border-radius:16px; box-shadow:0 10px 28px rgba(0,0,0,.6);
-    padding:20px; min-height:720px;
+    position:relative;
+    z-index:1;
+    background:var(--panel);
+    backdrop-filter:saturate(120%) blur(10px);
+    border-radius:16px;
+    box-shadow:0 10px 28px rgba(0,0,0,.35);
+    padding:20px;
+    min-height:720px;
     content-visibility:auto;
     contain-intrinsic-size:1000px;
   }
@@ -33,74 +57,243 @@
   .topbar{
     display:grid;
     grid-template-columns:1fr;
-    align-items:start;
     gap:12px;
-    position:relative;
   }
-  .top-left{display:flex; flex-direction:column; gap:8px; align-items:flex-start;}
+  .top-left{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    align-items:flex-start;
+  }
   .brand{
-    background:#111; color:#fff; border-radius:8px; padding:7px 12px; font-weight:800;
+    background:#111;
+    color:#fff;
+    border-radius:8px;
+    padding:7px 12px;
+    font-weight:800;
     font-size:clamp(16px,5.2vw,22px);
   }
 
-  .btn{border:0; border-radius:14px; padding:10px 14px; font-size:18px; font-weight:800; cursor:pointer}
-  .btn.ghost{background:#fff; color:#111; border:1px solid #ddd}
-  .btn.warn{background:#fff0f0; color:#a33; border:1px solid #f3b9b9}
-  .btn.secondary{background:#3949ab; color:#fff}
+  .btn{
+    border:0;
+    border-radius:14px;
+    padding:10px 14px;
+    font-size:18px;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .btn.ghost{
+    background:#fff;
+    color:#111;
+    border:1px solid #ddd;
+  }
+  .btn.warn{
+    background:#fff0f0;
+    color:#a33;
+    border:1px solid #f3b9b9;
+  }
+  .btn.secondary{
+    background:#3949ab;
+    color:#fff;
+  }
 
-  .grid{display:grid; gap:18px; margin-top:16px}
-  @media(min-width:980px){ .grid{grid-template-columns:420px 1fr} }
+  .grid{
+    display:grid;
+    gap:18px;
+    margin-top:16px;
+  }
+  @media(min-width:980px){
+    .grid{ grid-template-columns:420px 1fr; }
+  }
 
-  .leftbox{display:flex; flex-direction:column; gap:14px}
+  .leftbox{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
   .jacket{
-    width:100%; aspect-ratio:1/1; border-radius:14px; background:#f5f5f5;
-    display:flex; align-items:center; justify-content:center; overflow:hidden; color:#888
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:14px;
+    background:#f5f5f5;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    color:#888;
   }
-  .jacket img{width:100%; height:100%; object-fit:cover; display:block}
+  .jacket img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
 
-  .ytwrap{position:relative; width:100%; padding-top:56.25%; border-radius:14px; overflow:hidden; background:#000}
-  #ytPlaceholder{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; cursor:pointer}
-  #ytPlaceholder img{width:100%; height:100%; object-fit:cover; display:block}
+  .ytwrap{
+    position:relative;
+    width:100%;
+    padding-top:56.25%;
+    border-radius:14px;
+    overflow:hidden;
+    background:#000;
+  }
+  #ytPlaceholder{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  #ytPlaceholder img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
   #ytPlaceholder .playbtn{
-    position:absolute; width:68px; height:48px; border-radius:12px;
-    background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center;
-    font-weight:800; color:#fff; font-size:18px;
+    position:absolute;
+    width:68px;
+    height:48px;
+    border-radius:12px;
+    background:rgba(0,0,0,.6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    color:#fff;
+    font-size:18px;
   }
 
-  .head{display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start}
-  .title{min-width:0}
-  .band{font-size:26px; font-weight:900; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .track{font-size:20px; color:#444; margin:4px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-  .badge{padding:8px 12px; border-radius:999px; font-size:16px; font-weight:800; align-self:flex-start}
+  .head{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:flex-start;
+  }
+  .title{ min-width:0; }
+  .band{
+    font-size:26px;
+    font-weight:900;
+    margin:0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .track{
+    font-size:20px;
+    color:#444;
+    margin:4px 0 0;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .badge{
+    padding:8px 12px;
+    border-radius:999px;
+    font-size:16px;
+    font-weight:800;
+    align-self:flex-start;
+  }
 
-  .meta{display:grid; gap:8px; margin:10px 0 0}
-  .kv{display:flex; gap:10px; align-items:center}
-  .k{font-weight:800; color:#555; min-width:7em}
-  .v{color:#222}
+  .meta{
+    display:grid;
+    gap:8px;
+    margin:10px 0 0;
+  }
+  .kv{
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  .k{
+    font-weight:800;
+    color:#555;
+    min-width:7em;
+  }
+  .v{ color:#222; }
 
-  .desc{margin-top:14px; white-space:pre-wrap}
-  .author{margin-top:10px; color:#555}
-  .actions{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap}
+  .desc{
+    margin-top:14px;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+  .author{
+    margin-top:10px;
+    color:#555;
+    word-break:break-word;
+  }
+  .actions{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+    flex-wrap:wrap;
+  }
 
   .alert{
-    margin-top:14px; padding:12px; border-radius:12px;
-    border:1px solid #e6e6e6; background:#fff; font-size:16px; display:none
+    margin-top:14px;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid #e6e6e6;
+    background:#fff;
+    font-size:16px;
+    display:none;
+    word-break:break-word;
   }
-  .alert.show{display:block}
+  .alert.show{ display:block; }
 
-  h1{font-size:clamp(18px,4.6vw,24px)}
-  #subtitle{white-space:nowrap; font-size:16px; color:#555}
+  h1{
+    font-size:clamp(18px,4.6vw,24px);
+    margin:0;
+  }
+  #subtitle{
+    white-space:nowrap;
+    font-size:16px;
+    color:#555;
+  }
 
-  .toolbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px}
-  .in{background:#fff; border:1px solid #ddd; border-radius:10px; padding:8px 10px; font-size:16px}
+  .toolbar{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .in{
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:10px;
+    padding:8px 10px;
+    font-size:16px;
+    width:100%;
+    box-sizing:border-box;
+  }
   #editPanel{
-    display:none; margin-top:10px; border:1px dashed #ddd; background:#fff;
-    padding:10px; border-radius:12px
+    display:none;
+    margin-top:10px;
+    border:1px dashed #ddd;
+    background:#fff;
+    padding:10px;
+    border-radius:12px;
   }
-  .row2{display:grid; gap:10px}
-  @media(min-width:720px){ .row2{grid-template-columns:1fr 1fr} }
-  .lab{font-size:14px; color:#555; font-weight:800; margin-top:6px}
-  .ta{min-height:120px; white-space:pre-wrap}
+  .row2{
+    display:grid;
+    gap:10px;
+  }
+  @media(min-width:720px){
+    .row2{ grid-template-columns:1fr 1fr; }
+  }
+  .lab{
+    font-size:14px;
+    color:#555;
+    font-weight:800;
+    margin-top:6px;
+  }
+  .ta{
+    min-height:120px;
+    white-space:pre-wrap;
+    resize:vertical;
+  }
 </style>
 </head>
 <body>
@@ -216,6 +409,22 @@ var LABELS = {
 };
 
 var currentRecord = null;
+var currentRow = 0;
+
+function setAlertState(el, text, ok){
+  if(!el) return;
+  el.className = 'alert show';
+  el.textContent = text || '';
+  if(ok){
+    el.style.background = 'var(--ok-bg)';
+    el.style.borderColor = 'var(--ok-bd)';
+    el.style.color = 'var(--ok-fg)';
+  }else{
+    el.style.background = 'var(--ng-bg)';
+    el.style.borderColor = 'var(--ng-bd)';
+    el.style.color = 'var(--ng-fg)';
+  }
+}
 
 function setUI(){
   document.getElementById('subtitle').textContent = LABELS.subtitle;
@@ -230,13 +439,9 @@ function setUI(){
   document.getElementById('btnEdit').textContent = LABELS.edit;
   document.getElementById('btnHide').textContent = LABELS.hide;
   document.getElementById('btnUnhide').textContent = LABELS.unhide;
+
   var ek = document.getElementById('editKey');
   if(ek) ek.placeholder = LABELS.keyPh;
-
-  if(currentRecord){
-    document.getElementById('description').textContent = currentRecord.description || '';
-    document.getElementById('author').textContent = currentRecord.author ? (LABELS.by + currentRecord.author) : '';
-  }
 }
 
 (function setupBackButton(){
@@ -256,35 +461,58 @@ function normalizeHttps(u){
     if(/^https:\/\//i.test(u)) return u;
     if(/^http:\/\//i.test(u)) return u.replace(/^http:/i,'https:');
     return u;
-  }catch(_){ return String(u||''); }
+  }catch(_){
+    return String(u||'');
+  }
 }
+
 function extractDriveId(u){
   try{
-    var s=String(u||'');
-    var m=s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if(m) return m[1];
-    m=s.match(/[?&]id=([a-zA-Z0-9_-]+)/); if(m) return m[1];
-    m=s.match(/uc\?export=view&id=([a-zA-Z0-9_-]+)/); if(m) return m[1];
+    var s = String(u||'');
+    var m = s.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if(m) return m[1];
+    m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if(m) return m[1];
+    m = s.match(/uc\?export=view&id=([a-zA-Z0-9_-]+)/);
+    if(m) return m[1];
   }catch(_){}
   return '';
 }
+
 function buildImageSources(url){
   url = normalizeHttps(url);
-  var arr=[]; if(!url) return arr;
-  var id=extractDriveId(url);
+  var arr = [];
+  if(!url) return arr;
+  var id = extractDriveId(url);
   if(id){
-    arr.push('https://drive.google.com/uc?export=view&id='+id);
-    arr.push('https://drive.google.com/thumbnail?id='+id+'&sz=w900');
+    arr.push('https://drive.google.com/uc?export=view&id=' + id);
+    arr.push('https://drive.google.com/thumbnail?id=' + id + '&sz=w900');
   }
   if(/^https:\/\//i.test(url)) arr.push(url);
   return arr;
 }
+
 function setJacket(url){
-  var box=document.getElementById('jacketBox'); box.innerHTML='';
-  var srcs=buildImageSources(url);
-  if(!srcs.length){ box.textContent='No image'; return; }
-  var img=new Image(); var i=0; img.loading='lazy';
-  function next(){ if(i>=srcs.length){ box.textContent='No image'; return; } img.src=srcs[i++]; }
-  img.onerror=next; next(); box.appendChild(img);
+  var box = document.getElementById('jacketBox');
+  box.innerHTML = '';
+  var srcs = buildImageSources(url);
+  if(!srcs.length){
+    box.textContent = 'No image';
+    return;
+  }
+  var img = new Image();
+  var i = 0;
+  img.loading = 'lazy';
+  function next(){
+    if(i >= srcs.length){
+      box.textContent = 'No image';
+      return;
+    }
+    img.src = srcs[i++];
+  }
+  img.onerror = next;
+  next();
+  box.appendChild(img);
 }
 
 function extractYouTubeId(u){
@@ -293,26 +521,38 @@ function extractYouTubeId(u){
   var m = u.match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{6,})/);
   return m ? m[1] : '';
 }
+
 function setYouTube(u){
-  var wrap  = document.getElementById('ytWrap');
-  var ph    = document.getElementById('ytPlaceholder');
+  var wrap = document.getElementById('ytWrap');
+  var ph = document.getElementById('ytPlaceholder');
   wrap.style.display = 'none';
   ph.innerHTML = '';
+
   var id = extractYouTubeId(u||'');
-  if(!id){ return; }
+  if(!id) return;
+
   wrap.style.display = '';
   var doThumb = function(){
-    var thumb = 'https://img.youtube.com/vi/'+id+'/hqdefault.jpg';
-    ph.innerHTML = '<img src="'+thumb+'" alt="YouTube thumbnail"><div class="playbtn">▶</div>';
+    var thumb = 'https://img.youtube.com/vi/' + id + '/hqdefault.jpg';
+    ph.innerHTML = '<img src="' + thumb + '" alt="YouTube thumbnail"><div class="playbtn">▶</div>';
   };
-  if ('requestIdleCallback' in window){ requestIdleCallback(doThumb, {timeout:500}); } else { doThumb(); }
+  if ('requestIdleCallback' in window){
+    requestIdleCallback(doThumb, {timeout:500});
+  } else {
+    doThumb();
+  }
+
   ph.onclick = function(){
     ph.remove();
     var ifr = document.createElement('iframe');
-    ifr.src = 'https://www.youtube.com/embed/'+id+'?rel=0&modestbranding=1&autoplay=1';
+    ifr.src = 'https://www.youtube.com/embed/' + id + '?rel=0&modestbranding=1&autoplay=1';
     ifr.setAttribute('allow','accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
     ifr.setAttribute('allowfullscreen','');
-    ifr.style.position='absolute'; ifr.style.inset='0'; ifr.style.width='100%'; ifr.style.height='100%'; ifr.style.border='0';
+    ifr.style.position = 'absolute';
+    ifr.style.inset = '0';
+    ifr.style.width = '100%';
+    ifr.style.height = '100%';
+    ifr.style.border = '0';
     wrap.appendChild(ifr);
   };
 }
@@ -325,6 +565,7 @@ function render(rec){
 
   var g = currentRecord.genre || 'Other';
   document.getElementById('genre').textContent = g;
+
   var style = GENRE_STYLES[g] || GENRE_STYLES.Other;
   var badge = document.getElementById('genreBadge');
   badge.textContent = g;
@@ -332,78 +573,42 @@ function render(rec){
   badge.style.color = style.fg;
 
   var era = '';
-  var yr = String(currentRecord.release_year||'').match(/(\d{4})/);
+  var yr = String(currentRecord.release_year || '').match(/(\d{4})/);
   if(yr){
-    var y=parseInt(yr[1],10);
-    if(!isNaN(y)) era = (Math.floor(y/10)*10) + 's';
+    var y = parseInt(yr[1], 10);
+    if(!isNaN(y)) era = (Math.floor(y / 10) * 10) + 's';
   }
   document.getElementById('era').textContent = era || '-';
-
   document.getElementById('catalog').textContent = currentRecord.catalog_no || '-';
   document.getElementById('format').textContent  = currentRecord.format || '-';
   document.getElementById('description').textContent = currentRecord.description || '';
   document.getElementById('author').textContent = currentRecord.author ? (LABELS.by + currentRecord.author) : '';
 
-  setJacket(currentRecord.image_url||'');
-  setYouTube(currentRecord.youtube_url||'');
+  setJacket(currentRecord.image_url || '');
+  setYouTube(currentRecord.youtube_url || '');
 }
 
 function persistCurrentRecord(row){
   try{
-    sessionStorage.setItem('cz_selected_record', JSON.stringify(Object.assign({__row:row}, currentRecord || {})));
+    sessionStorage.setItem(
+      'cz_selected_record',
+      JSON.stringify(Object.assign({__row:row}, currentRecord || {}))
+    );
   }catch(_){}
 }
 
 function ensureClientId(){
   try{
-    var k='chaynup_cid';
-    var v=localStorage.getItem(k);
-    if(!v){ v = 'cid_' + Math.random().toString(36).slice(2); localStorage.setItem(k,v); }
+    var k = 'chaynup_cid';
+    var v = localStorage.getItem(k);
+    if(!v){
+      v = 'cid_' + Math.random().toString(36).slice(2);
+      localStorage.setItem(k, v);
+    }
     return v;
-  }catch(_){ return ''; }
-}
-
-async function postReportFallback(payload){
-  var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
-  var r = await fetch(url, {
-    method:'POST', mode:'cors', cache:'no-store',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({ fn:'submitReport', payload, csrf:(window.__CZ_CSRF||'') })
-  });
-  if(!r.ok){ throw new Error('HTTP '+r.status); }
-  return await r.json();
-}
-
-function reportThis(rowIndex){
-  var reason = prompt('通報理由を入力してください（例：権利侵害、スパム等）');
-  if(!reason) return;
-  var msg=document.getElementById('msg');
-  msg.className='alert show';
-  msg.textContent='通報送信中…';
-
-  function done(res){
-    if(res && res.ok){
-      if(res.autoHidden){ msg.textContent='通報を受け付けました（累計閾値に達したため自動的に非表示になりました）。'; }
-      else{ msg.textContent='通報を受け付けました。ご協力ありがとうございます。'; }
-    }else{
-      msg.textContent='通報に失敗しました：' + (res && res.error || 'unknown');
-    }
+  }catch(_){
+    return '';
   }
-  function fail(err){
-    msg.textContent='通報に失敗しました：' + (err && err.message ? err.message : String(err));
-  }
-
-  try{
-    if (window.google && google.script && google.script.run){
-      google.script.run
-        .withSuccessHandler(done)
-        .withFailureHandler(fail)
-        .submitReport({ sheetName:'Records', rowIndex: Number(rowIndex), reason: reason, client_id: ensureClientId() });
-    }else{
-      postReportFallback({ sheetName:'Records', rowIndex: Number(rowIndex), reason: reason, client_id: ensureClientId() })
-        .then(done).catch(fail);
-    }
-  }catch(e){ fail(e); }
 }
 
 (function resolveExecUrl(){
@@ -421,7 +626,7 @@ async function fetchRecordByRow(row){
 
   try{
     var url1 = window.EXEC_URL
-      + (window.EXEC_URL.indexOf('?')>=0?'&':'?')
+      + (window.EXEC_URL.indexOf('?')>=0 ? '&' : '?')
       + 'fn=getRecordByRow&payload=' + encodeURIComponent(JSON.stringify({rowIndex:Number(row)}))
       + '&v=' + Date.now();
     var r1 = await fetch(url1, {method:'GET', mode:'cors', cache:'no-store'});
@@ -431,29 +636,111 @@ async function fetchRecordByRow(row){
     }
   }catch(_){}
 
-  var url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
+  var url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0 ? '&' : '?') + 'v=' + Date.now();
   var r2 = await fetch(url2, {
-    method:'POST', mode:'cors', cache:'no-store',
+    method:'POST',
+    mode:'cors',
+    cache:'no-store',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({ fn:'getRecordByRow', payload:{rowIndex:Number(row)}, csrf:(window.__CZ_CSRF||'') })
+    body: JSON.stringify({
+      fn:'getRecordByRow',
+      payload:{rowIndex:Number(row)},
+      csrf:(window.__CZ_CSRF||'')
+    })
   });
-  if(!r2.ok){ throw new Error('HTTP '+r2.status); }
+  if(!r2.ok) throw new Error('HTTP ' + r2.status);
   return await r2.json();
 }
 
-function showEditMessage(text, ok){
-  var m=document.getElementById('editMsg');
-  m.className='alert show';
-  m.textContent=text;
-  if(ok){
-    m.style.borderColor = '#c6ecd1';
-    m.style.background = '#eefcf1';
-    m.style.color = '#0a7a32';
-  }else{
-    m.style.borderColor = '#f6bcbc';
-    m.style.background = '#ffe9e9';
-    m.style.color = '#a33';
+async function postEditFallback(payload){
+  var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0 ? '&' : '?') + 'v=' + Date.now();
+  var r = await fetch(url, {
+    method:'POST',
+    mode:'cors',
+    cache:'no-store',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({
+      fn:'editEntry',
+      payload:payload,
+      csrf:(window.__CZ_CSRF||'')
+    })
+  });
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  return await r.json();
+}
+
+async function postReportFallback(payload){
+  var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0 ? '&' : '?') + 'v=' + Date.now();
+  var r = await fetch(url, {
+    method:'POST',
+    mode:'cors',
+    cache:'no-store',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({
+      fn:'submitReport',
+      payload:payload,
+      csrf:(window.__CZ_CSRF||'')
+    })
+  });
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  return await r.json();
+}
+
+function reportThis(rowIndex){
+  var reason = prompt('通報理由を入力してください（例：権利侵害、スパム等）');
+  if(!reason) return;
+
+  var msg = document.getElementById('msg');
+  setAlertState(msg, '通報送信中…', true);
+
+  function done(res){
+    if(res && res.ok){
+      if(res.autoHidden){
+        setAlertState(msg, '通報を受け付けました（累計閾値に達したため自動的に非表示になりました）。', true);
+      }else{
+        setAlertState(msg, '通報を受け付けました。ご協力ありがとうございます。', true);
+      }
+    }else{
+      setAlertState(msg, '通報に失敗しました：' + (res && res.error || 'unknown'), false);
+    }
   }
+
+  function fail(err){
+    setAlertState(msg, '通報に失敗しました：' + (err && err.message ? err.message : String(err)), false);
+  }
+
+  try{
+    if (window.google && google.script && google.script.run){
+      google.script.run
+        .withSuccessHandler(done)
+        .withFailureHandler(fail)
+        .submitReport({
+          sheetName:'Records',
+          rowIndex:Number(rowIndex),
+          reason:reason,
+          client_id:ensureClientId()
+        });
+    }else{
+      postReportFallback({
+        sheetName:'Records',
+        rowIndex:Number(rowIndex),
+        reason:reason,
+        client_id:ensureClientId()
+      }).then(done).catch(fail);
+    }
+  }catch(e){
+    fail(e);
+  }
+}
+
+function openEditPanel(){
+  document.getElementById('editControls').style.display = 'inline-flex';
+  document.getElementById('editPanel').style.display = 'block';
+  ensureEditPanel(true);
+}
+
+function showEditMessage(text, ok){
+  setAlertState(document.getElementById('editMsg'), text, ok);
 }
 
 async function reloadAndRender(rowIndex){
@@ -461,18 +748,19 @@ async function reloadAndRender(rowIndex){
   if(!res || !res.ok || !res.data) throw new Error('reload failed');
   render(res.data);
   persistCurrentRecord(rowIndex);
-
-  var host = document.getElementById('editPanel');
-  if (host && host.__ready){
-    host.__ready = false;
-    host.innerHTML = '';
-    ensureEditPanel();
-  }
+  ensureEditPanel(true);
 }
 
 async function callEditEntry(action, rowIndex, editKey, patch){
-  var payload = { sheetName:'Records', rowIndex:Number(rowIndex), edit_key:String(editKey||''), action:String(action||'') };
-  if (action==='update'){ payload.patch = patch || {}; }
+  var payload = {
+    sheetName:'Records',
+    rowIndex:Number(rowIndex),
+    edit_key:String(editKey||'').trim(),
+    action:String(action||'').trim()
+  };
+  if (action === 'update'){
+    payload.patch = patch || {};
+  }
 
   try{
     var res;
@@ -484,14 +772,7 @@ async function callEditEntry(action, rowIndex, editKey, patch){
           .editEntry(payload);
       });
     }else{
-      var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
-      var r = await fetch(url, {
-        method:'POST', mode:'cors', cache:'no-store',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({ fn:'editEntry', payload:payload, csrf:(window.__CZ_CSRF||'') })
-      });
-      if(!r.ok){ throw new Error('HTTP '+r.status); }
-      res = await r.json();
+      res = await postEditFallback(payload);
     }
 
     if(!res || !res.ok){
@@ -515,81 +796,123 @@ async function callEditEntry(action, rowIndex, editKey, patch){
   }
 }
 
-function ensureEditPanel(){
+function ensureEditPanel(force){
   var host = document.getElementById('editPanel');
-  if (!host || host.__ready) return;
+  if (!host) return;
+  if (host.__ready && !force) return;
 
   host.innerHTML = ''
-    + '<div class="lab">'+LABELS.editGuide+'</div>'
+    + '<div class="lab">' + LABELS.editGuide + '</div>'
     + '<div class="row2">'
     + '  <div><div class="lab">BAND</div><input id="e_band" class="in" type="text"></div>'
     + '  <div><div class="lab">TRACK</div><input id="e_track" class="in" type="text"></div>'
     + '</div>'
     + '<div class="row2">'
-    + '  <div><div class="lab">'+LABELS.genre+'</div><input id="e_genre" class="in" type="text" placeholder="Punk / Glam / ..."></div>'
+    + '  <div><div class="lab">' + LABELS.genre + '</div><input id="e_genre" class="in" type="text" placeholder="Punk / Glam / ..."></div>'
     + '  <div><div class="lab">COUNTRY</div><input id="e_country" class="in" type="text" placeholder="Japan / USA / ..."></div>'
     + '</div>'
     + '<div class="row2">'
-    + '  <div><div class="lab">'+LABELS.era+'</div><input id="e_release_year" class="in" type="text" placeholder="YYYY"></div>'
-    + '  <div><div class="lab">'+LABELS.catalog+'</div><input id="e_catalog_no" class="in" type="text"></div>'
+    + '  <div><div class="lab">' + LABELS.era + '</div><input id="e_release_year" class="in" type="text" placeholder="YYYY"></div>'
+    + '  <div><div class="lab">' + LABELS.catalog + '</div><input id="e_catalog_no" class="in" type="text"></div>'
     + '</div>'
-    + '<div><div class="lab">'+LABELS.format+'</div><input id="e_format" class="in" type="text" placeholder="7&quot;EP / LP / CD / ..."></div>'
+    + '<div><div class="lab">' + LABELS.format + '</div><input id="e_format" class="in" type="text" placeholder="7&quot;EP / LP / CD / ..."></div>'
     + '<div><div class="lab">DESCRIPTION</div><textarea id="e_description" class="in ta" maxlength="500"></textarea></div>'
     + '<div class="row2">'
     + '  <div><div class="lab">IMAGE URL</div><input id="e_image_url" class="in" type="url" placeholder="https://..."></div>'
     + '  <div><div class="lab">YOUTUBE URL</div><input id="e_youtube_url" class="in" type="url" placeholder="https://youtu.be/..."></div>'
     + '</div>'
-    + '<div><div class="lab">'+LABELS.by+'</div><input id="e_author" class="in" type="text"></div>'
+    + '<div><div class="lab">' + LABELS.by + '</div><input id="e_author" class="in" type="text"></div>'
     + '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'
-    + '  <button id="btnSave" class="btn secondary" type="button">'+LABELS.save+'</button>'
+    + '  <button id="btnSave" class="btn secondary" type="button">' + LABELS.save + '</button>'
     + '</div>';
 
   var r = currentRecord || {};
-  function S(id, v){ var el=document.getElementById(id); if(el){ el.value = String(v||''); } }
-  S('e_band', r.band);
-  S('e_track', r.track);
-  S('e_genre', r.genre);
-  S('e_country', r.country);
-  S('e_release_year', r.release_year);
-  S('e_catalog_no', r.catalog_no);
-  S('e_format', r.format);
-  S('e_description', r.description);
-  S('e_image_url', r.image_url);
-  S('e_youtube_url', r.youtube_url);
-  S('e_author', r.author);
+
+  function setVal(id, v){
+    var el = document.getElementById(id);
+    if(el) el.value = String(v || '');
+  }
+
+  setVal('e_band', r.band);
+  setVal('e_track', r.track);
+  setVal('e_genre', r.genre);
+  setVal('e_country', r.country);
+  setVal('e_release_year', r.release_year);
+  setVal('e_catalog_no', r.catalog_no);
+  setVal('e_format', r.format);
+  setVal('e_description', r.description);
+  setVal('e_image_url', r.image_url);
+  setVal('e_youtube_url', r.youtube_url);
+  setVal('e_author', r.author);
 
   document.getElementById('btnSave').onclick = function(){
-    var ek = (document.getElementById('editKey')||{}).value || '';
-    if(!ek){ alert(LABELS.needKey); return; }
-
-    var patch={};
-    function P(key, id){
-      var el = document.getElementById(id);
-      var v = el ? el.value : '';
-      if(String(v) !== String(currentRecord[key] || '')) patch[key]=v;
+    var ek = (document.getElementById('editKey') || {}).value || '';
+    ek = String(ek).trim();
+    if(!ek){
+      alert(LABELS.needKey);
+      return;
     }
 
-    P('band','e_band');
-    P('track','e_track');
-    P('genre','e_genre');
-    P('country','e_country');
-    P('release_year','e_release_year');
-    P('catalog_no','e_catalog_no');
-    P('format','e_format');
-    P('description','e_description');
-    P('image_url','e_image_url');
-    P('youtube_url','e_youtube_url');
-    P('author','e_author');
+    var patch = {};
 
-    if(Object.keys(patch).length===0){
+    function pick(key, id){
+      var el = document.getElementById(id);
+      var v = el ? String(el.value || '') : '';
+      var cur = String(currentRecord[key] || '');
+      if(v !== cur){
+        patch[key] = v;
+      }
+    }
+
+    pick('band', 'e_band');
+    pick('track', 'e_track');
+    pick('genre', 'e_genre');
+    pick('country', 'e_country');
+    pick('release_year', 'e_release_year');
+    pick('catalog_no', 'e_catalog_no');
+    pick('format', 'e_format');
+    pick('description', 'e_description');
+    pick('image_url', 'e_image_url');
+    pick('youtube_url', 'e_youtube_url');
+    pick('author', 'e_author');
+
+    if(Object.keys(patch).length === 0){
       showEditMessage('変更はありません。', true);
       return;
     }
 
-    callEditEntry('update', window.__rowIndex, ek, patch);
+    callEditEntry('update', currentRow, ek, patch);
   };
 
   host.__ready = true;
+}
+
+function attachPageHandlers(row){
+  document.getElementById('reportBtn').onclick = function(){
+    reportThis(row);
+  };
+
+  document.getElementById('btnEdit').onclick = function(){
+    openEditPanel();
+  };
+
+  document.getElementById('btnHide').onclick = function(){
+    var ek = String((document.getElementById('editKey').value || '')).trim();
+    if(!ek){
+      alert(LABELS.needKey);
+      return;
+    }
+    callEditEntry('delete', row, ek);
+  };
+
+  document.getElementById('btnUnhide').onclick = function(){
+    var ek = String((document.getElementById('editKey').value || '')).trim();
+    if(!ek){
+      alert(LABELS.needKey);
+      return;
+    }
+    callEditEntry('restore', row, ek);
+  };
 }
 
 (function(){
@@ -598,17 +921,16 @@ function ensureEditPanel(){
   function rowFromHref(){
     var m = (location.search || location.href).match(/[?&]row=(\d+)/);
     var n = m ? Number(m[1]) : 0;
-    return (Number.isInteger(n) && n>=2) ? n : 0;
+    return (Number.isInteger(n) && n >= 2) ? n : 0;
   }
 
   function showError(msg){
-    var m=document.getElementById('msg');
-    m.textContent = msg;
-    m.classList.add('show');
+    setAlertState(document.getElementById('msg'), msg, false);
   }
 
   async function start(row){
-    window.__rowIndex = row;
+    currentRow = row;
+
     if(!row){
       showError('レコードID（row）が指定されていません。');
       return;
@@ -618,37 +940,24 @@ function ensureEditPanel(){
       var cached = sessionStorage.getItem('cz_selected_record');
       if (cached){
         var rec = JSON.parse(cached);
-        if (rec && String(rec.__row||rec.rowIndex||rec.id) === String(row)){
+        if (rec && String(rec.__row || rec.rowIndex || rec.id) === String(row)){
           render(rec);
         }
       }
     }catch(_){}
 
+    attachPageHandlers(row);
+
     try{
       if (window.google && google.script && google.script.run){
         google.script.run
           .withSuccessHandler(function(res){
-            if(!res || !res.ok){ showError('読み込みに失敗しました。'); return; }
+            if(!res || !res.ok){
+              showError('読み込みに失敗しました。');
+              return;
+            }
             render(res.data || {});
             persistCurrentRecord(row);
-
-            document.getElementById('reportBtn').onclick = function(){ reportThis(row); };
-
-            document.getElementById('btnEdit').onclick = function(){
-              var ec=document.getElementById('editControls'); ec.style.display='inline-flex';
-              var ep=document.getElementById('editPanel'); ep.style.display='block';
-              ensureEditPanel();
-            };
-            document.getElementById('btnHide').onclick = function(){
-              var ek=document.getElementById('editKey').value.trim();
-              if(!ek){ alert(LABELS.needKey); return; }
-              callEditEntry('delete', row, ek);
-            };
-            document.getElementById('btnUnhide').onclick = function(){
-              var ek=document.getElementById('editKey').value.trim();
-              if(!ek){ alert(LABELS.needKey); return; }
-              callEditEntry('restore', row, ek);
-            };
           })
           .withFailureHandler(function(err){
             showError('読み込みに失敗しました：' + (err && err.message ? err.message : String(err)));
@@ -660,27 +969,12 @@ function ensureEditPanel(){
 
     try{
       var res = await fetchRecordByRow(row);
-      if(!res || !res.ok){ showError('読み込みに失敗しました。'); return; }
+      if(!res || !res.ok){
+        showError('読み込みに失敗しました。');
+        return;
+      }
       render(res.data || {});
       persistCurrentRecord(row);
-
-      document.getElementById('reportBtn').onclick = function(){ reportThis(row); };
-
-      document.getElementById('btnEdit').onclick = function(){
-        var ec=document.getElementById('editControls'); ec.style.display='inline-flex';
-        var ep=document.getElementById('editPanel'); ep.style.display='block';
-        ensureEditPanel();
-      };
-      document.getElementById('btnHide').onclick = function(){
-        var ek=document.getElementById('editKey').value.trim();
-        if(!ek){ alert(LABELS.needKey); return; }
-        callEditEntry('delete', row, ek);
-      };
-      document.getElementById('btnUnhide').onclick = function(){
-        var ek=document.getElementById('editKey').value.trim();
-        if(!ek){ alert(LABELS.needKey); return; }
-        callEditEntry('restore', row, ek);
-      };
     }catch(err){
       showError('読み込みに失敗しました：' + (err && err.message ? err.message : 'Load failed'));
     }

@@ -294,6 +294,18 @@
     white-space:pre-wrap;
     resize:vertical;
   }
+
+  .debug{
+    margin-top:16px;
+    padding:12px;
+    border:1px dashed #bbb;
+    border-radius:12px;
+    background:rgba(255,255,255,.8);
+    font-size:13px;
+    line-height:1.4;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
 </style>
 </head>
 <body>
@@ -356,6 +368,8 @@
         </div>
 
         <div id="editPanel"></div>
+
+        <div id="debugBox" class="debug" style="display:none"></div>
       </div>
     </div>
   </div>
@@ -410,6 +424,22 @@ var LABELS = {
 
 var currentRecord = null;
 var currentRow = 0;
+var DEBUG = true;
+
+function debugLog(title, value){
+  if(!DEBUG) return;
+  var box = document.getElementById('debugBox');
+  if(!box) return;
+  box.style.display = 'block';
+  var line = '--- ' + title + ' ---\n';
+  try{
+    line += (typeof value === 'string') ? value : JSON.stringify(value, null, 2);
+  }catch(_){
+    line += String(value);
+  }
+  line += '\n\n';
+  box.textContent = line + box.textContent;
+}
 
 function setAlertState(el, text, ok){
   if(!el) return;
@@ -559,6 +589,7 @@ function setYouTube(u){
 
 function render(rec){
   currentRecord = rec || {};
+  debugLog('render currentRecord', currentRecord);
 
   document.getElementById('band').textContent  = currentRecord.band || '(Band)';
   document.getElementById('track').textContent = currentRecord.track || '(Track)';
@@ -578,6 +609,7 @@ function render(rec){
     var y = parseInt(yr[1], 10);
     if(!isNaN(y)) era = (Math.floor(y / 10) * 10) + 's';
   }
+
   document.getElementById('era').textContent = era || '-';
   document.getElementById('catalog').textContent = currentRecord.catalog_no || '-';
   document.getElementById('format').textContent  = currentRecord.format || '-';
@@ -619,6 +651,7 @@ function ensureClientId(){
   }catch(_){
     window.EXEC_URL = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
   }
+  debugLog('EXEC_URL', window.EXEC_URL);
 })();
 
 async function fetchRecordByRow(row){
@@ -629,44 +662,65 @@ async function fetchRecordByRow(row){
       + (window.EXEC_URL.indexOf('?')>=0 ? '&' : '?')
       + 'fn=getRecordByRow&payload=' + encodeURIComponent(JSON.stringify({rowIndex:Number(row)}))
       + '&v=' + Date.now();
+
+    debugLog('fetchRecordByRow GET url', url1);
+
     var r1 = await fetch(url1, {method:'GET', mode:'cors', cache:'no-store'});
     var ctype = (r1.headers && r1.headers.get && r1.headers.get('content-type')) || '';
     if (r1.ok && ctype.indexOf('application/json') >= 0){
-      return await r1.json();
+      var j1 = await r1.json();
+      debugLog('fetchRecordByRow GET res', j1);
+      return j1;
     }
-  }catch(_){}
+  }catch(e){
+    debugLog('fetchRecordByRow GET err', String(e));
+  }
 
   var url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0 ? '&' : '?') + 'v=' + Date.now();
+  var body = {
+    fn:'getRecordByRow',
+    payload:{rowIndex:Number(row)},
+    csrf:(window.__CZ_CSRF||'')
+  };
+
+  debugLog('fetchRecordByRow POST url', url2);
+  debugLog('fetchRecordByRow POST body', body);
+
   var r2 = await fetch(url2, {
     method:'POST',
     mode:'cors',
     cache:'no-store',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({
-      fn:'getRecordByRow',
-      payload:{rowIndex:Number(row)},
-      csrf:(window.__CZ_CSRF||'')
-    })
+    body: JSON.stringify(body)
   });
   if(!r2.ok) throw new Error('HTTP ' + r2.status);
-  return await r2.json();
+  var j2 = await r2.json();
+  debugLog('fetchRecordByRow POST res', j2);
+  return j2;
 }
 
 async function postEditFallback(payload){
   var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0 ? '&' : '?') + 'v=' + Date.now();
+  var body = {
+    fn:'editEntry',
+    payload:payload,
+    csrf:(window.__CZ_CSRF||'')
+  };
+
+  debugLog('postEditFallback url', url);
+  debugLog('postEditFallback body', body);
+
   var r = await fetch(url, {
     method:'POST',
     mode:'cors',
     cache:'no-store',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({
-      fn:'editEntry',
-      payload:payload,
-      csrf:(window.__CZ_CSRF||'')
-    })
+    body: JSON.stringify(body)
   });
   if(!r.ok) throw new Error('HTTP ' + r.status);
-  return await r.json();
+  var j = await r.json();
+  debugLog('postEditFallback res', j);
+  return j;
 }
 
 async function postReportFallback(payload){
@@ -762,6 +816,8 @@ async function callEditEntry(action, rowIndex, editKey, patch){
     payload.patch = patch || {};
   }
 
+  debugLog('callEditEntry payload', payload);
+
   try{
     var res;
     if (window.google && google.script && google.script.run){
@@ -771,6 +827,7 @@ async function callEditEntry(action, rowIndex, editKey, patch){
           .withFailureHandler(reject)
           .editEntry(payload);
       });
+      debugLog('google.script.run editEntry res', res);
     }else{
       res = await postEditFallback(payload);
     }
@@ -792,6 +849,7 @@ async function callEditEntry(action, rowIndex, editKey, patch){
       showEditMessage(LABELS.ok, true);
     }
   }catch(e){
+    debugLog('callEditEntry err', String(e));
     showEditMessage(LABELS.fail + ' : ' + (e && e.message ? e.message : String(e)), false);
   }
 }
@@ -876,6 +934,8 @@ function ensureEditPanel(force){
     pick('youtube_url', 'e_youtube_url');
     pick('author', 'e_author');
 
+    debugLog('edit patch', patch);
+
     if(Object.keys(patch).length === 0){
       showEditMessage('変更はありません。', true);
       return;
@@ -936,15 +996,20 @@ function attachPageHandlers(row){
       return;
     }
 
+    debugLog('start row', row);
+
     try{
       var cached = sessionStorage.getItem('cz_selected_record');
       if (cached){
         var rec = JSON.parse(cached);
         if (rec && String(rec.__row || rec.rowIndex || rec.id) === String(row)){
+          debugLog('sessionStorage cached record', rec);
           render(rec);
         }
       }
-    }catch(_){}
+    }catch(e){
+      debugLog('sessionStorage err', String(e));
+    }
 
     attachPageHandlers(row);
 
@@ -952,6 +1017,7 @@ function attachPageHandlers(row){
       if (window.google && google.script && google.script.run){
         google.script.run
           .withSuccessHandler(function(res){
+            debugLog('google.script.run getRecordByRow res', res);
             if(!res || !res.ok){
               showError('読み込みに失敗しました。');
               return;
@@ -960,12 +1026,15 @@ function attachPageHandlers(row){
             persistCurrentRecord(row);
           })
           .withFailureHandler(function(err){
+            debugLog('google.script.run getRecordByRow err', String(err));
             showError('読み込みに失敗しました：' + (err && err.message ? err.message : String(err)));
           })
           .getRecordByRow({rowIndex:Number(row)});
         return;
       }
-    }catch(_){}
+    }catch(e){
+      debugLog('google.script.run init err', String(e));
+    }
 
     try{
       var res = await fetchRecordByRow(row);
@@ -976,6 +1045,7 @@ function attachPageHandlers(row){
       render(res.data || {});
       persistCurrentRecord(row);
     }catch(err){
+      debugLog('start fallback err', String(err));
       showError('読み込みに失敗しました：' + (err && err.message ? err.message : 'Load failed'));
     }
   }

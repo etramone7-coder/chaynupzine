@@ -255,6 +255,14 @@
     cursor:default;
   }
 
+  .btnDanger{
+    background:#b33;
+  }
+
+  .btnSub{
+    background:#3949ab;
+  }
+
   .toolbar{
     display:flex;
     gap:8px;
@@ -263,12 +271,52 @@
     margin:10px 0 0;
   }
 
-  .in{
+  .in,
+  .editInput,
+  .editTextarea,
+  .editSelect{
     background:#0e121a;
     border:1px solid var(--line);
     border-radius:8px;
     color:#fff;
     padding:8px 10px;
+    width:100%;
+    font:inherit;
+  }
+
+  .editTextarea{
+    min-height:90px;
+    resize:vertical;
+  }
+
+  .editGrid{
+    margin-top:10px;
+    display:none;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+
+  .editField{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+
+  .editField.full{
+    grid-column:1 / -1;
+  }
+
+  .editLabel{
+    font-size:12px;
+    color:#9aa3af;
+    font-weight:700;
+  }
+
+  .editActions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
   }
 
   .small{
@@ -337,6 +385,10 @@
       grid-column:1;
       grid-row:3;
     }
+
+    .editGrid{
+      grid-template-columns:1fr;
+    }
   }
 </style>
 </head>
@@ -365,8 +417,8 @@
       <button id="btnEdit" class="btn" type="button">編集</button>
       <span id="editControls" style="display:none;align-items:center;gap:8px">
         <input id="editKey" class="in" type="text" placeholder="編集キー">
-        <button id="btnHide" class="btn" type="button">非表示</button>
-        <button id="btnUnhide" class="btn" type="button" style="background:#3949ab">再表示</button>
+        <button id="btnHide" class="btn btnDanger" type="button">非表示</button>
+        <button id="btnUnhide" class="btn btnSub" type="button">再表示</button>
       </span>
       <span id="editMsg" class="msg"></span>
     </div>
@@ -382,6 +434,7 @@
 <script>
 (function(){
   let current = null;
+  let isSaving = false;
 
   var LABELS = {
     top:'トップへ戻る',
@@ -389,15 +442,20 @@
     editCap:'投稿を編集/削除',
     more:'もっと見る',
     edit:'編集',
+    closeEdit:'編集を閉じる',
     hide:'非表示',
     unhide:'再表示',
+    save:'保存',
+    saving:'保存中...',
     keyPh:'編集キー',
     needKey:'編集キーを入力してください',
     cond:'条件に合致するライブを表示します。',
     nodata:'データを取得できませんでした。検索ページからもう一度お試しください。',
     ok:'完了しました',
     fail:'失敗しました',
-    saved:'保存しました'
+    saved:'保存しました',
+    noRow:'行番号が取得できませんでした',
+    noChange:'変更がありません'
   };
 
   var STATUS_LABELS = {
@@ -405,6 +463,13 @@
     canceled:'中止',
     done:'終了'
   };
+
+  function setMsg(text, cls){
+    var m = document.getElementById('editMsg');
+    if(!m) return;
+    m.textContent = text || '';
+    m.className = 'msg' + (cls ? ' ' + cls : '');
+  }
 
   function setUI(){
     var ttl = document.getElementById('pageTitle');
@@ -487,6 +552,7 @@
   }
 
   function pick(v, arr){
+    v = v || {};
     for(var i=0;i<arr.length;i++){
       if(v[arr[i]]) return v[arr[i]];
     }
@@ -550,7 +616,8 @@
 
   function resolveImageCandidates(item){
     try{
-      var u = item.image_url || pick(item,['image','cover','img','imageUrl','coverUrl']);
+      item = item || {};
+      var u = item.image_url || pick(item,['image','cover','img','imageUrl','coverUrl','flyer_url','flyerUrl']);
       u = String(u || '').trim();
 
       var ver = String(item.image_updated_at || item.updated_at || item.timestamp || '').trim();
@@ -658,6 +725,68 @@
     }
   }
 
+  function normalizeItem(it){
+    it = it || {};
+    it.image_url = it.image_url || pick(it,['image','cover','img','flyer_url','flyerUrl']);
+    it.description = it.description || pick(it,['desc','body','text']);
+    it.title = it.title || pick(it,['titleLive','ttl']);
+    it.youtube_url = it.youtube_url || pick(it,['youtube','youtubeUrl','yt_url']);
+    return it;
+  }
+
+  function fieldValue(it, key){
+    return String((it && it[key] != null) ? it[key] : '');
+  }
+
+  function makeEditField(label, key, it, type){
+    var wrap = el('div',{className:'editField' + (key === 'description' || key === 'image_url' || key === 'youtube_url' ? ' full' : '')});
+    wrap.appendChild(el('label',{className:'editLabel',textContent:label}));
+
+    var input;
+
+    if(key === 'description'){
+      input = el('textarea',{className:'editTextarea'});
+      input.value = fieldValue(it,key);
+    }else if(key === 'status'){
+      input = el('select',{className:'editSelect'});
+      [
+        ['scheduled','開催予定'],
+        ['canceled','中止'],
+        ['done','終了']
+      ].forEach(function(pair){
+        var opt = el('option',{value:pair[0],textContent:pair[1]});
+        input.appendChild(opt);
+      });
+      input.value = fieldValue(it,key) || 'scheduled';
+    }else{
+      input = el('input',{className:'editInput',type:type || 'text'});
+      input.value = fieldValue(it,key);
+    }
+
+    input.setAttribute('data-edit-key', key);
+    wrap.appendChild(input);
+    return wrap;
+  }
+
+  function collectPatch(editBox, original){
+    var patch = {};
+    var changed = false;
+    var nodes = editBox.querySelectorAll('[data-edit-key]');
+
+    nodes.forEach(function(node){
+      var key = node.getAttribute('data-edit-key');
+      var newVal = String(node.value || '');
+      var oldVal = String((original && original[key] != null) ? original[key] : '');
+
+      if(newVal !== oldVal){
+        patch[key] = newVal;
+        changed = true;
+      }
+    });
+
+    return changed ? patch : {};
+  }
+
   function renderLive(it){
     var root = document.getElementById('results');
     root.innerHTML = '';
@@ -667,9 +796,7 @@
       return;
     }
 
-    it.image_url = it.image_url || pick(it,['image','cover','img']);
-    it.description = it.description || pick(it,['desc','body','text']);
-    it.title = it.title || pick(it,['titleLive','ttl']);
+    it = normalizeItem(it);
 
     var c = el('div',{className:'card'});
 
@@ -689,11 +816,11 @@
     var infoWrap = el('div',{className:'infoWrap'});
 
     var row1 = el('div',{className:'row'});
-    var st = el('span',{className:'badge st',textContent:'［' + toStatus(it.status) + '］'});
+    var statusBadge = el('span',{className:'badge st',textContent:'［' + toStatus(it.status) + '］'});
     var regionLabel = it.region || '';
     var prefLabel = it.prefecture || '';
     var rp = el('span',{className:'badge',textContent:[regionLabel,prefLabel].filter(Boolean).join(' / ')});
-    row1.appendChild(st);
+    row1.appendChild(statusBadge);
     if(rp.textContent) row1.appendChild(rp);
     infoWrap.appendChild(row1);
 
@@ -730,50 +857,64 @@
       infoWrap.appendChild(el('div',{className:'desc',textContent:it.description}));
     }
 
-    var editBox = el('div',{style:'margin-top:8px;display:none;flex-direction:column;gap:6px'});
-
-    function makeInput(label, key){
-      var wrap = el('div');
-      var input = el('input',{
-        className:'in',
-        value: it[key] || '',
-        placeholder: label + ' (' + key + ')'
-      });
-
-      input.onchange = function(){
-        var ek = document.getElementById('editKey').value.trim();
-        if(!ek){
-          document.getElementById('editMsg').textContent = LABELS.needKey;
-          return;
-        }
-        var patch = {};
-        patch[key] = input.value;
-        updateLive(it.rowIndex, patch, ek);
-      };
-
-      wrap.appendChild(input);
-      return wrap;
-    }
+    var editBox = el('div',{className:'editGrid'});
 
     [
-      'title',
-      'venue',
-      'region',
-      'prefecture',
-      'price',
-      'description',
-      'status',
-      'date',
-      'open_time',
-      'start_time',
-      'youtube_url',
-      'image_url',
-      'artist',
-      'genre',
-      'author'
-    ].forEach(function(f){
-      editBox.appendChild(makeInput(f.toUpperCase(), f));
+      ['TITLE','title'],
+      ['ARTIST','artist'],
+      ['GENRE','genre'],
+      ['VENUE','venue'],
+      ['REGION','region'],
+      ['PREFECTURE','prefecture'],
+      ['PRICE','price'],
+      ['STATUS','status'],
+      ['DATE','date'],
+      ['OPEN TIME','open_time'],
+      ['START TIME','start_time'],
+      ['AUTHOR','author'],
+      ['YOUTUBE URL','youtube_url'],
+      ['IMAGE URL','image_url'],
+      ['DESCRIPTION','description']
+    ].forEach(function(pair){
+      editBox.appendChild(makeEditField(pair[0], pair[1], it));
     });
+
+    var editActions = el('div',{className:'editActions full'});
+    var saveBtn = el('button',{className:'btn',type:'button',textContent:LABELS.save});
+    editActions.appendChild(saveBtn);
+    editBox.appendChild(editActions);
+
+    saveBtn.onclick = async function(){
+      if(isSaving) return;
+
+      var key = document.getElementById('editKey').value.trim();
+      if(!key){
+        setMsg(LABELS.needKey, 'err');
+        return;
+      }
+
+      var row = current && current.rowIndex;
+      if(!row){
+        setMsg(LABELS.noRow, 'err');
+        return;
+      }
+
+      var patch = collectPatch(editBox, current);
+      if(!Object.keys(patch).length){
+        setMsg(LABELS.noChange, '');
+        return;
+      }
+
+      isSaving = true;
+      saveBtn.disabled = true;
+      saveBtn.textContent = LABELS.saving;
+
+      await updateLive(row, patch, key);
+
+      isSaving = false;
+      saveBtn.disabled = false;
+      saveBtn.textContent = LABELS.save;
+    };
 
     infoWrap.appendChild(editBox);
     c.appendChild(infoWrap);
@@ -789,17 +930,22 @@
     }
     c.appendChild(videoWrap);
 
-    document.getElementById('results').appendChild(c);
+    root.appendChild(c);
 
     document.getElementById('btnEdit').onclick = function(){
       var ec = document.getElementById('editControls');
-      ec.style.display = (ec.style.display === 'none' ? 'inline-flex' : 'none');
-      editBox.style.display = (editBox.style.display === 'none' ? 'flex' : 'none');
+      var btn = document.getElementById('btnEdit');
+      var willOpen = editBox.style.display === '' || editBox.style.display === 'none';
+
+      ec.style.display = willOpen ? 'inline-flex' : 'none';
+      editBox.style.display = willOpen ? 'grid' : 'none';
+      btn.textContent = willOpen ? LABELS.closeEdit : LABELS.edit;
+      setMsg('', '');
     };
   }
 
   function getSelectedFromSession(){
-    var raw = sessionStorage.getItem('cz_selected_live') || sessionStorage.getItem('cz_selected_record') || '';
+    var raw = sessionStorage.getItem('cz_selected_live') || '';
     if(!raw) return null;
     try{
       return JSON.parse(raw);
@@ -849,7 +995,7 @@
         mode:'cors',
         cache:'no-store',
         headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({fn:'listLives', payload, csrf:(window.__CZ_CSRF || '')})
+        body: JSON.stringify({fn:'listLives', payload:payload, csrf:(window.__CZ_CSRF || '')})
       });
 
       if(!r2.ok) throw new Error('HTTP ' + r2.status);
@@ -871,7 +1017,6 @@
           var hit = res.items.find(function(x){
             return Number(x.rowIndex) === Number(rowIndex);
           });
-          console.log('LIVE ITEM', hit);
           resolve(hit || null);
         }catch(_){
           resolve(null);
@@ -882,72 +1027,90 @@
     });
   }
 
+  async function postEditEntry(payload){
+    var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now();
+
+    var body = {
+      fn:'editEntry',
+      csrf:(window.__CZ_CSRF || ''),
+      payload:payload
+    };
+
+    var r = await fetch(url, {
+      method:'POST',
+      mode:'cors',
+      cache:'no-store',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(body)
+    });
+
+    var text = await r.text();
+    var j = null;
+
+    try{
+      j = JSON.parse(text);
+    }catch(_){
+      throw new Error('JSONではない応答です');
+    }
+
+    if(!r.ok || !j || !j.ok){
+      throw new Error((j && (j.error || j.message)) || ('HTTP ' + r.status));
+    }
+
+    return j;
+  }
+
   async function updateLive(rowIndex, patch, editKey){
     try{
-      var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now();
-      var body = {
-        fn:'editEntry',
-        csrf:(window.__CZ_CSRF || ''),
-        payload:{
-          sheetName:'Lives',
-          rowIndex:rowIndex,
-          edit_key:editKey,
-          action:'update',
-          patch:patch
-        }
+      var payload = {
+        sheetName:'Lives',
+        type:'live',
+        rowIndex:rowIndex,
+        edit_key:editKey,
+        editKey:editKey,
+        action:'update',
+        patch:patch
       };
 
-      var r = await fetch(url, {
-        method:'POST',
-        mode:'cors',
-        cache:'no-store',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify(body)
-      });
+      await postEditEntry(payload);
 
-      var j = await r.json();
-      if(!j || !j.ok) throw new Error(j && j.error || 'fail');
-
-      document.getElementById('editMsg').textContent = LABELS.saved;
+      setMsg(LABELS.saved, 'ok');
 
       var fetched = await hydrateFromNetwork(rowIndex);
       if(fetched){
-        current = fetched;
+        current = normalizeItem(fetched);
+        renderLive(current);
+      }else{
+        current = Object.assign({}, current || {}, patch);
         renderLive(current);
       }
     }catch(e){
-      document.getElementById('editMsg').textContent = LABELS.fail;
+      setMsg(LABELS.fail + '：' + (e && e.message ? e.message : ''), 'err');
     }
   }
 
   async function hideLive(rowIndex, hide, editKey){
     try{
-      var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now();
-      var body = {
-        fn:'editEntry',
-        csrf:(window.__CZ_CSRF || ''),
-        payload:{
-          sheetName:'Lives',
-          rowIndex:rowIndex,
-          edit_key:editKey,
-          action:(hide ? 'delete' : 'restore')
-        }
+      var payload = {
+        sheetName:'Lives',
+        type:'live',
+        rowIndex:rowIndex,
+        edit_key:editKey,
+        editKey:editKey,
+        action:(hide ? 'delete' : 'restore')
       };
 
-      var r = await fetch(url, {
-        method:'POST',
-        mode:'cors',
-        cache:'no-store',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify(body)
-      });
+      await postEditEntry(payload);
 
-      var j = await r.json();
-      if(!j || !j.ok) throw new Error(j && j.error || 'fail');
+      setMsg(LABELS.ok, 'ok');
 
-      document.getElementById('editMsg').textContent = LABELS.ok;
+      var fetched = await hydrateFromNetwork(rowIndex);
+      if(fetched){
+        current = normalizeItem(fetched);
+        renderLive(current);
+      }
     }catch(e){
-      document.getElementById('editMsg').textContent = LABELS.fail;
+      setMsg(LABELS.fail + '：' + (e && e.message ? e.message : ''), 'err');
     }
   }
 
@@ -957,21 +1120,33 @@
   document.getElementById('btnHide').onclick = function(){
     var key = document.getElementById('editKey').value.trim();
     if(!key){
-      document.getElementById('editMsg').textContent = LABELS.needKey;
+      setMsg(LABELS.needKey, 'err');
       return;
     }
+
     var row = current && current.rowIndex;
-    if(row) hideLive(row, true, key);
+    if(!row){
+      setMsg(LABELS.noRow, 'err');
+      return;
+    }
+
+    hideLive(row, true, key);
   };
 
   document.getElementById('btnUnhide').onclick = function(){
     var key = document.getElementById('editKey').value.trim();
     if(!key){
-      document.getElementById('editMsg').textContent = LABELS.needKey;
+      setMsg(LABELS.needKey, 'err');
       return;
     }
+
     var row = current && current.rowIndex;
-    if(row) hideLive(row, false, key);
+    if(!row){
+      setMsg(LABELS.noRow, 'err');
+      return;
+    }
+
+    hideLive(row, false, key);
   };
 
   var rowHint = qs('row');
@@ -982,12 +1157,12 @@
     if(keyRow){
       var fetched = await hydrateFromNetwork(keyRow);
       if(fetched){
-        current = fetched;
+        current = normalizeItem(fetched);
       }
     }
 
     if(!current){
-      current = getSelectedFromSession();
+      current = normalizeItem(getSelectedFromSession());
     }
 
     renderLive(current);

@@ -99,6 +99,7 @@
     border:0; border-radius:12px; padding:10px 14px; font-weight:800; cursor:pointer; font-size:14px;
     background:#111; color:#fff;
   }
+  .btn:disabled{opacity:.6; cursor:default}
   .btn.ghost{background:#fff; color:#111; border:1px solid #d0d7de}
   .btn.warn{background:#fff0f0; color:#a33; border:1px solid #f3b9b9}
   .btn.secondary{background:#3949ab; color:#fff}
@@ -228,6 +229,8 @@
 document.getElementById('bg').style.backgroundImage =
   'url(https://etramone7-coder.github.io/chaynupzine/assets/feature_browse.webp)';
 
+var GAS_EXEC_URL = 'https://script.google.com/macros/s/AKfycbzkQN0yd6DLoImgNdI0877buJU56w6G-ewWlNfZOVuVmKmRlEeGElI6p4QHnL5glSHK1A/exec';
+
 function qs(k){
   var m = location.search.match(new RegExp('[?&]'+k+'=([^&]+)'));
   return m ? decodeURIComponent(m[1]) : '';
@@ -236,6 +239,8 @@ function qs(k){
 var gFeature = null;
 var gRowIndex = 0;
 var gIsEditOpen = false;
+var gIsSaving = false;
+var gLastEditKey = '';
 
 function esc(s){
   return String(s||'').replace(/[&<>"']/g, function(c){
@@ -273,6 +278,7 @@ function buildImageSources(url){
   if(id){
     arr.push('https://drive.google.com/thumbnail?id='+id+'&sz=w1200');
     arr.push('https://drive.google.com/uc?export=view&id='+id);
+    arr.push('https://lh3.googleusercontent.com/d/'+id);
   }
   if(/^https:\/\//i.test(url)) arr.push(url);
   return arr;
@@ -292,15 +298,17 @@ function ytId(u){
       if(v && /^[A-Za-z0-9_-]{6,}$/.test(v)) return v;
       var m = url.pathname.match(/\/embed\/([A-Za-z0-9_-]{6,})/);
       if(m) return m[1];
+      var s2 = url.pathname.match(/\/shorts\/([A-Za-z0-9_-]{6,})/);
+      if(s2) return s2[1];
     }
   }catch(_){}
-  var m2 = String(u||'').match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{6,})/);
+  var m2 = String(u||'').match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
   return m2 ? m2[1] : '';
 }
 
 function isAllowedYouTube(u){
   if(!u) return true;
-  return /^(https:\/\/(?:www\.)?youtube\.com\/watch\?v=|https:\/\/youtu\.be\/)/i.test(String(u).trim());
+  return !!ytId(u);
 }
 
 function chip(text){
@@ -310,76 +318,17 @@ function chip(text){
   return s;
 }
 
-(function resolveExecUrl(){
+function resolveExecUrl(){
   try{
-    var injected = (window.EXEC_URL||'<?= EXEC_URL ?>'||'').trim();
+    var injected = (window.EXEC_URL||'').trim();
     if (!injected || injected.indexOf('<?=')===0) injected = '';
-    var fallback='https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
-    window.EXEC_URL = injected || fallback;
+    window.EXEC_URL = injected || GAS_EXEC_URL;
   }catch(_){
-    window.EXEC_URL='https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
-  }
-})();
-
-async function callGetFeatureById(arg, onOK, onNG){
-  try{
-    if(window.google && google.script && google.script.run){
-      google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).getFeatureById(arg);
-      return;
-    }
-  }catch(_){}
-  try{
-    const url1 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?')
-      + 'fn=getFeatureById&payload=' + encodeURIComponent(JSON.stringify(arg))
-      + '&v=' + Date.now();
-    const r1 = await fetch(url1,{method:'GET',mode:'cors',cache:'no-store'});
-    const ct = r1.headers.get('content-type')||'';
-    if(r1.ok && ct.indexOf('application/json')>=0){
-      onOK(await r1.json());
-      return;
-    }
-  }catch(_){}
-  try{
-    const url2 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
-    const r2 = await fetch(url2,{
-      method:'POST',mode:'cors',cache:'no-store',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({fn:'getFeatureById',payload:arg,csrf:(window.__CZ_CSRF||'')})
-    });
-    if(!r2.ok){ throw new Error('HTTP '+r2.status); }
-    onOK(await r2.json());
-  }catch(err){
-    onNG(err);
+    window.EXEC_URL = GAS_EXEC_URL;
   }
 }
 
-async function callEditEntry(payload, onOK, onNG){
-  try{
-    if(window.google && google.script && google.script.run){
-      google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).editEntry(payload);
-      return;
-    }
-  }catch(_){}
-  try{
-    const url = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
-    const r = await fetch(url,{
-      method:'POST',
-      mode:'cors',
-      cache:'no-store',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({fn:'editEntry',payload:payload,csrf:(window.__CZ_CSRF||'')})
-    });
-    if(!r.ok){
-      const t = await r.text().catch(function(){ return ''; });
-      throw new Error('HTTP '+r.status+' '+t);
-    }
-    onOK(await r.json());
-  }catch(err){
-    onNG(err);
-  }
-}
-
-async function renderHeader(data){
+function renderHeader(data){
   var head = document.getElementById('head');
   head.innerHTML = '';
 
@@ -401,7 +350,7 @@ async function renderHeader(data){
   head.appendChild(meta);
 }
 
-async function renderBody(data){
+function renderBody(data){
   var body = document.getElementById('body');
   body.innerHTML='';
 
@@ -438,7 +387,10 @@ async function renderBody(data){
           img.decoding='async';
           img.alt='image';
           var k=0;
-          function next(){ if(k>=srcs.length){ return; } img.src=srcs[k++]; }
+          function next(){
+            if(k>=srcs.length){ return; }
+            img.src=srcs[k++];
+          }
           img.onerror=next;
           next();
           t.appendChild(img);
@@ -615,7 +567,110 @@ function refreshTargetInfo(){
   target.value = gRowIndex ? ('row=' + gRowIndex + (gFeature && gFeature.slug ? ' / slug=' + gFeature.slug : '')) : '';
 }
 
+async function postApi(fn, payload){
+  var url = window.EXEC_URL + (window.EXEC_URL.indexOf('?') >= 0 ? '&' : '?') + 'v=' + Date.now();
+
+  var r = await fetch(url,{
+    method:'POST',
+    mode:'cors',
+    cache:'no-store',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({
+      fn:fn,
+      payload:payload,
+      csrf:(window.__CZ_CSRF||'')
+    })
+  });
+
+  var text = await r.text();
+  var j = null;
+
+  try{
+    j = JSON.parse(text);
+  }catch(_){
+    throw new Error('JSONではない応答です: ' + text.slice(0,120));
+  }
+
+  if(!r.ok || !j || !j.ok){
+    throw new Error((j && (j.error || j.message)) || ('HTTP ' + r.status));
+  }
+
+  return j;
+}
+
+async function callGetFeatureById(arg, onOK, onNG){
+  try{
+    if(window.google && google.script && google.script.run){
+      google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).getFeatureById(arg);
+      return;
+    }
+  }catch(_){}
+
+  try{
+    const url1 = window.EXEC_URL + (window.EXEC_URL.indexOf('?')>=0?'&':'?')
+      + 'fn=getFeatureById&payload=' + encodeURIComponent(JSON.stringify(arg))
+      + '&v=' + Date.now();
+    const r1 = await fetch(url1,{method:'GET',mode:'cors',cache:'no-store'});
+    const ct = r1.headers.get('content-type')||'';
+    if(r1.ok && ct.indexOf('application/json')>=0){
+      onOK(await r1.json());
+      return;
+    }
+  }catch(_){}
+
+  try{
+    onOK(await postApi('getFeatureById', arg));
+  }catch(err){
+    onNG(err);
+  }
+}
+
+async function callEditEntry(payload, onOK, onNG){
+  try{
+    if(window.google && google.script && google.script.run){
+      google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).editEntry(payload);
+      return;
+    }
+  }catch(_){}
+
+  try{
+    onOK(await postApi('editEntry', payload));
+  }catch(err){
+    onNG(err);
+  }
+}
+
+async function hydrateFeature(){
+  if(!gRowIndex) return null;
+  try{
+    var res = await postApi('getFeatureById', {rowIndex:gRowIndex});
+    if(res && res.ok && res.data){
+      return res.data;
+    }
+  }catch(_){}
+  return null;
+}
+
+function applyFeatureToScreen(data){
+  gFeature = data || {};
+  renderHeader(gFeature);
+  renderBody(gFeature);
+
+  var idhint = document.getElementById('idhint');
+  idhint.textContent = gFeature.slug
+    ? ('slug: '+gFeature.slug+' / row: '+(gRowIndex||''))
+    : ('row: '+(gRowIndex||''));
+
+  refreshTargetInfo();
+
+  if(gIsEditOpen){
+    fillEditForm(gFeature);
+  }
+}
+
 (function init(){
+  resolveExecUrl();
+
   document.getElementById('btnEditStart').onclick = function(){
     clearBanners();
     if(!gFeature){
@@ -633,15 +688,22 @@ function refreshTargetInfo(){
 
   document.getElementById('btnSave').onclick = function(){
     clearBanners();
+
+    if(gIsSaving) return;
+
     var key = (document.getElementById('editKey').value || '').trim();
     if(!key){
       showErrorText('editキーを入力してください。');
       return;
     }
+
+    gLastEditKey = key;
+
     if(!gRowIndex){
       showErrorText('rowIndex を取得できません。');
       return;
     }
+
     if(!gIsEditOpen){
       fillEditForm(gFeature || {});
       showOkText('編集欄に現在の内容を読み込みました。');
@@ -652,6 +714,11 @@ function refreshTargetInfo(){
       var patch = collectPatch();
       validatePatch(patch);
 
+      var btn = document.getElementById('btnSave');
+      gIsSaving = true;
+      btn.disabled = true;
+      btn.textContent = '保存中...';
+
       callEditEntry({
         sheetName:'Features',
         rowIndex:gRowIndex,
@@ -659,20 +726,42 @@ function refreshTargetInfo(){
         action:'update',
         patch:patch
       }, async function(res){
+        btn.disabled = false;
+        btn.textContent = '保存';
+        gIsSaving = false;
+
         if(!res || !res.ok){
           showErrorText((res && res.error) ? res.error : '処理に失敗しました。');
           return;
         }
 
         Object.assign(gFeature, patch);
-        await renderHeader(gFeature);
-        await renderBody(gFeature);
-        fillEditForm(gFeature);
+        applyFeatureToScreen(gFeature);
+        if(gLastEditKey){
+          document.getElementById('editKey').value = gLastEditKey;
+        }
         showOkText('保存しました。');
+
+        var fresh = await hydrateFeature();
+        if(fresh){
+          Object.assign(fresh, patch);
+          applyFeatureToScreen(fresh);
+          if(gLastEditKey){
+            document.getElementById('editKey').value = gLastEditKey;
+          }
+          showOkText('保存しました。');
+        }
       }, function(err){
+        btn.disabled = false;
+        btn.textContent = '保存';
+        gIsSaving = false;
         showErrorText(err && err.message ? err.message : '処理に失敗しました。');
       });
     }catch(e){
+      gIsSaving = false;
+      var btn2 = document.getElementById('btnSave');
+      btn2.disabled = false;
+      btn2.textContent = '保存';
       showErrorText(e && e.message ? e.message : '処理に失敗しました。');
     }
   };
@@ -684,6 +773,9 @@ function refreshTargetInfo(){
       showErrorText('editキーを入力してください。');
       return;
     }
+
+    gLastEditKey = key;
+
     if(!gRowIndex){
       showErrorText('rowIndex を取得できません。');
       return;
@@ -699,6 +791,7 @@ function refreshTargetInfo(){
         showErrorText((res && res.error) ? res.error : '処理に失敗しました。');
         return;
       }
+      if(gFeature) gFeature.is_hidden = true;
       showOkText('非表示にしました。');
     }, function(err){
       showErrorText(err && err.message ? err.message : '処理に失敗しました。');
@@ -712,6 +805,9 @@ function refreshTargetInfo(){
       showErrorText('editキーを入力してください。');
       return;
     }
+
+    gLastEditKey = key;
+
     if(!gRowIndex){
       showErrorText('rowIndex を取得できません。');
       return;
@@ -727,6 +823,7 @@ function refreshTargetInfo(){
         showErrorText((res && res.error) ? res.error : '処理に失敗しました。');
         return;
       }
+      if(gFeature) gFeature.is_hidden = false;
       showOkText('再表示しました。');
     }, function(err){
       showErrorText(err && err.message ? err.message : '処理に失敗しました。');
@@ -744,6 +841,7 @@ function refreshTargetInfo(){
           showErrorText('対象の特集が見つかりません。');
           return;
         }
+
         var d = res.data || {};
         gFeature = d;
         gRowIndex = Number(res.rowIndex || d.rowIndex || row || 0);
@@ -753,11 +851,7 @@ function refreshTargetInfo(){
           showErrorText('この特集は非公開です。');
         }
 
-        renderHeader(d);
-        renderBody(d);
-        var idhint = document.getElementById('idhint');
-        idhint.textContent = d.slug ? ('slug: '+d.slug+' / row: '+(gRowIndex||'')) : ('row: '+(gRowIndex||''));
-        refreshTargetInfo();
+        applyFeatureToScreen(d);
       }catch(_){
         showErrorText('対象の特集が見つかりません。');
       }

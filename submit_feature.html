@@ -17,7 +17,7 @@
     position:fixed; inset:0; background-size:cover; background-position:center;
     filter:brightness(.88); z-index:0;
     background-color:#f3f5f7;
-    background-image:url("https://etramone7-coder.github.io/chaynupzine/assets/bg_submit_feauture.webp");
+    background-image:url("https://etramone7-coder.github.io/chaynupzine/assets/bg_submit_feature.webp");
   }
   .wrap{max-width:1100px; margin:28px auto; padding:0 16px;}
   .panel{
@@ -224,7 +224,7 @@
 </div>
 
 <script>
-const EXEC_URL = 'https://script.google.com/macros/s/AKfycbxZ9JsvX-BQUrFXLTBSkf9i_MgWxt-fyQygLDQfi2DQWy3qZ7dtc_IObvi3VMYoaCQAxw/exec';
+const EXEC_URL = 'https://script.google.com/macros/s/AKfycbzkQN0yd6DLoImgNdI0877buJU56w6G-ewWlNfZOVuVmKmRlEeGElI6p4QHnL5glSHK1A/exec';
 
 async function callSubmitFeature(payload, onOK, onNG){
   try{
@@ -252,7 +252,7 @@ async function callSubmitFeature(payload, onOK, onNG){
 
 <script>
 (function(){
-  var url = 'https://etramone7-coder.github.io/chaynupzine/assets/bg_submit_feauture.webp';
+  var url = 'https://etramone7-coder.github.io/chaynupzine/assets/bg_submit_feature.webp';
   document.getElementById('bg').style.backgroundImage = 'url(' + url + ')';
 })();
 
@@ -653,6 +653,7 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   }catch(e){
     msg.className='alert err';
     msg.textContent='投稿に失敗しました: ' + (e && e.message ? e.message : String(e));
+    btn.disabled=false;
   }
 });
 

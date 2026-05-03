@@ -660,6 +660,51 @@
     return img;
   }
 
+  function normalizeTimeValue(v){
+    try{
+      if(v === null || v === undefined) return '';
+
+      if(v instanceof Date && !isNaN(v.getTime())){
+        var hh = ('0' + v.getHours()).slice(-2);
+        var mm = ('0' + v.getMinutes()).slice(-2);
+        return hh + ':' + mm;
+      }
+
+      var s = String(v).trim();
+      if(!s) return '';
+
+      var iso = s.match(/T(\d{1,2}):(\d{2})(?::\d{2})?/);
+      if(iso){
+        return ('0' + iso[1]).slice(-2) + ':' + iso[2];
+      }
+
+      var any = s.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
+      if(any){
+        return ('0' + any[1]).slice(-2) + ':' + any[2];
+      }
+
+      var jp = s
+        .replace(/[．。]/g,':')
+        .replace(/[時]/g,':')
+        .replace(/[分]/g,'')
+        .replace(/[^\d:]/g,'');
+
+      if(/^\d{3,4}$/.test(jp)){
+        jp = ('0000' + jp).slice(-4);
+        return jp.slice(0,2) + ':' + jp.slice(2,4);
+      }
+
+      var m = jp.match(/(\d{1,2}):(\d{2})/);
+      if(m){
+        return ('0' + m[1]).slice(-2) + ':' + m[2];
+      }
+
+      return '';
+    }catch(_){
+      return '';
+    }
+  }
+
   function formatDate(s){
     try{
       if(!s) return '';
@@ -679,25 +724,8 @@
   }
 
   function formatTime(s){
-    try{
-      if(!s) return '';
-      var str = String(s).trim();
-      var any = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?/);
-      if(any) return ('0' + any[1]).slice(-2) + ':' + any[2];
-
-      str = str.replace(/[．。]/g,':').replace(/[時]/g,':').replace(/[分]/g,'').replace(/[^\d:]/g,'');
-      if(/^\d{3,4}$/.test(str)){
-        str = ('0000' + str).slice(-4);
-        return str.slice(0,2) + ':' + str.slice(2,4);
-      }
-
-      var m = str.match(/(\d{1,2}):(\d{2})/);
-      if(m) return ('0' + m[1]).slice(-2) + ':' + m[2];
-
-      return String(s || '');
-    }catch(_){
-      return String(s || '');
-    }
+    var t = normalizeTimeValue(s);
+    return t || String(s || '');
   }
 
   function normalizeItem(it){
@@ -708,10 +736,15 @@
     it.title = it.title || pick(it,['titleLive','ttl']);
     it.youtube_url = it.youtube_url || pick(it,['youtube','youtubeUrl','yt_url']);
     it.status = it.status || 'scheduled';
+    it.open_time = normalizeTimeValue(it.open_time);
+    it.start_time = normalizeTimeValue(it.start_time);
     return it;
   }
 
   function fieldValue(it, key){
+    if(key === 'open_time' || key === 'start_time'){
+      return normalizeTimeValue(it && it[key]);
+    }
     return String((it && it[key] != null) ? it[key] : '');
   }
 
@@ -735,6 +768,10 @@
         input.appendChild(opt);
       });
       input.value = fieldValue(it,key) || 'scheduled';
+    }else if(key === 'open_time' || key === 'start_time'){
+      input = el('input',{className:'editInput',type:'time'});
+      input.value = normalizeTimeValue(fieldValue(it,key));
+      input.step = '60';
     }else{
       input = el('input',{className:'editInput',type:type || 'text'});
       input.value = fieldValue(it,key);
@@ -753,6 +790,11 @@
       var key = node.getAttribute('data-edit-key');
       var newVal = String(node.value || '');
       var oldVal = String((original && original[key] != null) ? original[key] : '');
+
+      if(key === 'open_time' || key === 'start_time'){
+        newVal = normalizeTimeValue(newVal);
+        oldVal = normalizeTimeValue(oldVal);
+      }
 
       if(newVal !== oldVal){
         patch[key] = newVal;
@@ -1060,6 +1102,13 @@
 
   async function updateLive(rowIndex, patch, editKey){
     try{
+      if(Object.prototype.hasOwnProperty.call(patch, 'open_time')){
+        patch.open_time = normalizeTimeValue(patch.open_time);
+      }
+      if(Object.prototype.hasOwnProperty.call(patch, 'start_time')){
+        patch.start_time = normalizeTimeValue(patch.start_time);
+      }
+
       var payload = {
         sheetName:'Lives',
         rowIndex:rowIndex,

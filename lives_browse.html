@@ -99,11 +99,6 @@
     border:1px solid var(--line);
   }
 
-  .btnA.primary{
-    background:var(--accent);
-    color:#fff;
-  }
-
   .panel{
     background:rgba(14,18,26,.88);
     border:1px solid #273045;
@@ -227,11 +222,6 @@
 
   .badge.st{
     border-color:#2b6cb0;
-  }
-
-  .badge.er{
-    border-color:#a33;
-    color:#ffb3b3;
   }
 
   .morewrap{
@@ -435,6 +425,10 @@
 (function(){
   let current = null;
   let isSaving = false;
+  let isEditOpen = false;
+  let lastEditKey = '';
+
+  var GAS_EXEC_URL = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
 
   var LABELS = {
     top:'トップへ戻る',
@@ -472,35 +466,16 @@
   }
 
   function setUI(){
-    var ttl = document.getElementById('pageTitle');
-    if(ttl) ttl.textContent = 'Lives browse';
-
-    var bTop = document.getElementById('btn-top');
-    if(bTop) bTop.textContent = LABELS.top;
-
-    var bForm = document.getElementById('btn-form');
-    if(bForm) bForm.textContent = LABELS.toForm;
-
-    var cap = document.getElementById('tool-cap');
-    if(cap) cap.textContent = LABELS.editCap;
-
-    var more = document.getElementById('moreBtn');
-    if(more) more.textContent = LABELS.more;
-
-    var sum = document.getElementById('summary');
-    if(sum) sum.textContent = LABELS.cond;
-
-    var ed = document.getElementById('btnEdit');
-    if(ed) ed.textContent = LABELS.edit;
-
-    var hid = document.getElementById('btnHide');
-    if(hid) hid.textContent = LABELS.hide;
-
-    var unh = document.getElementById('btnUnhide');
-    if(unh) unh.textContent = LABELS.unhide;
-
-    var ek = document.getElementById('editKey');
-    if(ek) ek.placeholder = LABELS.keyPh;
+    document.getElementById('pageTitle').textContent = 'Lives browse';
+    document.getElementById('btn-top').textContent = LABELS.top;
+    document.getElementById('btn-form').textContent = LABELS.toForm;
+    document.getElementById('tool-cap').textContent = LABELS.editCap;
+    document.getElementById('moreBtn').textContent = LABELS.more;
+    document.getElementById('summary').textContent = LABELS.cond;
+    document.getElementById('btnEdit').textContent = LABELS.edit;
+    document.getElementById('btnHide').textContent = LABELS.hide;
+    document.getElementById('btnUnhide').textContent = LABELS.unhide;
+    document.getElementById('editKey').placeholder = LABELS.keyPh;
   }
 
   function el(tag, attrs){
@@ -509,14 +484,22 @@
     return e;
   }
 
-  function toStatus(v){
-    var key = String(v || 'scheduled').toLowerCase();
-    return STATUS_LABELS[key] || STATUS_LABELS.scheduled;
-  }
-
   function qs(k){
     var m = location.search.match(new RegExp('[?&]' + k + '=([^&]+)'));
     return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  function pick(v, arr){
+    v = v || {};
+    for(var i=0;i<arr.length;i++){
+      if(v[arr[i]] !== undefined && v[arr[i]] !== null && String(v[arr[i]]) !== '') return v[arr[i]];
+    }
+    return '';
+  }
+
+  function toStatus(v){
+    var key = String(v || 'scheduled').toLowerCase();
+    return STATUS_LABELS[key] || STATUS_LABELS.scheduled;
   }
 
   function firstUrlFromCell(s){
@@ -549,14 +532,6 @@
     }catch(_){
       return '';
     }
-  }
-
-  function pick(v, arr){
-    v = v || {};
-    for(var i=0;i<arr.length;i++){
-      if(v[arr[i]]) return v[arr[i]];
-    }
-    return '';
   }
 
   function ytId(u){
@@ -620,7 +595,7 @@
       var u = item.image_url || pick(item,['image','cover','img','imageUrl','coverUrl','flyer_url','flyerUrl']);
       u = String(u || '').trim();
 
-      var ver = String(item.image_updated_at || item.updated_at || item.timestamp || '').trim();
+      var ver = String(item.image_updated_at || item.updated_at || item.timestamp || Date.now()).trim();
       var candidates = [];
       var seen = {};
 
@@ -727,10 +702,12 @@
 
   function normalizeItem(it){
     it = it || {};
+    it.rowIndex = it.rowIndex || it.row || it.row_index || '';
     it.image_url = it.image_url || pick(it,['image','cover','img','flyer_url','flyerUrl']);
     it.description = it.description || pick(it,['desc','body','text']);
     it.title = it.title || pick(it,['titleLive','ttl']);
     it.youtube_url = it.youtube_url || pick(it,['youtube','youtubeUrl','yt_url']);
+    it.status = it.status || 'scheduled';
     return it;
   }
 
@@ -770,7 +747,6 @@
 
   function collectPatch(editBox, original){
     var patch = {};
-    var changed = false;
     var nodes = editBox.querySelectorAll('[data-edit-key]');
 
     nodes.forEach(function(node){
@@ -780,11 +756,18 @@
 
       if(newVal !== oldVal){
         patch[key] = newVal;
-        changed = true;
       }
     });
 
-    return changed ? patch : {};
+    return patch;
+  }
+
+  function mergePreferPatch(base, fetched, patch){
+    var merged = Object.assign({}, base || {});
+    if(fetched) merged = Object.assign(merged, fetched);
+    if(patch) merged = Object.assign(merged, patch);
+    if(base && base.rowIndex && !merged.rowIndex) merged.rowIndex = base.rowIndex;
+    return normalizeItem(merged);
   }
 
   function renderLive(it){
@@ -858,6 +841,7 @@
     }
 
     var editBox = el('div',{className:'editGrid'});
+    editBox.style.display = isEditOpen ? 'grid' : 'none';
 
     [
       ['TITLE','title'],
@@ -892,6 +876,8 @@
         setMsg(LABELS.needKey, 'err');
         return;
       }
+
+      lastEditKey = key;
 
       var row = current && current.rowIndex;
       if(!row){
@@ -935,13 +921,26 @@
     document.getElementById('btnEdit').onclick = function(){
       var ec = document.getElementById('editControls');
       var btn = document.getElementById('btnEdit');
-      var willOpen = editBox.style.display === '' || editBox.style.display === 'none';
 
-      ec.style.display = willOpen ? 'inline-flex' : 'none';
-      editBox.style.display = willOpen ? 'grid' : 'none';
-      btn.textContent = willOpen ? LABELS.closeEdit : LABELS.edit;
+      isEditOpen = !isEditOpen;
+
+      ec.style.display = isEditOpen ? 'inline-flex' : 'none';
+      editBox.style.display = isEditOpen ? 'grid' : 'none';
+      btn.textContent = isEditOpen ? LABELS.closeEdit : LABELS.edit;
+
+      if(lastEditKey){
+        document.getElementById('editKey').value = lastEditKey;
+      }
+
       setMsg('', '');
     };
+
+    document.getElementById('editControls').style.display = isEditOpen ? 'inline-flex' : 'none';
+    document.getElementById('btnEdit').textContent = isEditOpen ? LABELS.closeEdit : LABELS.edit;
+
+    if(lastEditKey){
+      document.getElementById('editKey').value = lastEditKey;
+    }
   }
 
   function getSelectedFromSession(){
@@ -954,16 +953,15 @@
     }
   }
 
-  (function resolveExecUrl(){
+  function resolveExecUrl(){
     try{
       var injected = (window.EXEC_URL || '').trim();
       if(!injected || injected.indexOf('<?=') === 0) injected = '';
-      var fallback = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
-      window.EXEC_URL = injected || fallback;
+      window.EXEC_URL = injected || GAS_EXEC_URL;
     }catch(_){
-      window.EXEC_URL = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
+      window.EXEC_URL = GAS_EXEC_URL;
     }
-  })();
+  }
 
   async function callListLives(payload, onOK, onNG){
     try{
@@ -1017,7 +1015,7 @@
           var hit = res.items.find(function(x){
             return Number(x.rowIndex) === Number(rowIndex);
           });
-          resolve(hit || null);
+          resolve(hit ? normalizeItem(hit) : null);
         }catch(_){
           resolve(null);
         }
@@ -1050,7 +1048,7 @@
     try{
       j = JSON.parse(text);
     }catch(_){
-      throw new Error('JSONではない応答です');
+      throw new Error('JSONではない応答です: ' + text.slice(0,120));
     }
 
     if(!r.ok || !j || !j.ok){
@@ -1064,26 +1062,29 @@
     try{
       var payload = {
         sheetName:'Lives',
-        type:'live',
         rowIndex:rowIndex,
         edit_key:editKey,
-        editKey:editKey,
         action:'update',
         patch:patch
       };
 
       await postEditEntry(payload);
 
-      setMsg(LABELS.saved, 'ok');
+      var baseBeforeSave = Object.assign({}, current || {});
+      current = mergePreferPatch(baseBeforeSave, null, patch);
+      current.rowIndex = rowIndex;
 
-      var fetched = await hydrateFromNetwork(rowIndex);
-      if(fetched){
-        current = normalizeItem(fetched);
-        renderLive(current);
-      }else{
-        current = Object.assign({}, current || {}, patch);
-        renderLive(current);
-      }
+      setMsg(LABELS.saved, 'ok');
+      renderLive(current);
+
+      hydrateFromNetwork(rowIndex).then(function(fetched){
+        if(fetched){
+          current = mergePreferPatch(current, fetched, patch);
+          current.rowIndex = rowIndex;
+          renderLive(current);
+          setMsg(LABELS.saved, 'ok');
+        }
+      });
     }catch(e){
       setMsg(LABELS.fail + '：' + (e && e.message ? e.message : ''), 'err');
     }
@@ -1093,20 +1094,20 @@
     try{
       var payload = {
         sheetName:'Lives',
-        type:'live',
         rowIndex:rowIndex,
         edit_key:editKey,
-        editKey:editKey,
         action:(hide ? 'delete' : 'restore')
       };
 
       await postEditEntry(payload);
 
-      setMsg(LABELS.ok, 'ok');
+      current = Object.assign({}, current || {}, {is_hidden:hide});
+      setMsg(hide ? '非表示にしました。' : '再表示しました。', 'ok');
 
       var fetched = await hydrateFromNetwork(rowIndex);
       if(fetched){
-        current = normalizeItem(fetched);
+        current = mergePreferPatch(current, fetched, {is_hidden:hide});
+        current.rowIndex = rowIndex;
         renderLive(current);
       }
     }catch(e){
@@ -1115,6 +1116,8 @@
   }
 
   setUI();
+  resolveExecUrl();
+
   document.getElementById('moreBtn').style.display = 'none';
 
   document.getElementById('btnHide').onclick = function(){
@@ -1123,6 +1126,8 @@
       setMsg(LABELS.needKey, 'err');
       return;
     }
+
+    lastEditKey = key;
 
     var row = current && current.rowIndex;
     if(!row){
@@ -1139,6 +1144,8 @@
       setMsg(LABELS.needKey, 'err');
       return;
     }
+
+    lastEditKey = key;
 
     var row = current && current.rowIndex;
     if(!row){

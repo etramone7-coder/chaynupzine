@@ -67,6 +67,22 @@
   .content{display:grid; grid-template-columns:1fr; gap:16px}
   @media(max-width:780px){ .content{grid-template-columns:1fr} }
 
+  .authorFooter{
+    margin-top:18px;
+    padding-top:14px;
+    border-top:1px dashed #cfd6df;
+    text-align:right;
+    font-size:15px;
+    font-weight:800;
+    color:#333;
+  }
+
+  .authorFooter span{
+    color:#666;
+    font-weight:700;
+    margin-right:6px;
+  }
+
   .editbox{
     margin-top:14px;
     padding:14px;
@@ -216,6 +232,8 @@
       </div>
     </div>
 
+    <div id="authorFooter" class="authorFooter"></div>
+
     <div class="divider"></div>
 
     <div class="tools">
@@ -348,6 +366,21 @@ function renderHeader(data){
   author.textContent = data.author ? ('by ' + data.author) : '';
   meta.appendChild(author);
   head.appendChild(meta);
+}
+
+function renderAuthorFooter(data){
+  var box = document.getElementById('authorFooter');
+  if(!box) return;
+
+  var author = String((data && data.author) || '').trim();
+  if(!author){
+    box.innerHTML = '';
+    box.style.display = 'none';
+    return;
+  }
+
+  box.style.display = 'block';
+  box.innerHTML = '<span>Author:</span>' + esc(author);
 }
 
 function renderBody(data){
@@ -655,6 +688,7 @@ function applyFeatureToScreen(data){
   gFeature = data || {};
   renderHeader(gFeature);
   renderBody(gFeature);
+  renderAuthorFooter(gFeature);
 
   var idhint = document.getElementById('idhint');
   idhint.textContent = gFeature.slug

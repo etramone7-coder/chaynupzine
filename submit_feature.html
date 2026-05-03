@@ -69,6 +69,7 @@
   .alert{
     margin:12px 0; padding:12px; border-radius:14px; background:#ffe9e9;
     color:#a33; border:1px solid #f6bcbc; font-size:16px; display:none; overflow-wrap:anywhere;
+    white-space:pre-wrap;
   }
   .alert.ok{background:#eefcf1; color:#0a7a32; border-color:#c6ecd1; display:block;}
   .alert.err{display:block;}
@@ -226,13 +227,57 @@
 <script>
 const EXEC_URL = 'https://script.google.com/macros/s/AKfycbzkQN0yd6DLoImgNdI0877buJU56w6G-ewWlNfZOVuVmKmRlEeGElI6p4QHnL5glSHK1A/exec';
 
+function showMsg(type, text){
+  var msg = document.getElementById('msg');
+  msg.className = 'alert ' + (type === 'ok' ? 'ok' : 'err');
+  msg.textContent = text || '';
+}
+
+function stringifySafe(obj){
+  try{
+    return JSON.stringify(obj, null, 2);
+  }catch(_){
+    return String(obj);
+  }
+}
+
+function makeFailureText(prefix, detail, payload){
+  var lines = [];
+  lines.push(prefix || '投稿に失敗しました。');
+  if(detail) lines.push('');
+  if(detail) lines.push('理由: ' + detail);
+
+  lines.push('');
+  lines.push('送信先: ' + EXEC_URL);
+
+  if(payload){
+    lines.push('');
+    lines.push('送信内容の概要:');
+    lines.push('title: ' + (payload.title || ''));
+    lines.push('author: ' + (payload.author || ''));
+    lines.push('genre: ' + (payload.genre || ''));
+    lines.push('edit_key_length: ' + String((payload.edit_key || '').length));
+    lines.push('region: ' + (payload.region || ''));
+  }
+
+  return lines.join('\n');
+}
+
 async function callSubmitFeature(payload, onOK, onNG){
   try{
     if (window.google && google.script && google.script.run){
-      google.script.run.withSuccessHandler(onOK).withFailureHandler(onNG).submitFeature(payload);
+      google.script.run
+        .withSuccessHandler(onOK)
+        .withFailureHandler(function(err){
+          onNG(new Error('google.script.run failure: ' + (err && err.message ? err.message : String(err))));
+        })
+        .submitFeature(payload);
       return;
     }
-  }catch(_){}
+  }catch(e){
+    console.warn('google.script.run unavailable:', e);
+  }
+
   try{
     const url = EXEC_URL + (EXEC_URL.indexOf('?')>=0?'&':'?') + 'v=' + Date.now();
     const r = await fetch(url, {
@@ -242,8 +287,29 @@ async function callSubmitFeature(payload, onOK, onNG){
       headers:{ 'Content-Type':'text/plain;charset=utf-8' },
       body: JSON.stringify({ fn:'submitFeature', payload, csrf:(window.__CZ_CSRF||'') })
     });
-    if(!r.ok){ const t = await r.text().catch(()=> ''); throw new Error('HTTP '+r.status+' '+t); }
-    onOK(await r.json());
+
+    const text = await r.text();
+    let json = null;
+
+    try{
+      json = JSON.parse(text);
+    }catch(_){
+      throw new Error(
+        'GASからJSONではない応答が返りました。' +
+        '\nHTTP status: ' + r.status +
+        '\nResponse head: ' + text.slice(0, 500)
+      );
+    }
+
+    if(!r.ok){
+      throw new Error(
+        'HTTPエラーです。' +
+        '\nHTTP status: ' + r.status +
+        '\nGAS response: ' + stringifySafe(json)
+      );
+    }
+
+    onOK(json);
   }catch(err){
     onNG(err);
   }
@@ -535,12 +601,11 @@ for(let i=1;i<=5;i++){
 }
 
 document.getElementById('submitBtn').addEventListener('click', async function(){
-  var msg=document.getElementById('msg');
   var btn=document.getElementById('submitBtn');
-  msg.className='alert'; msg.textContent='送信準備中…';
+  showMsg('err', '送信準備中…');
 
   if(!document.getElementById('consentCheck').checked){
-    msg.className='alert err'; msg.textContent='免責事項に同意してください。'; return;
+    showMsg('err', '免責事項に同意してください。'); return;
   }
 
   var genre = (document.getElementById('genre').value||'').trim();
@@ -549,14 +614,14 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   var ek = (document.getElementById('edit_key').value||'').trim();
 
   if(!genre || !title || !author || !ek){
-    msg.className='alert err'; msg.textContent='未入力の必須項目があります。'; return;
+    showMsg('err', '未入力の必須項目があります。'); return;
   }
   if(genre === 'other' && !(document.getElementById('genre_other').value||'').trim()){
-    msg.className='alert err'; msg.textContent='GENRE が OTHER の場合は自由入力も必須です。'; return;
+    showMsg('err', 'GENRE が OTHER の場合は自由入力も必須です。'); return;
   }
 
   if(ek.length < 8 || ek.length > 32 || !/^[A-Za-z0-9]{8,32}$/.test(ek)){
-    msg.className='alert err'; msg.textContent='編集キーは半角英数字のみ・8〜32文字で入力してください。'; return;
+    showMsg('err', '編集キーは半角英数字のみ・8〜32文字で入力してください。'); return;
   }
 
   var ngText = [
@@ -570,19 +635,19 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   var low = ngText.join('\n').toLowerCase();
   for(var k=0;k<NG_TERMS.length;k++){
     if(low.indexOf(NG_TERMS[k])>=0){
-      msg.className='alert err'; msg.textContent='禁止ワードが含まれています。'; return;
+      showMsg('err', '禁止ワードが含まれています。'); return;
     }
   }
 
   for(let i=1;i<=5;i++){
     var yraw = (document.getElementById('youtube'+i).value||'').trim();
     if(yraw && !isAllowedYouTube(yraw)){
-      msg.className='alert err'; msg.textContent='YouTubeのURL形式が不正です（§'+i+'）。'; return;
+      showMsg('err', 'YouTubeのURL形式が不正です（§'+i+'）。'); return;
     }
     for(let j=1;j<=3;j++){
       var u = (document.getElementById('p'+i+'_img'+j+'_url').value||'').trim();
       if(u && !isAllowedImageUrl(u)){
-        msg.className='alert err'; msg.textContent='画像URLの形式が不正です（§'+i+' / 画像'+j+'）。'; return;
+        showMsg('err', '画像URLの形式が不正です（§'+i+' / 画像'+j+'）。'); return;
       }
     }
   }
@@ -623,12 +688,13 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     await Promise.all(imgTasks);
 
     btn.disabled=true;
+    showMsg('err', '送信中…');
+
     callSubmitFeature(
       payload,
       function(res){
         if(res && res.ok){
-          msg.className='alert ok';
-          msg.textContent='投稿しました。ありがとうございます！';
+          showMsg('ok', '投稿しました。ありがとうございます！');
 
           var keep = { edit_key: document.getElementById('edit_key').value };
 
@@ -639,20 +705,23 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
           document.getElementById('regionOther').style.display = 'none';
           refreshPv();
         }else{
-          msg.className='alert err';
-          msg.textContent='投稿に失敗しました: ' + (res && res.error || 'unknown');
+          var reason = '';
+          if(res){
+            reason = res.error || res.message || stringifySafe(res);
+          }else{
+            reason = 'GASから空の応答が返りました。';
+          }
+          showMsg('err', makeFailureText('投稿に失敗しました。', reason, payload));
         }
         btn.disabled=false;
       },
       function(err){
-        msg.className='alert err';
-        msg.textContent='投稿に失敗しました: ' + (err && err.message ? err.message : String(err));
+        showMsg('err', makeFailureText('投稿に失敗しました。', err && err.message ? err.message : String(err), payload));
         btn.disabled=false;
       }
     );
   }catch(e){
-    msg.className='alert err';
-    msg.textContent='投稿に失敗しました: ' + (e && e.message ? e.message : String(e));
+    showMsg('err', makeFailureText('投稿に失敗しました。', e && e.message ? e.message : String(e), payload));
     btn.disabled=false;
   }
 });

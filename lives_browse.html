@@ -660,6 +660,47 @@
     return img;
   }
 
+  function normalizeDateValue(v){
+    try{
+      if(v === null || v === undefined) return '';
+
+      if(v instanceof Date && !isNaN(v.getTime())){
+        var yy = v.getFullYear();
+        var mm = ('0' + (v.getMonth() + 1)).slice(-2);
+        var dd = ('0' + v.getDate()).slice(-2);
+        return yy + '-' + mm + '-' + dd;
+      }
+
+      var s = String(v).trim();
+      if(!s) return '';
+
+      var iso = s.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+      if(iso) return iso[1] + '-' + iso[2] + '-' + iso[3];
+
+      var ymd = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
+      if(ymd){
+        return ymd[1] + '-' + ('0' + ymd[2]).slice(-2) + '-' + ('0' + ymd[3]).slice(-2);
+      }
+
+      var compact = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+      if(compact){
+        return compact[1] + '-' + compact[2] + '-' + compact[3];
+      }
+
+      var d = new Date(s);
+      if(!isNaN(d.getTime())){
+        var y = d.getFullYear();
+        var m = ('0' + (d.getMonth()+1)).slice(-2);
+        var day = ('0' + d.getDate()).slice(-2);
+        return y + '-' + m + '-' + day;
+      }
+
+      return '';
+    }catch(_){
+      return '';
+    }
+  }
+
   function normalizeTimeValue(v){
     try{
       if(v === null || v === undefined) return '';
@@ -706,21 +747,8 @@
   }
 
   function formatDate(s){
-    try{
-      if(!s) return '';
-      var d = new Date(s);
-      if(isNaN(d.getTime())){
-        var t = String(s).trim().replace(/[.\-]/g,'/').replace(/^(\d{4})(\d{1,2})(\d{1,2})$/,'$1/$2/$3');
-        d = new Date(t);
-      }
-      if(isNaN(d.getTime())) return String(s);
-      var y = d.getFullYear();
-      var m = ('0' + (d.getMonth()+1)).slice(-2);
-      var dd = ('0' + d.getDate()).slice(-2);
-      return y + '/' + m + '/' + dd;
-    }catch(_){
-      return String(s || '');
-    }
+    var d = normalizeDateValue(s);
+    return d ? d.replace(/-/g, '/') : String(s || '');
   }
 
   function formatTime(s){
@@ -736,12 +764,16 @@
     it.title = it.title || pick(it,['titleLive','ttl']);
     it.youtube_url = it.youtube_url || pick(it,['youtube','youtubeUrl','yt_url']);
     it.status = it.status || 'scheduled';
+    it.date = normalizeDateValue(it.date);
     it.open_time = normalizeTimeValue(it.open_time);
     it.start_time = normalizeTimeValue(it.start_time);
     return it;
   }
 
   function fieldValue(it, key){
+    if(key === 'date'){
+      return normalizeDateValue(it && it[key]);
+    }
     if(key === 'open_time' || key === 'start_time'){
       return normalizeTimeValue(it && it[key]);
     }
@@ -768,6 +800,9 @@
         input.appendChild(opt);
       });
       input.value = fieldValue(it,key) || 'scheduled';
+    }else if(key === 'date'){
+      input = el('input',{className:'editInput',type:'date'});
+      input.value = normalizeDateValue(fieldValue(it,key));
     }else if(key === 'open_time' || key === 'start_time'){
       input = el('input',{className:'editInput',type:'time'});
       input.value = normalizeTimeValue(fieldValue(it,key));
@@ -790,6 +825,11 @@
       var key = node.getAttribute('data-edit-key');
       var newVal = String(node.value || '');
       var oldVal = String((original && original[key] != null) ? original[key] : '');
+
+      if(key === 'date'){
+        newVal = normalizeDateValue(newVal);
+        oldVal = normalizeDateValue(oldVal);
+      }
 
       if(key === 'open_time' || key === 'start_time'){
         newVal = normalizeTimeValue(newVal);
@@ -1102,6 +1142,9 @@
 
   async function updateLive(rowIndex, patch, editKey){
     try{
+      if(Object.prototype.hasOwnProperty.call(patch, 'date')){
+        patch.date = normalizeDateValue(patch.date);
+      }
       if(Object.prototype.hasOwnProperty.call(patch, 'open_time')){
         patch.open_time = normalizeTimeValue(patch.open_time);
       }

@@ -427,6 +427,7 @@
   let isSaving = false;
   let isEditOpen = false;
   let lastEditKey = '';
+  let saveRevision = 0;
 
   var GAS_EXEC_URL = 'https://script.google.com/macros/s/AKfycbzkQN0yd6DLoImgNdI0877buJU56w6G-ewWlNfZOVuVmKmRlEeGElI6p4QHnL5glSHK1A/exec';
 
@@ -660,22 +661,23 @@
     return img;
   }
 
+  function localDateFromDateObject(d){
+    var y = d.getFullYear();
+    var m = ('0' + (d.getMonth()+1)).slice(-2);
+    var day = ('0' + d.getDate()).slice(-2);
+    return y + '-' + m + '-' + day;
+  }
+
   function normalizeDateValue(v){
     try{
       if(v === null || v === undefined) return '';
 
       if(v instanceof Date && !isNaN(v.getTime())){
-        var yy = v.getFullYear();
-        var mm = ('0' + (v.getMonth() + 1)).slice(-2);
-        var dd = ('0' + v.getDate()).slice(-2);
-        return yy + '-' + mm + '-' + dd;
+        return localDateFromDateObject(v);
       }
 
       var s = String(v).trim();
       if(!s) return '';
-
-      var iso = s.match(/^(\d{4})-(\d{2})-(\d{2})T/);
-      if(iso) return iso[1] + '-' + iso[2] + '-' + iso[3];
 
       var ymd = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
       if(ymd){
@@ -687,12 +689,16 @@
         return compact[1] + '-' + compact[2] + '-' + compact[3];
       }
 
+      if(/^\d{4}-\d{2}-\d{2}T/.test(s)){
+        var isoDate = new Date(s);
+        if(!isNaN(isoDate.getTime())){
+          return localDateFromDateObject(isoDate);
+        }
+      }
+
       var d = new Date(s);
       if(!isNaN(d.getTime())){
-        var y = d.getFullYear();
-        var m = ('0' + (d.getMonth()+1)).slice(-2);
-        var day = ('0' + d.getDate()).slice(-2);
-        return y + '-' + m + '-' + day;
+        return localDateFromDateObject(d);
       }
 
       return '';
@@ -1141,6 +1147,8 @@
   }
 
   async function updateLive(rowIndex, patch, editKey){
+    var myRevision = ++saveRevision;
+
     try{
       if(Object.prototype.hasOwnProperty.call(patch, 'date')){
         patch.date = normalizeDateValue(patch.date);
@@ -1162,6 +1170,10 @@
 
       await postEditEntry(payload);
 
+      if(myRevision !== saveRevision){
+        return;
+      }
+
       var baseBeforeSave = Object.assign({}, current || {});
       current = mergePreferPatch(baseBeforeSave, null, patch);
       current.rowIndex = rowIndex;
@@ -1170,6 +1182,10 @@
       renderLive(current);
 
       hydrateFromNetwork(rowIndex).then(function(fetched){
+        if(myRevision !== saveRevision){
+          return;
+        }
+
         if(fetched){
           current = mergePreferPatch(current, fetched, patch);
           current.rowIndex = rowIndex;
@@ -1178,11 +1194,15 @@
         }
       });
     }catch(e){
-      setMsg(LABELS.fail + '：' + (e && e.message ? e.message : ''), 'err');
+      if(myRevision === saveRevision){
+        setMsg(LABELS.fail + '：' + (e && e.message ? e.message : ''), 'err');
+      }
     }
   }
 
   async function hideLive(rowIndex, hide, editKey){
+    var myRevision = ++saveRevision;
+
     try{
       var payload = {
         sheetName:'Lives',
@@ -1193,17 +1213,27 @@
 
       await postEditEntry(payload);
 
+      if(myRevision !== saveRevision){
+        return;
+      }
+
       current = Object.assign({}, current || {}, {is_hidden:hide});
       setMsg(hide ? '非表示にしました。' : '再表示しました。', 'ok');
 
       var fetched = await hydrateFromNetwork(rowIndex);
+      if(myRevision !== saveRevision){
+        return;
+      }
+
       if(fetched){
         current = mergePreferPatch(current, fetched, {is_hidden:hide});
         current.rowIndex = rowIndex;
         renderLive(current);
       }
     }catch(e){
-      setMsg(LABELS.fail + '：' + (e && e.message ? e.message : ''), 'err');
+      if(myRevision === saveRevision){
+        setMsg(LABELS.fail + '：' + (e && e.message ? e.message : ''), 'err');
+      }
     }
   }
 

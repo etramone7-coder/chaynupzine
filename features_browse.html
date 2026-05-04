@@ -98,6 +98,8 @@
     flex-wrap:wrap;
   }
   .edittitle{font-weight:800; font-size:16px}
+  .editBody{display:none; margin-top:12px}
+  .editBody.show{display:block}
   .editrow{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px}
   .editrow3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px}
   @media(max-width:900px){ .editrow3{grid-template-columns:1fr} }
@@ -120,8 +122,7 @@
   .btn.warn{background:#fff0f0; color:#a33; border:1px solid #f3b9b9}
   .btn.secondary{background:#3949ab; color:#fff}
 
-  .editpanel{display:none; margin-top:12px; border-top:1px solid #d8dee6; padding-top:12px}
-  .editpanel.show{display:block}
+  .editpanel{display:block; margin-top:12px; border-top:1px solid #d8dee6; padding-top:12px}
   .smallnote{margin-top:6px; font-size:12px; color:#666}
 
   .sectionbox{
@@ -165,59 +166,63 @@
 
     <div class="editbox">
       <div class="edithead">
-        <div class="edittitle">投稿を編集 / 非表示 / 再表示</div>
-        <div class="smallnote">このページで表示中の特集を、editキーで直接更新します。</div>
-      </div>
-
-      <div class="editrow">
         <div>
-          <div class="lab">editキー</div>
-          <input id="editKey" class="in" type="text" placeholder="投稿時に設定した編集キー">
+          <div class="edittitle">投稿を編集 / 非表示 / 再表示</div>
+          <div class="smallnote">編集する場合のみ、右のボタンを押してください。</div>
         </div>
-        <div>
-          <div class="lab">対象情報</div>
-          <input id="targetInfo" class="in" type="text" readonly placeholder="row / slug">
-        </div>
+        <button id="btnEditToggle" class="btn secondary" type="button">編集</button>
       </div>
 
-      <div class="edit-actions">
-        <button id="btnEditStart" class="btn secondary" type="button">編集開始</button>
-        <button id="btnSave" class="btn" type="button">保存</button>
-        <button id="btnHide" class="btn warn" type="button">非表示</button>
-        <button id="btnUnhide" class="btn ghost" type="button">再表示</button>
-        <button id="btnCancelEdit" class="btn ghost" type="button">編集解除</button>
-      </div>
-
-      <div class="smallnote">※ この画面では画像は URL のみ編集します。ファイルアップロード差し替えは未対応です。</div>
-
-      <div id="editPanel" class="editpanel">
+      <div id="editBody" class="editBody">
         <div class="editrow">
           <div>
-            <div class="lab">TITLE</div>
-            <input id="e_title" class="in" type="text">
+            <div class="lab">editキー</div>
+            <input id="editKey" class="in" type="text" placeholder="投稿時に設定した編集キー">
           </div>
           <div>
-            <div class="lab">AUTHOR</div>
-            <input id="e_author" class="in" type="text">
+            <div class="lab">対象情報</div>
+            <input id="targetInfo" class="in" type="text" readonly placeholder="row / slug">
           </div>
         </div>
 
-        <div class="editrow3">
-          <div>
-            <div class="lab">GENRE</div>
-            <input id="e_genre" class="in" type="text">
-          </div>
-          <div>
-            <div class="lab">ERA</div>
-            <input id="e_era" class="in" type="text">
-          </div>
-          <div>
-            <div class="lab">REGION</div>
-            <input id="e_region" class="in" type="text">
-          </div>
+        <div class="edit-actions">
+          <button id="btnSave" class="btn" type="button">保存</button>
+          <button id="btnHide" class="btn warn" type="button">非表示</button>
+          <button id="btnUnhide" class="btn ghost" type="button">再表示</button>
+          <button id="btnCancelEdit" class="btn ghost" type="button">編集を閉じる</button>
         </div>
 
-        <div id="editSections"></div>
+        <div class="smallnote">※ この画面では画像は URL のみ編集します。ファイルアップロード差し替えは未対応です。</div>
+
+        <div id="editPanel" class="editpanel">
+          <div class="editrow">
+            <div>
+              <div class="lab">TITLE</div>
+              <input id="e_title" class="in" type="text">
+            </div>
+            <div>
+              <div class="lab">AUTHOR</div>
+              <input id="e_author" class="in" type="text">
+            </div>
+          </div>
+
+          <div class="editrow3">
+            <div>
+              <div class="lab">GENRE</div>
+              <input id="e_genre" class="in" type="text">
+            </div>
+            <div>
+              <div class="lab">ERA</div>
+              <input id="e_era" class="in" type="text">
+            </div>
+            <div>
+              <div class="lab">REGION</div>
+              <input id="e_region" class="in" type="text">
+            </div>
+          </div>
+
+          <div id="editSections"></div>
+        </div>
       </div>
     </div>
 
@@ -537,8 +542,6 @@ function fillEditForm(data){
   document.getElementById('e_era').value = data.era || '';
   document.getElementById('e_region').value = data.region || '';
   buildEditSections(data);
-  document.getElementById('editPanel').classList.add('show');
-  gIsEditOpen = true;
 }
 
 function clearEditForm(){
@@ -548,8 +551,33 @@ function clearEditForm(){
   document.getElementById('e_era').value = '';
   document.getElementById('e_region').value = '';
   document.getElementById('editSections').innerHTML = '';
-  document.getElementById('editPanel').classList.remove('show');
+}
+
+function openEditBox(){
+  if(!gFeature){
+    showErrorText('対象の特集が見つかりません。');
+    return;
+  }
+
+  gIsEditOpen = true;
+  document.getElementById('editBody').classList.add('show');
+  document.getElementById('btnEditToggle').textContent = '編集を閉じる';
+  fillEditForm(gFeature);
+  refreshTargetInfo();
+
+  if(gLastEditKey){
+    document.getElementById('editKey').value = gLastEditKey;
+  }
+
+  clearBanners();
+}
+
+function closeEditBox(){
   gIsEditOpen = false;
+  document.getElementById('editBody').classList.remove('show');
+  document.getElementById('btnEditToggle').textContent = '編集';
+  clearEditForm();
+  clearBanners();
 }
 
 function collectPatch(){
@@ -705,19 +733,16 @@ function applyFeatureToScreen(data){
 (function init(){
   resolveExecUrl();
 
-  document.getElementById('btnEditStart').onclick = function(){
-    clearBanners();
-    if(!gFeature){
-      showErrorText('対象の特集が見つかりません。');
-      return;
+  document.getElementById('btnEditToggle').onclick = function(){
+    if(gIsEditOpen){
+      closeEditBox();
+    }else{
+      openEditBox();
     }
-    fillEditForm(gFeature);
-    showOkText('編集欄に現在の内容を読み込みました。');
   };
 
   document.getElementById('btnCancelEdit').onclick = function(){
-    clearBanners();
-    clearEditForm();
+    closeEditBox();
   };
 
   document.getElementById('btnSave').onclick = function(){
@@ -739,8 +764,7 @@ function applyFeatureToScreen(data){
     }
 
     if(!gIsEditOpen){
-      fillEditForm(gFeature || {});
-      showOkText('編集欄に現在の内容を読み込みました。');
+      openEditBox();
       return;
     }
 

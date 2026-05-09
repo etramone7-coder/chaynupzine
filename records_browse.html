@@ -340,6 +340,7 @@
         <div class="author" id="author"></div>
 
         <div class="actions">
+          <button class="btn secondary" id="copyLinkBtn" type="button" aria-label="この投稿ページのリンクをコピー">リンクをコピー</button>
           <button class="btn warn" id="reportBtn" type="button" aria-label="この投稿を通報">通報する</button>
         </div>
         <div id="msg" class="alert"></div>
@@ -393,6 +394,9 @@ var LABELS = {
   catalog:'型番',
   format:'フォーマット',
   report:'通報する',
+  copyLink:'リンクをコピー',
+  copied:'投稿ページのリンクをコピーしました。',
+  copyFail:'コピーできませんでした。下記URLを手動でコピーしてください：',
   back:'検索へ戻る',
   home:'トップへ戻る',
   by:'投稿者：',
@@ -433,6 +437,10 @@ function setUI(){
   document.getElementById('label-catalog').textContent = LABELS.catalog;
   document.getElementById('label-format').textContent = LABELS.format;
   document.getElementById('reportBtn').textContent = LABELS.report;
+
+  var copyBtn = document.getElementById('copyLinkBtn');
+  if(copyBtn) copyBtn.textContent = LABELS.copyLink;
+
   document.getElementById('btn-back').textContent = LABELS.back;
   document.getElementById('btn-home').textContent = LABELS.home;
   document.getElementById('tool-cap').textContent = LABELS.editCap;
@@ -610,6 +618,38 @@ function ensureClientId(){
   }catch(_){
     return '';
   }
+}
+
+function buildShareUrl(row){
+  var base = location.origin + location.pathname;
+  return base + '?row=' + encodeURIComponent(row);
+}
+
+async function copyTextToClipboard(text){
+  if(navigator.clipboard && window.isSecureContext){
+    await navigator.clipboard.writeText(text);
+    return true;
+  }
+
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  ta.style.top = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+
+  var ok = false;
+  try{
+    ok = document.execCommand('copy');
+  }catch(_){
+    ok = false;
+  }
+
+  document.body.removeChild(ta);
+  return ok;
 }
 
 (function resolveExecUrl(){
@@ -906,6 +946,24 @@ function ensureEditPanel(force){
 }
 
 function attachPageHandlers(row){
+  var copyBtn = document.getElementById('copyLinkBtn');
+  if(copyBtn){
+    copyBtn.onclick = async function(){
+      var url = buildShareUrl(row);
+
+      try{
+        var ok = await copyTextToClipboard(url);
+        if(ok){
+          setAlertState(document.getElementById('msg'), LABELS.copied, true);
+        }else{
+          setAlertState(document.getElementById('msg'), LABELS.copyFail + ' ' + url, false);
+        }
+      }catch(e){
+        setAlertState(document.getElementById('msg'), LABELS.copyFail + ' ' + url, false);
+      }
+    };
+  }
+
   document.getElementById('reportBtn').onclick = function(){
     reportThis(row);
   };

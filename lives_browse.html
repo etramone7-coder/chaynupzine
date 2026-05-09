@@ -99,6 +99,24 @@
     border:1px solid var(--line);
   }
 
+  .btnA.sns-x{
+    background:#111;
+    color:#fff;
+    border:1px solid #111;
+  }
+
+  .btnA.sns-fb{
+    background:#1877f2;
+    color:#fff;
+    border:1px solid #1877f2;
+  }
+
+  .btnA.sns-line{
+    background:#06c755;
+    color:#fff;
+    border:1px solid #06c755;
+  }
+
   .panel{
     background:rgba(14,18,26,.88);
     border:1px solid #273045;
@@ -397,6 +415,9 @@
     <a class="btnA ghost" id="btn-top" href="https://etramone7-coder.github.io/chaynupzine/">トップへ戻る</a>
     <a class="btnA ghost" id="btn-form" href="https://etramone7-coder.github.io/chaynupzine/submit_live.html">ライブ投稿フォームへ</a>
     <button class="btnA ghost" id="copyLinkBtn" type="button">リンクをコピー</button>
+    <button class="btnA sns-x" id="shareXBtn" type="button">Xでシェア</button>
+    <button class="btnA sns-fb" id="shareFacebookBtn" type="button">Facebook</button>
+    <button class="btnA sns-line" id="shareLineBtn" type="button">LINE</button>
   </div>
 
   <div class="panel">
@@ -438,6 +459,9 @@
     copyLink:'リンクをコピー',
     copied:'投稿ページのリンクをコピーしました。',
     copyFail:'コピーできませんでした。下記URLを手動でコピーしてください：',
+    shareX:'Xでシェア',
+    shareFacebook:'Facebook',
+    shareLine:'LINE',
     editCap:'投稿を編集/削除',
     more:'もっと見る',
     edit:'編集',
@@ -475,6 +499,9 @@
     document.getElementById('btn-top').textContent = LABELS.top;
     document.getElementById('btn-form').textContent = LABELS.toForm;
     document.getElementById('copyLinkBtn').textContent = LABELS.copyLink;
+    document.getElementById('shareXBtn').textContent = LABELS.shareX;
+    document.getElementById('shareFacebookBtn').textContent = LABELS.shareFacebook;
+    document.getElementById('shareLineBtn').textContent = LABELS.shareLine;
     document.getElementById('tool-cap').textContent = LABELS.editCap;
     document.getElementById('moreBtn').textContent = LABELS.more;
     document.getElementById('summary').textContent = LABELS.cond;
@@ -786,6 +813,28 @@
     return base + '?row=' + encodeURIComponent(row);
   }
 
+  function buildShareTitle(){
+    var artist = current && current.artist ? String(current.artist).trim() : '';
+    var title = current && current.title ? String(current.title).trim() : '';
+    var date = current && current.date ? formatDate(current.date) : '';
+    var venue = current && current.venue ? String(current.venue).trim() : '';
+
+    var main = [artist, title].filter(Boolean).join(' - ');
+    var sub = [date, venue].filter(Boolean).join(' / ');
+
+    if(main && sub){
+      return main + '｜' + sub + ' | CHAYNUPZINE';
+    }
+    if(main){
+      return main + ' | CHAYNUPZINE';
+    }
+    return 'CHAYNUPZINE Live';
+  }
+
+  function openShareWindow(url){
+    window.open(url, '_blank', 'noopener,noreferrer,width=640,height=640');
+  }
+
   async function copyTextToClipboard(text){
     if(navigator.clipboard && window.isSecureContext){
       await navigator.clipboard.writeText(text);
@@ -837,6 +886,66 @@
         setMsg(LABELS.copyFail + ' ' + url, 'err');
       }
     };
+  }
+
+  function setupSnsShareButtons(){
+    var xBtn = document.getElementById('shareXBtn');
+    var fbBtn = document.getElementById('shareFacebookBtn');
+    var lineBtn = document.getElementById('shareLineBtn');
+
+    if(xBtn){
+      xBtn.onclick = function(){
+        var row = current && current.rowIndex;
+        if(!row){
+          setMsg(LABELS.noRow, 'err');
+          return;
+        }
+
+        var url = buildShareUrl(row);
+        var title = buildShareTitle();
+
+        openShareWindow(
+          'https://twitter.com/intent/tweet?text=' +
+          encodeURIComponent(title) +
+          '&url=' +
+          encodeURIComponent(url)
+        );
+      };
+    }
+
+    if(fbBtn){
+      fbBtn.onclick = function(){
+        var row = current && current.rowIndex;
+        if(!row){
+          setMsg(LABELS.noRow, 'err');
+          return;
+        }
+
+        var url = buildShareUrl(row);
+
+        openShareWindow(
+          'https://www.facebook.com/sharer/sharer.php?u=' +
+          encodeURIComponent(url)
+        );
+      };
+    }
+
+    if(lineBtn){
+      lineBtn.onclick = function(){
+        var row = current && current.rowIndex;
+        if(!row){
+          setMsg(LABELS.noRow, 'err');
+          return;
+        }
+
+        var url = buildShareUrl(row);
+
+        openShareWindow(
+          'https://social-plugins.line.me/lineit/share?url=' +
+          encodeURIComponent(url)
+        );
+      };
+    }
   }
 
   function fieldValue(it, key){
@@ -1303,6 +1412,7 @@
   setUI();
   resolveExecUrl();
   setupCopyButton();
+  setupSnsShareButtons();
 
   document.getElementById('moreBtn').style.display = 'none';
 

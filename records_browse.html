@@ -96,6 +96,18 @@
     background:#3949ab;
     color:#fff;
   }
+  .btn.sns-x{
+    background:#111;
+    color:#fff;
+  }
+  .btn.sns-fb{
+    background:#1877f2;
+    color:#fff;
+  }
+  .btn.sns-line{
+    background:#06c755;
+    color:#fff;
+  }
 
   .grid{
     display:grid;
@@ -341,6 +353,9 @@
 
         <div class="actions">
           <button class="btn secondary" id="copyLinkBtn" type="button" aria-label="この投稿ページのリンクをコピー">リンクをコピー</button>
+          <button class="btn sns-x" id="shareXBtn" type="button" aria-label="Xでシェア">Xでシェア</button>
+          <button class="btn sns-fb" id="shareFacebookBtn" type="button" aria-label="Facebookでシェア">Facebook</button>
+          <button class="btn sns-line" id="shareLineBtn" type="button" aria-label="LINEでシェア">LINE</button>
           <button class="btn warn" id="reportBtn" type="button" aria-label="この投稿を通報">通報する</button>
         </div>
         <div id="msg" class="alert"></div>
@@ -397,6 +412,10 @@ var LABELS = {
   copyLink:'リンクをコピー',
   copied:'投稿ページのリンクをコピーしました。',
   copyFail:'コピーできませんでした。下記URLを手動でコピーしてください：',
+  shareX:'Xでシェア',
+  shareFacebook:'Facebook',
+  shareLine:'LINE',
+  shareText:'CHAYNUPZINE',
   back:'検索へ戻る',
   home:'トップへ戻る',
   by:'投稿者：',
@@ -440,6 +459,15 @@ function setUI(){
 
   var copyBtn = document.getElementById('copyLinkBtn');
   if(copyBtn) copyBtn.textContent = LABELS.copyLink;
+
+  var shareXBtn = document.getElementById('shareXBtn');
+  if(shareXBtn) shareXBtn.textContent = LABELS.shareX;
+
+  var shareFacebookBtn = document.getElementById('shareFacebookBtn');
+  if(shareFacebookBtn) shareFacebookBtn.textContent = LABELS.shareFacebook;
+
+  var shareLineBtn = document.getElementById('shareLineBtn');
+  if(shareLineBtn) shareLineBtn.textContent = LABELS.shareLine;
 
   document.getElementById('btn-back').textContent = LABELS.back;
   document.getElementById('btn-home').textContent = LABELS.home;
@@ -623,6 +651,22 @@ function ensureClientId(){
 function buildShareUrl(row){
   var base = location.origin + location.pathname;
   return base + '?row=' + encodeURIComponent(row);
+}
+
+function buildShareTitle(){
+  var band = currentRecord && currentRecord.band ? String(currentRecord.band).trim() : '';
+  var track = currentRecord && currentRecord.track ? String(currentRecord.track).trim() : '';
+  var title = [band, track].filter(Boolean).join(' - ');
+
+  if(title){
+    return title + ' | CHAYNUPZINE';
+  }
+
+  return 'CHAYNUPZINE';
+}
+
+function openShareWindow(url){
+  window.open(url, '_blank', 'noopener,noreferrer,width=640,height=640');
 }
 
 async function copyTextToClipboard(text){
@@ -961,6 +1005,42 @@ function attachPageHandlers(row){
       }catch(e){
         setAlertState(document.getElementById('msg'), LABELS.copyFail + ' ' + url, false);
       }
+    };
+  }
+
+  var shareXBtn = document.getElementById('shareXBtn');
+  if(shareXBtn){
+    shareXBtn.onclick = function(){
+      var url = buildShareUrl(row);
+      var title = buildShareTitle();
+      openShareWindow(
+        'https://twitter.com/intent/tweet?text=' +
+        encodeURIComponent(title) +
+        '&url=' +
+        encodeURIComponent(url)
+      );
+    };
+  }
+
+  var shareFacebookBtn = document.getElementById('shareFacebookBtn');
+  if(shareFacebookBtn){
+    shareFacebookBtn.onclick = function(){
+      var url = buildShareUrl(row);
+      openShareWindow(
+        'https://www.facebook.com/sharer/sharer.php?u=' +
+        encodeURIComponent(url)
+      );
+    };
+  }
+
+  var shareLineBtn = document.getElementById('shareLineBtn');
+  if(shareLineBtn){
+    shareLineBtn.onclick = function(){
+      var url = buildShareUrl(row);
+      openShareWindow(
+        'https://social-plugins.line.me/lineit/share?url=' +
+        encodeURIComponent(url)
+      );
     };
   }
 

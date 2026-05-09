@@ -148,7 +148,7 @@
 
     <div class="tools" style="margin-top:6px">
       <div class="back"><a id="btn-top" href="https://etramone7-coder.github.io/chaynupzine/">← トップへ戻る</a></div>
-      <div></div>
+      <button id="copyLinkBtn" class="btn secondary" type="button">リンクをコピー</button>
     </div>
 
     <div id="alert" class="alert"></div>
@@ -349,6 +349,72 @@ function resolveExecUrl(){
   }catch(_){
     window.EXEC_URL = GAS_EXEC_URL;
   }
+}
+
+function buildShareUrl(){
+  var base = location.origin + location.pathname;
+
+  if(gFeature && gFeature.slug){
+    return base + '?slug=' + encodeURIComponent(gFeature.slug);
+  }
+
+  if(gRowIndex){
+    return base + '?row=' + encodeURIComponent(gRowIndex);
+  }
+
+  return location.href;
+}
+
+async function copyTextToClipboard(text){
+  if(navigator.clipboard && window.isSecureContext){
+    await navigator.clipboard.writeText(text);
+    return true;
+  }
+
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  ta.style.top = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+
+  var ok = false;
+  try{
+    ok = document.execCommand('copy');
+  }catch(_){
+    ok = false;
+  }
+
+  document.body.removeChild(ta);
+  return ok;
+}
+
+function setupCopyButton(){
+  var btn = document.getElementById('copyLinkBtn');
+  if(!btn) return;
+
+  btn.onclick = async function(){
+    if(!gRowIndex && !(gFeature && gFeature.slug)){
+      showErrorText('投稿ページの情報を取得できていません。');
+      return;
+    }
+
+    var url = buildShareUrl();
+
+    try{
+      var ok = await copyTextToClipboard(url);
+      if(ok){
+        showOkText('投稿ページのリンクをコピーしました。');
+      }else{
+        showErrorText('コピーできませんでした。下記URLを手動でコピーしてください：' + url);
+      }
+    }catch(_){
+      showErrorText('コピーできませんでした。下記URLを手動でコピーしてください：' + url);
+    }
+  };
 }
 
 function renderHeader(data){
@@ -732,6 +798,7 @@ function applyFeatureToScreen(data){
 
 (function init(){
   resolveExecUrl();
+  setupCopyButton();
 
   document.getElementById('btnEditToggle').onclick = function(){
     if(gIsEditOpen){

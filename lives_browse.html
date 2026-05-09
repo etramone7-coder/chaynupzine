@@ -396,6 +396,7 @@
   <div class="actions">
     <a class="btnA ghost" id="btn-top" href="https://etramone7-coder.github.io/chaynupzine/">トップへ戻る</a>
     <a class="btnA ghost" id="btn-form" href="https://etramone7-coder.github.io/chaynupzine/submit_live.html">ライブ投稿フォームへ</a>
+    <button class="btnA ghost" id="copyLinkBtn" type="button">リンクをコピー</button>
   </div>
 
   <div class="panel">
@@ -434,6 +435,9 @@
   var LABELS = {
     top:'トップへ戻る',
     toForm:'ライブ投稿フォームへ',
+    copyLink:'リンクをコピー',
+    copied:'投稿ページのリンクをコピーしました。',
+    copyFail:'コピーできませんでした。下記URLを手動でコピーしてください：',
     editCap:'投稿を編集/削除',
     more:'もっと見る',
     edit:'編集',
@@ -470,6 +474,7 @@
     document.getElementById('pageTitle').textContent = 'Lives browse';
     document.getElementById('btn-top').textContent = LABELS.top;
     document.getElementById('btn-form').textContent = LABELS.toForm;
+    document.getElementById('copyLinkBtn').textContent = LABELS.copyLink;
     document.getElementById('tool-cap').textContent = LABELS.editCap;
     document.getElementById('moreBtn').textContent = LABELS.more;
     document.getElementById('summary').textContent = LABELS.cond;
@@ -774,6 +779,64 @@
     it.open_time = normalizeTimeValue(it.open_time);
     it.start_time = normalizeTimeValue(it.start_time);
     return it;
+  }
+
+  function buildShareUrl(row){
+    var base = location.origin + location.pathname;
+    return base + '?row=' + encodeURIComponent(row);
+  }
+
+  async function copyTextToClipboard(text){
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.top = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+
+    var ok = false;
+    try{
+      ok = document.execCommand('copy');
+    }catch(_){
+      ok = false;
+    }
+
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  function setupCopyButton(){
+    var btn = document.getElementById('copyLinkBtn');
+    if(!btn) return;
+
+    btn.onclick = async function(){
+      var row = current && current.rowIndex;
+      if(!row){
+        setMsg(LABELS.noRow, 'err');
+        return;
+      }
+
+      var url = buildShareUrl(row);
+
+      try{
+        var ok = await copyTextToClipboard(url);
+        if(ok){
+          setMsg(LABELS.copied, 'ok');
+        }else{
+          setMsg(LABELS.copyFail + ' ' + url, 'err');
+        }
+      }catch(_){
+        setMsg(LABELS.copyFail + ' ' + url, 'err');
+      }
+    };
   }
 
   function fieldValue(it, key){
@@ -1239,6 +1302,7 @@
 
   setUI();
   resolveExecUrl();
+  setupCopyButton();
 
   document.getElementById('moreBtn').style.display = 'none';
 

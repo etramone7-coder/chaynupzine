@@ -3,7 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>CHAYNUPZINE — Record View</title>
+<meta name="description" content="CHAYNUPZINEのレコード紹介ページです。パンク、ハードコア、パワーポップ、レゲエ、ロックなどのレコード投稿を閲覧できます。">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://etramone7-coder.github.io/chaynupzine/records_browse.html">
+
+<meta property="og:site_name" content="CHAYNUPZINE">
+<meta property="og:title" content="CHAYNUPZINE — Record View">
+<meta property="og:description" content="CHAYNUPZINEのレコード紹介ページです。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://etramone7-coder.github.io/chaynupzine/records_browse.html">
+<meta property="og:image" content="https://etramone7-coder.github.io/chaynupzine/assets/chaynupzine_poster.webp">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CHAYNUPZINE — Record View">
+<meta name="twitter:description" content="CHAYNUPZINEのレコード紹介ページです。">
+<meta name="twitter:image" content="https://etramone7-coder.github.io/chaynupzine/assets/chaynupzine_poster.webp">
+
+<script type="application/ld+json" id="recordJsonLd">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "CHAYNUPZINE — Record View",
+  "url": "https://etramone7-coder.github.io/chaynupzine/records_browse.html",
+  "description": "CHAYNUPZINEのレコード紹介ページです。",
+  "inLanguage": "ja"
+}
+</script>
+
 <style>
   :root{
     --ink:#222;
@@ -528,6 +556,12 @@ function buildImageSources(url){
   return arr;
 }
 
+function getSeoImageUrl(url){
+  var srcs = buildImageSources(url);
+  if(srcs.length) return srcs[0];
+  return 'https://etramone7-coder.github.io/chaynupzine/assets/chaynupzine_poster.webp';
+}
+
 function setJacket(url){
   var box = document.getElementById('jacketBox');
   box.innerHTML = '';
@@ -593,6 +627,115 @@ function setYouTube(u){
   };
 }
 
+function escapeMetaText(s){
+  return String(s || '')
+    .replace(/\s+/g, ' ')
+    .replace(/[<>]/g, '')
+    .trim();
+}
+
+function shortenText(s, max){
+  s = escapeMetaText(s);
+  if(!s) return '';
+  if(s.length <= max) return s;
+  return s.slice(0, max - 1) + '…';
+}
+
+function setMetaBySelector(selector, attr, value){
+  var el = document.querySelector(selector);
+  if(!el) return;
+  el.setAttribute(attr, value);
+}
+
+function ensureCanonical(url){
+  var el = document.querySelector('link[rel="canonical"]');
+  if(!el){
+    el = document.createElement('link');
+    el.setAttribute('rel', 'canonical');
+    document.head.appendChild(el);
+  }
+  el.setAttribute('href', url);
+}
+
+function updateRecordSeo(rec, row){
+  rec = rec || {};
+
+  var shareUrl = buildShareUrl(row);
+  var band = escapeMetaText(rec.band || '');
+  var track = escapeMetaText(rec.track || '');
+  var genre = escapeMetaText(rec.genre || '');
+  var year = escapeMetaText(rec.release_year || '');
+  var format = escapeMetaText(rec.format || '');
+  var catalog = escapeMetaText(rec.catalog_no || '');
+  var author = escapeMetaText(rec.author || '');
+  var descRaw = escapeMetaText(rec.description || '');
+
+  var titleBase = [band, track].filter(Boolean).join(' - ');
+  var pageTitle = titleBase ? (titleBase + ' | CHAYNUPZINE') : 'CHAYNUPZINE — Record View';
+
+  var parts = [];
+  if(titleBase) parts.push(titleBase + 'のレコード紹介。');
+  if(genre) parts.push('ジャンル: ' + genre + '。');
+  if(year) parts.push('発売年: ' + year + '。');
+  if(format) parts.push('フォーマット: ' + format + '。');
+  if(catalog) parts.push('型番: ' + catalog + '。');
+  if(author) parts.push('投稿者: ' + author + '。');
+  if(descRaw) parts.push(descRaw);
+
+  var pageDescription = shortenText(
+    parts.join(' ') || 'CHAYNUPZINEのレコード紹介ページです。',
+    160
+  );
+
+  var imageUrl = getSeoImageUrl(rec.image_url || '');
+
+  document.title = pageTitle;
+  setMetaBySelector('meta[name="description"]', 'content', pageDescription);
+  setMetaBySelector('meta[name="robots"]', 'content', 'index, follow');
+  ensureCanonical(shareUrl);
+
+  setMetaBySelector('meta[property="og:site_name"]', 'content', 'CHAYNUPZINE');
+  setMetaBySelector('meta[property="og:title"]', 'content', pageTitle);
+  setMetaBySelector('meta[property="og:description"]', 'content', pageDescription);
+  setMetaBySelector('meta[property="og:type"]', 'content', 'article');
+  setMetaBySelector('meta[property="og:url"]', 'content', shareUrl);
+  setMetaBySelector('meta[property="og:image"]', 'content', imageUrl);
+
+  setMetaBySelector('meta[name="twitter:card"]', 'content', 'summary_large_image');
+  setMetaBySelector('meta[name="twitter:title"]', 'content', pageTitle);
+  setMetaBySelector('meta[name="twitter:description"]', 'content', pageDescription);
+  setMetaBySelector('meta[name="twitter:image"]', 'content', imageUrl);
+
+  var jsonLd = {
+    '@context':'https://schema.org',
+    '@type':'MusicRecording',
+    'name': track || titleBase || 'Record View',
+    'url': shareUrl,
+    'description': pageDescription,
+    'inLanguage':'ja',
+    'isPartOf':{
+      '@type':'WebSite',
+      'name':'CHAYNUPZINE',
+      'url':'https://etramone7-coder.github.io/chaynupzine/'
+    }
+  };
+
+  if(band){
+    jsonLd.byArtist = {
+      '@type':'MusicGroup',
+      'name':band
+    };
+  }
+  if(genre) jsonLd.genre = genre;
+  if(year) jsonLd.datePublished = year;
+  if(imageUrl) jsonLd.image = imageUrl;
+
+  var script = document.getElementById('recordJsonLd');
+  if(script){
+    script.textContent = JSON.stringify(jsonLd, null, 2);
+  }
+}
+
 function render(rec){
   currentRecord = rec || {};
 
@@ -623,6 +766,10 @@ function render(rec){
 
   setJacket(currentRecord.image_url || '');
   setYouTube(currentRecord.youtube_url || '');
+
+  if(currentRow){
+    updateRecordSeo(currentRecord, currentRow);
+  }
 }
 
 function persistCurrentRecord(row){
@@ -656,13 +803,27 @@ function buildShareUrl(row){
 function buildShareTitle(){
   var band = currentRecord && currentRecord.band ? String(currentRecord.band).trim() : '';
   var track = currentRecord && currentRecord.track ? String(currentRecord.track).trim() : '';
+  var genre = currentRecord && currentRecord.genre ? String(currentRecord.genre).trim() : '';
   var title = [band, track].filter(Boolean).join(' - ');
+
+  if(title && genre){
+    return title + ' / ' + genre + ' | CHAYNUPZINE';
+  }
 
   if(title){
     return title + ' | CHAYNUPZINE';
   }
 
   return 'CHAYNUPZINE';
+}
+
+function buildShareText(){
+  var title = buildShareTitle();
+  var desc = currentRecord && currentRecord.description ? shortenText(currentRecord.description, 80) : '';
+  if(desc){
+    return title + '\n' + desc;
+  }
+  return title;
 }
 
 function openShareWindow(url){
@@ -1012,10 +1173,10 @@ function attachPageHandlers(row){
   if(shareXBtn){
     shareXBtn.onclick = function(){
       var url = buildShareUrl(row);
-      var title = buildShareTitle();
+      var text = buildShareText();
       openShareWindow(
         'https://twitter.com/intent/tweet?text=' +
-        encodeURIComponent(title) +
+        encodeURIComponent(text) +
         '&url=' +
         encodeURIComponent(url)
       );
@@ -1037,9 +1198,12 @@ function attachPageHandlers(row){
   if(shareLineBtn){
     shareLineBtn.onclick = function(){
       var url = buildShareUrl(row);
+      var text = buildShareText();
       openShareWindow(
         'https://social-plugins.line.me/lineit/share?url=' +
-        encodeURIComponent(url)
+        encodeURIComponent(url) +
+        '&text=' +
+        encodeURIComponent(text)
       );
     };
   }
@@ -1091,6 +1255,8 @@ function attachPageHandlers(row){
       showError('レコードID（row）が指定されていません。');
       return;
     }
+
+    updateRecordSeo({}, row);
 
     try{
       var cached = sessionStorage.getItem('cz_selected_record');

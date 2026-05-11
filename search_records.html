@@ -53,6 +53,7 @@
     display:flex;
     align-items:center;
     gap:12px;
+    flex-wrap:wrap;
   }
 
   .brand{
@@ -68,6 +69,31 @@
   .sub{
     font-size:16px;
     color:#555;
+  }
+
+  .langbar{
+    display:flex;
+    justify-content:flex-end;
+    align-items:center;
+    gap:8px;
+    margin:0 0 10px;
+  }
+
+  .langbtn{
+    border:1px solid #ddd;
+    background:#fff;
+    color:#111;
+    border-radius:999px;
+    padding:8px 12px;
+    font-weight:900;
+    cursor:pointer;
+    font-size:14px;
+  }
+
+  .langbtn.active{
+    background:#111;
+    color:#fff;
+    border-color:#111;
   }
 
   .guide-wrap{
@@ -96,6 +122,8 @@
     padding:10px 12px;
     color:#333;
     display:none;
+    font-size:16px;
+    line-height:1.55;
   }
 
   .guide-panel.show{
@@ -188,6 +216,11 @@
     .list-compact{grid-template-columns:repeat(3,1fr)}
   }
 
+  .result-link{
+    color:inherit;
+    text-decoration:none;
+  }
+
   .card{
     display:flex;
     gap:16px;
@@ -198,6 +231,12 @@
     padding:12px;
     cursor:pointer;
     min-height:180px;
+    height:100%;
+  }
+
+  .card:hover{
+    box-shadow:0 8px 20px rgba(0,0,0,.12);
+    transform:translateY(-1px);
   }
 
   .thumb{
@@ -247,6 +286,17 @@
     margin-top:4px;
   }
 
+  .desc-mini{
+    font-size:14px;
+    color:#444;
+    margin-top:8px;
+    line-height:1.35;
+    display:-webkit-box;
+    -webkit-line-clamp:3;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+
   .morewrap{
     text-align:center;
     margin:12px 0 8px;
@@ -272,6 +322,7 @@
     background:#fff;
     overflow:auto;
     padding:20px;
+    z-index:20;
   }
 
   .loading::after{
@@ -293,12 +344,16 @@
 </style>
 <script>window.EXEC_URL='<?= EXEC_URL ?>';</script>
 </head>
-<script>window.EXEC_URL = '<?= EXEC_URL ?>';</script>
 <body>
 <div id="bg" class="bg"></div>
 
 <div class="wrap">
   <div class="panel">
+    <div class="langbar" aria-label="language switch">
+      <button type="button" class="langbtn" id="lang-ja">JP</button>
+      <button type="button" class="langbtn" id="lang-en">EN</button>
+    </div>
+
     <h1>
       <span class="brand">CHAYNUPZINE</span>
       <span class="sub" id="title-sub"></span>
@@ -355,11 +410,30 @@
     }
   })();
 
-  (function setupFormLink(){
+  var currentLang = 'ja';
+
+  try{
+    var qsLang = new URLSearchParams(location.search).get('lang');
+    var savedLang = localStorage.getItem('cz_lang');
+    currentLang = (qsLang === 'en' || savedLang === 'en') ? 'en' : 'ja';
+  }catch(_){
+    currentLang = 'ja';
+  }
+
+  function saveLang(){
+    try{ localStorage.setItem('cz_lang', currentLang); }catch(_){}
+    try{ document.documentElement.lang = currentLang; }catch(_){}
+  }
+
+  function T(){
+    return TEXT[currentLang] || TEXT.ja;
+  }
+
+  function setupFormLink(){
     var formUrl = 'https://etramone7-coder.github.io/chaynupzine/submit.html';
     var a = document.getElementById('btn-form');
-    if (a) a.setAttribute('href', formUrl);
-  })();
+    if (a) a.setAttribute('href', formUrl + '?lang=' + encodeURIComponent(currentLang));
+  }
 
   function isHttpsUrl(u){
     try{
@@ -388,8 +462,10 @@
   }
 
   async function callListRecords(payload, onOK, onNG){
+    var key = '';
+
     try{
-      var key = 'records:'+JSON.stringify(payload);
+      key = 'records:'+JSON.stringify(payload);
       var cached = cacheGet(key);
       if (cached){
         onOK(cached);
@@ -448,7 +524,7 @@
         body: JSON.stringify({ fn:'listRecords', payload, csrf:(window.__CZ_CSRF||'') })
       });
       if(!res2.ok){
-        var txt2 = await res2.text().catch(()=> '');
+        var txt2 = await res2.text().catch(function(){ return ''; });
         throw new Error('HTTP '+res2.status+' '+(txt2||''));
       }
       var j2 = await res2.json();
@@ -463,27 +539,63 @@
   }
 
   var TEXT = {
-    subTitle:"Records — 検索 & 一覧",
-    lead:"世界各国の曲を記録。ジャンル / 国 / 年代 / 頭文字をクリックして段階的に絞り込みます。同じ曲の重複紹介もOK。気に入ったら詳細ページへどうぞ。",
-    guideBtn:"検索ガイド",
-    guideText:"ジャンル・国・年代・頭文字のうち、<b>どれか1つ以上選べば検索できます</b>。複数選ぶとさらに絞り込みます。選択済みのチップをもう一度クリックすると解除されます。",
-    labels:{
-      genre:"ジャンル",
-      country:"国",
-      era:"年代",
-      initial:"頭文字",
-      cond:"条件",
-      none:"指定なし",
-      search:"検索",
-      more:"もっと見る",
-      fullMore:"さらに読み込む",
-      back:"戻る",
-      reset:"条件リセット",
-      form:"投稿フォームへ",
-      home:"トップへ戻る",
-      reading:"読み込み中…",
-      nohit:"該当データがありません。条件を変えて試してください。",
-      fail:"読み込みに失敗しました。"
+    ja:{
+      subTitle:"Records — 検索 & 一覧",
+      lead:"世界各国の曲を記録。ジャンル / 国 / 年代 / 頭文字をクリックして段階的に絞り込みます。同じ曲の重複紹介もOK。気に入ったら詳細ページへどうぞ。",
+      guideBtn:"検索ガイド",
+      guideText:"ジャンル・国・年代・頭文字のうち、<b>どれか1つ以上選べば検索できます</b>。複数選ぶとさらに絞り込みます。選択済みのチップをもう一度クリックすると解除されます。",
+      labels:{
+        genre:"ジャンル",
+        country:"国",
+        era:"年代",
+        initial:"頭文字",
+        cond:"条件",
+        none:"指定なし",
+        search:"検索",
+        more:"もっと見る",
+        fullMore:"さらに読み込む",
+        back:"戻る",
+        reset:"条件リセット",
+        form:"投稿フォームへ",
+        home:"トップへ戻る",
+        reading:"読み込み中…",
+        nohit:"該当データがありません。条件を変えて試してください。",
+        fail:"読み込みに失敗しました。",
+        noBand:"(バンド名なし)",
+        noTitle:"(タイトルなし)",
+        noImage:"No image",
+        postedBy:"投稿",
+        description:"紹介文"
+      }
+    },
+    en:{
+      subTitle:"Records — Search & List",
+      lead:"Browse records from around the world. Filter step by step by genre, country, era, and initial. Duplicate recommendations for the same song are welcome. Open a detail page when you find something interesting.",
+      guideBtn:"Search guide",
+      guideText:"Choose <b>at least one</b> filter from genre, country, era, or initial. Selecting multiple filters narrows the results. Click an active chip again to clear it.",
+      labels:{
+        genre:"Genre",
+        country:"Country",
+        era:"Era",
+        initial:"Initial",
+        cond:"Filters",
+        none:"None",
+        search:"Search",
+        more:"Show more",
+        fullMore:"Load more",
+        back:"Back",
+        reset:"Reset filters",
+        form:"Submit record",
+        home:"Back to top",
+        reading:"Loading…",
+        nohit:"No matching records found. Try changing the filters.",
+        fail:"Failed to load records.",
+        noBand:"(No band)",
+        noTitle:"(No title)",
+        noImage:"No image",
+        postedBy:"Posted by",
+        description:"Description"
+      }
     }
   };
 
@@ -515,21 +627,71 @@
     initials:"ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("")
   };
 
+  function setLangButtons(){
+    var ja = document.getElementById('lang-ja');
+    var en = document.getElementById('lang-en');
+    if (ja) ja.classList.toggle('active', currentLang === 'ja');
+    if (en) en.classList.toggle('active', currentLang === 'en');
+  }
+
   function setUI(){
-    document.getElementById('title-sub').textContent = TEXT.subTitle;
-    document.getElementById('lead').textContent = TEXT.lead;
-    document.getElementById('guide-btn').textContent = TEXT.guideBtn;
-    document.getElementById('guide-panel').innerHTML = TEXT.guideText;
-    document.getElementById('btn-search').textContent = TEXT.labels.search;
-    document.getElementById('btn-more').textContent = TEXT.labels.more;
-    document.getElementById('btn-full-more').textContent = TEXT.labels.fullMore;
-    document.getElementById('btn-back').textContent = TEXT.labels.back;
-    document.getElementById('btn-reset').textContent = TEXT.labels.reset;
-    document.getElementById('btn-form').textContent = TEXT.labels.form;
-    document.getElementById('btn-home').textContent = TEXT.labels.home;
+    var tx = T();
+    var L = tx.labels;
+
+    saveLang();
+    setLangButtons();
+    setupFormLink();
+
+    document.getElementById('title-sub').textContent = tx.subTitle;
+    document.getElementById('lead').textContent = tx.lead;
+    document.getElementById('guide-btn').textContent = tx.guideBtn;
+    document.getElementById('guide-panel').innerHTML = tx.guideText;
+    document.getElementById('btn-search').textContent = L.search;
+    document.getElementById('btn-more').textContent = L.more;
+    document.getElementById('btn-full-more').textContent = L.fullMore;
+    document.getElementById('btn-back').textContent = L.back;
+    document.getElementById('btn-reset').textContent = L.reset;
+    document.getElementById('btn-form').textContent = L.form;
+    document.getElementById('btn-home').textContent = L.home;
+
+    document.getElementById('btn-home').setAttribute('aria-label', L.home);
+    document.getElementById('btn-reset').setAttribute('aria-label', L.reset);
+    document.getElementById('btn-form').setAttribute('aria-label', L.form);
+    document.getElementById('btn-search').setAttribute('aria-label', L.search);
+
     drawAllChips();
     makeAllSels();
+
+    rerenderExistingCards();
   }
+
+  function rerenderExistingCards(){
+    try{
+      var box = document.getElementById('results');
+      var full = document.getElementById('full-results');
+      var items1 = JSON.parse(sessionStorage.getItem('cz_last_record_results') || '[]');
+      var items2 = JSON.parse(sessionStorage.getItem('cz_last_record_full_results') || '[]');
+
+      if (box && box.children.length && items1.length){
+        box.innerHTML = '';
+        renderList('results', items1, true);
+      }
+      if (full && full.children.length && items2.length){
+        full.innerHTML = '';
+        renderList('full-results', items2, true);
+      }
+    }catch(_){}
+  }
+
+  document.getElementById('lang-ja').addEventListener('click', function(){
+    currentLang = 'ja';
+    setUI();
+  });
+
+  document.getElementById('lang-en').addEventListener('click', function(){
+    currentLang = 'en';
+    setUI();
+  });
 
   (function(){
     var btn = document.getElementById('guide-btn');
@@ -572,7 +734,7 @@
   }
 
   function makeAllSels(){
-    var L = TEXT.labels;
+    var L = T().labels;
     document.getElementById('sel-genre').textContent   = L.genre + ': ' + (state.genre || L.none);
     document.getElementById('sel-country').textContent = L.country + ': ' + (state.country || L.none);
     document.getElementById('sel-era').textContent     = L.era + ': ' + (state.era || L.none);
@@ -614,7 +776,7 @@
     box.className = 'thumb';
     var srcs = buildImageSources(url);
     if(!srcs.length){
-      box.textContent = 'No image';
+      box.textContent = T().labels.noImage;
       return box;
     }
     var img = new Image();
@@ -622,7 +784,7 @@
     var i = 0;
     function next(){
       if(i>=srcs.length){
-        box.textContent='No image';
+        box.textContent = T().labels.noImage;
         return;
       }
       img.src = srcs[i++];
@@ -635,12 +797,26 @@
     return box;
   }
 
+  function pickDesc(item){
+    if (currentLang === 'en') {
+      return String(item.description_en || item.description || '').trim();
+    }
+    return String(item.description || item.description_en || '').trim();
+  }
+
+  function detailHref(item){
+    return './records_browse.html?row='
+      + encodeURIComponent(String(item.rowIndex||''))
+      + '&lang=' + encodeURIComponent(currentLang);
+  }
+
   function card(item){
-    var href = './records_browse.html?row=' + encodeURIComponent(String(item.rowIndex||''));
+    var href = detailHref(item);
     var a = document.createElement('a');
     a.href = href;
     a.target = '_top';
     a.rel = 'noopener noreferrer';
+    a.className = 'result-link';
 
     var el = document.createElement('div');
     el.className = 'card';
@@ -658,19 +834,25 @@
 
     var b  = document.createElement('div');
     b.className = 'band';
-    b.textContent = item.band || '(No band)';
+    b.textContent = item.band || T().labels.noBand;
 
     var tr = document.createElement('div');
     tr.className = 'track';
-    tr.textContent = item.track || '(No title)';
+    tr.textContent = item.track || T().labels.noTitle;
 
     var mi = document.createElement('div');
     mi.className = 'minor';
-    mi.textContent = (item.country||'-') + ' / ' + (item.genre||'-') + (item.author ? (' / 投稿:' + item.author) : '');
+    mi.textContent = (item.country||'-') + ' / ' + (item.genre||'-') + (item.author ? (' / ' + T().labels.postedBy + ': ' + item.author) : '');
+
+    var desc = document.createElement('div');
+    desc.className = 'desc-mini';
+    var d = pickDesc(item);
+    desc.textContent = d || '';
 
     m.appendChild(b);
     m.appendChild(tr);
     m.appendChild(mi);
+    if (d) m.appendChild(desc);
     el.appendChild(m);
 
     a.appendChild(el);
@@ -678,9 +860,10 @@
     a.addEventListener('click', function(ev){
       try{
         sessionStorage.setItem('cz_selected_record', JSON.stringify(item));
+        sessionStorage.setItem('cz_lang', currentLang);
       }catch(e){}
       ev.preventDefault();
-      location.href = './records_browse.html?row=' + encodeURIComponent(String(item.rowIndex||''));
+      location.href = detailHref(item);
     });
 
     return a;
@@ -712,29 +895,44 @@
 
   var searching = false;
 
-  function renderList(targetId, items){
+  function renderList(targetId, items, skipStore){
     var box = document.getElementById(targetId);
     var frag = document.createDocumentFragment();
     items.forEach(function(it){
       frag.appendChild(card(it));
     });
     box.appendChild(frag);
+
+    if (!skipStore) {
+      try{
+        var key = targetId === 'full-results' ? 'cz_last_record_full_results' : 'cz_last_record_results';
+        var old = [];
+        if (targetId === 'full-results') old = JSON.parse(sessionStorage.getItem(key) || '[]');
+        sessionStorage.setItem(key, JSON.stringify(old.concat(items || [])));
+      }catch(_){}
+    }
   }
 
   function runFirstSearch(){
     if(searching) return;
     searching = true;
 
+    var L = T().labels;
     var btn = document.getElementById('btn-search');
     btn.disabled = true;
     paging.offset = 0;
-    showAlert(TEXT.labels.reading, true);
+    showAlert(L.reading, true);
     document.getElementById('results').innerHTML = '';
 
+    try{
+      sessionStorage.removeItem('cz_last_record_results');
+      sessionStorage.removeItem('cz_last_record_full_results');
+    }catch(_){}
+
     callListRecords(paramsFor(paging.limitFirst,0), function(res){
-      var L = TEXT.labels;
+      var L2 = T().labels;
       if(!res || !res.ok){
-        showAlert(L.fail);
+        showAlert(L2.fail);
         searching = false;
         btn.disabled = false;
         return;
@@ -745,11 +943,11 @@
       var more = document.getElementById('btn-more');
       if(paging.total > ((res.items || []).length || 0)) more.classList.remove('hidden');
       else more.classList.add('hidden');
-      if(!(res.items || []).length) showAlert(L.nohit);
+      if(!(res.items || []).length) showAlert(L2.nohit);
       searching = false;
       btn.disabled = false;
     }, function(err){
-      showAlert(TEXT.labels.fail + '：' + (err && err.message ? err.message : String(err)));
+      showAlert(T().labels.fail + '：' + (err && err.message ? err.message : String(err)));
       searching = false;
       btn.disabled = false;
     });
@@ -760,6 +958,7 @@
   function openFull(){
     paging.offset = 0;
     document.getElementById('full-results').innerHTML = '';
+    try{ sessionStorage.removeItem('cz_last_record_full_results'); }catch(_){}
     document.getElementById('full-list').classList.remove('hidden');
     loadMoreFull();
   }
@@ -771,7 +970,7 @@
   function loadMoreFull(){
     callListRecords(paramsFor(paging.limitList,paging.offset), function(res){
       if(!res || !res.ok){
-        showAlert(TEXT.labels.fail);
+        showAlert(T().labels.fail);
         return;
       }
       paging.total = res.total || 0;
@@ -782,7 +981,7 @@
       if(paging.offset < paging.total) more.classList.remove('hidden');
       else more.classList.add('hidden');
     }, function(){
-      showAlert(TEXT.labels.fail);
+      showAlert(T().labels.fail);
     });
   }
 

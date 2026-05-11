@@ -102,6 +102,29 @@
     font-size:clamp(16px,5.2vw,22px);
   }
 
+  .langbar{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:flex-end;
+    margin-bottom:8px;
+  }
+  .langbtn{
+    border:1px solid #ddd;
+    background:#fff;
+    color:#111;
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:14px;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .langbtn.active{
+    background:#111;
+    color:#fff;
+    border-color:#111;
+  }
+
   .btn{
     border:0;
     border-radius:14px;
@@ -109,6 +132,8 @@
     font-size:18px;
     font-weight:800;
     cursor:pointer;
+    text-decoration:none;
+    display:inline-block;
   }
   .btn.ghost{
     background:#fff;
@@ -341,6 +366,11 @@
 
 <div class="wrap">
   <div class="panel">
+    <div class="langbar">
+      <button type="button" class="langbtn" id="lang-ja">JP</button>
+      <button type="button" class="langbtn" id="lang-en">EN</button>
+    </div>
+
     <div class="topbar">
       <div class="top-left">
         <h1>
@@ -430,37 +460,136 @@ var GENRE_STYLES = {
   Other:{bg:'#9e9e9e',fg:'#fff'}
 };
 
-var LABELS = {
-  subtitle:'Record view',
-  genre:'ジャンル',
-  era:'年代',
-  catalog:'型番',
-  format:'フォーマット',
-  report:'通報する',
-  copyLink:'リンクをコピー',
-  copied:'投稿ページのリンクをコピーしました。',
-  copyFail:'コピーできませんでした。下記URLを手動でコピーしてください：',
-  shareX:'Xでシェア',
-  shareFacebook:'Facebook',
-  shareLine:'LINE',
-  shareText:'CHAYNUPZINE',
-  back:'検索へ戻る',
-  home:'トップへ戻る',
-  by:'投稿者：',
-  editCap:'投稿を編集/削除',
-  edit:'編集',
-  hide:'非表示',
-  unhide:'再表示',
-  keyPh:'編集キー',
-  ok:'完了しました',
-  fail:'失敗しました',
-  needKey:'編集キーを入力してください',
-  editGuide:'※必要な項目だけ編集できます。',
-  save:'保存'
+var TEXT = {
+  ja:{
+    subtitle:'Record view',
+    genre:'ジャンル',
+    era:'年代',
+    catalog:'型番',
+    format:'フォーマット',
+    report:'通報する',
+    copyLink:'リンクをコピー',
+    copied:'投稿ページのリンクをコピーしました。',
+    copyFail:'コピーできませんでした。下記URLを手動でコピーしてください：',
+    shareX:'Xでシェア',
+    shareFacebook:'Facebook',
+    shareLine:'LINE',
+    shareText:'CHAYNUPZINE',
+    back:'検索へ戻る',
+    home:'トップへ戻る',
+    by:'投稿者：',
+    editCap:'投稿を編集/削除',
+    edit:'編集',
+    hide:'非表示',
+    unhide:'再表示',
+    keyPh:'編集キー',
+    ok:'完了しました',
+    fail:'失敗しました',
+    needKey:'編集キーを入力してください',
+    editGuide:'※必要な項目だけ編集できます。保存時に英語説明文も自動更新されます。',
+    save:'保存',
+    noImage:'No image',
+    noRow:'レコードID（row）が指定されていません。',
+    loadFail:'読み込みに失敗しました。',
+    sendingReport:'通報送信中…',
+    reportPrompt:'通報理由を入力してください（例：権利侵害、スパム等）',
+    reportOk:'通報を受け付けました。ご協力ありがとうございます。',
+    reportAutoHidden:'通報を受け付けました（累計閾値に達したため自動的に非表示になりました）。',
+    reportFail:'通報に失敗しました：',
+    savedReload:'保存して再読込しました。',
+    hiddenReload:'非表示にして再読込しました。',
+    restoredReload:'再表示して再読込しました。',
+    noChange:'変更はありません。',
+    defaultDescription:'CHAYNUPZINEのレコード紹介ページです。',
+    recordIntro:'のレコード紹介。',
+    seoGenre:'ジャンル: ',
+    seoYear:'発売年: ',
+    seoFormat:'フォーマット: ',
+    seoCatalog:'型番: ',
+    seoAuthor:'投稿者: ',
+    descriptionLabel:'DESCRIPTION',
+    descriptionEnLabel:'DESCRIPTION EN'
+  },
+  en:{
+    subtitle:'Record view',
+    genre:'Genre',
+    era:'Era',
+    catalog:'Catalog No.',
+    format:'Format',
+    report:'Report',
+    copyLink:'Copy link',
+    copied:'The link to this record page has been copied.',
+    copyFail:'Could not copy the link. Please copy this URL manually:',
+    shareX:'Share on X',
+    shareFacebook:'Facebook',
+    shareLine:'LINE',
+    shareText:'CHAYNUPZINE',
+    back:'Back to search',
+    home:'Back to top',
+    by:'Posted by: ',
+    editCap:'Edit / hide this post',
+    edit:'Edit',
+    hide:'Hide',
+    unhide:'Unhide',
+    keyPh:'Edit key',
+    ok:'Done',
+    fail:'Failed',
+    needKey:'Please enter the edit key.',
+    editGuide:'Edit only the fields you need. The English description will also be updated automatically when saving.',
+    save:'Save',
+    noImage:'No image',
+    noRow:'Record ID (row) is missing.',
+    loadFail:'Failed to load the record.',
+    sendingReport:'Sending report…',
+    reportPrompt:'Please enter the reason for the report, such as rights issue or spam.',
+    reportOk:'Report submitted. Thank you.',
+    reportAutoHidden:'Report submitted. This post has been automatically hidden because it reached the report threshold.',
+    reportFail:'Failed to submit report: ',
+    savedReload:'Saved and reloaded.',
+    hiddenReload:'Hidden and reloaded.',
+    restoredReload:'Unhidden and reloaded.',
+    noChange:'No changes.',
+    defaultDescription:'A record post on CHAYNUPZINE.',
+    recordIntro:' record post.',
+    seoGenre:'Genre: ',
+    seoYear:'Release year: ',
+    seoFormat:'Format: ',
+    seoCatalog:'Catalog No.: ',
+    seoAuthor:'Posted by: ',
+    descriptionLabel:'DESCRIPTION',
+    descriptionEnLabel:'DESCRIPTION EN'
+  }
 };
 
+var currentLang = 'ja';
 var currentRecord = null;
 var currentRow = 0;
+
+try{
+  var qsLang = new URLSearchParams(location.search).get('lang');
+  var ssLang = sessionStorage.getItem('cz_lang');
+  var lsLang = localStorage.getItem('cz_lang');
+  currentLang = (qsLang === 'en' || ssLang === 'en' || lsLang === 'en') ? 'en' : 'ja';
+}catch(_){
+  currentLang = 'ja';
+}
+
+function L(){
+  return TEXT[currentLang] || TEXT.ja;
+}
+
+function saveLang(){
+  try{ localStorage.setItem('cz_lang', currentLang); }catch(_){}
+  try{ sessionStorage.setItem('cz_lang', currentLang); }catch(_){}
+  try{ document.documentElement.lang = currentLang; }catch(_){}
+}
+
+function setLangButtons(){
+  var ja = document.getElementById('lang-ja');
+  var en = document.getElementById('lang-en');
+  if(ja) ja.classList.toggle('active', currentLang === 'ja');
+  if(en) en.classList.toggle('active', currentLang === 'en');
+}
 
 function setAlertState(el, text, ok){
   if(!el) return;
@@ -478,35 +607,54 @@ function setAlertState(el, text, ok){
 }
 
 function setUI(){
-  document.getElementById('subtitle').textContent = LABELS.subtitle;
-  document.getElementById('label-genre').textContent = LABELS.genre;
-  document.getElementById('label-era').textContent = LABELS.era;
-  document.getElementById('label-catalog').textContent = LABELS.catalog;
-  document.getElementById('label-format').textContent = LABELS.format;
-  document.getElementById('reportBtn').textContent = LABELS.report;
+  var t = L();
+  saveLang();
+  setLangButtons();
+
+  document.getElementById('subtitle').textContent = t.subtitle;
+  document.getElementById('label-genre').textContent = t.genre;
+  document.getElementById('label-era').textContent = t.era;
+  document.getElementById('label-catalog').textContent = t.catalog;
+  document.getElementById('label-format').textContent = t.format;
+  document.getElementById('reportBtn').textContent = t.report;
 
   var copyBtn = document.getElementById('copyLinkBtn');
-  if(copyBtn) copyBtn.textContent = LABELS.copyLink;
+  if(copyBtn) copyBtn.textContent = t.copyLink;
 
   var shareXBtn = document.getElementById('shareXBtn');
-  if(shareXBtn) shareXBtn.textContent = LABELS.shareX;
+  if(shareXBtn) shareXBtn.textContent = t.shareX;
 
   var shareFacebookBtn = document.getElementById('shareFacebookBtn');
-  if(shareFacebookBtn) shareFacebookBtn.textContent = LABELS.shareFacebook;
+  if(shareFacebookBtn) shareFacebookBtn.textContent = t.shareFacebook;
 
   var shareLineBtn = document.getElementById('shareLineBtn');
-  if(shareLineBtn) shareLineBtn.textContent = LABELS.shareLine;
+  if(shareLineBtn) shareLineBtn.textContent = t.shareLine;
 
-  document.getElementById('btn-back').textContent = LABELS.back;
-  document.getElementById('btn-home').textContent = LABELS.home;
-  document.getElementById('tool-cap').textContent = LABELS.editCap;
-  document.getElementById('btnEdit').textContent = LABELS.edit;
-  document.getElementById('btnHide').textContent = LABELS.hide;
-  document.getElementById('btnUnhide').textContent = LABELS.unhide;
+  document.getElementById('btn-back').textContent = t.back;
+  document.getElementById('btn-home').textContent = t.home;
+  document.getElementById('tool-cap').textContent = t.editCap;
+  document.getElementById('btnEdit').textContent = t.edit;
+  document.getElementById('btnHide').textContent = t.hide;
+  document.getElementById('btnUnhide').textContent = t.unhide;
 
   var ek = document.getElementById('editKey');
-  if(ek) ek.placeholder = LABELS.keyPh;
+  if(ek) ek.placeholder = t.keyPh;
+
+  if(currentRecord){
+    render(currentRecord);
+    ensureEditPanel(true);
+  }
 }
+
+document.getElementById('lang-ja').addEventListener('click', function(){
+  currentLang = 'ja';
+  setUI();
+});
+
+document.getElementById('lang-en').addEventListener('click', function(){
+  currentLang = 'en';
+  setUI();
+});
 
 (function setupBackButton(){
   document.getElementById('btn-back').addEventListener('click', function(){
@@ -514,7 +662,7 @@ function setUI(){
     if (cameFromSearch && history.length > 1){
       history.back();
     } else {
-      location.href = 'search_records.html';
+      location.href = 'search_records.html?lang=' + encodeURIComponent(currentLang);
     }
   });
 })();
@@ -567,7 +715,7 @@ function setJacket(url){
   box.innerHTML = '';
   var srcs = buildImageSources(url);
   if(!srcs.length){
-    box.textContent = 'No image';
+    box.textContent = L().noImage;
     return;
   }
   var img = new Image();
@@ -575,7 +723,7 @@ function setJacket(url){
   img.loading = 'lazy';
   function next(){
     if(i >= srcs.length){
-      box.textContent = 'No image';
+      box.textContent = L().noImage;
       return;
     }
     img.src = srcs[i++];
@@ -588,7 +736,7 @@ function setJacket(url){
 function extractYouTubeId(u){
   u = String(u || '');
   if(!u) return '';
-  var m = u.match(/(?:youtu\.be\/|v=|embed\/)([A-Za-z0-9_-]{6,})/);
+  var m = u.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{6,})/);
   return m ? m[1] : '';
 }
 
@@ -641,6 +789,14 @@ function shortenText(s, max){
   return s.slice(0, max - 1) + '…';
 }
 
+function pickDescription(rec){
+  rec = rec || {};
+  if(currentLang === 'en'){
+    return String(rec.description_en || rec.description || '').trim();
+  }
+  return String(rec.description || rec.description_en || '').trim();
+}
+
 function setMetaBySelector(selector, attr, value){
   var el = document.querySelector(selector);
   if(!el) return;
@@ -659,6 +815,7 @@ function ensureCanonical(url){
 
 function updateRecordSeo(rec, row){
   rec = rec || {};
+  var t = L();
 
   var shareUrl = buildShareUrl(row);
   var band = escapeMetaText(rec.band || '');
@@ -668,22 +825,25 @@ function updateRecordSeo(rec, row){
   var format = escapeMetaText(rec.format || '');
   var catalog = escapeMetaText(rec.catalog_no || '');
   var author = escapeMetaText(rec.author || '');
-  var descRaw = escapeMetaText(rec.description || '');
+  var descRaw = escapeMetaText(pickDescription(rec));
 
   var titleBase = [band, track].filter(Boolean).join(' - ');
   var pageTitle = titleBase ? (titleBase + ' | CHAYNUPZINE') : 'CHAYNUPZINE — Record View';
 
   var parts = [];
-  if(titleBase) parts.push(titleBase + 'のレコード紹介。');
-  if(genre) parts.push('ジャンル: ' + genre + '。');
-  if(year) parts.push('発売年: ' + year + '。');
-  if(format) parts.push('フォーマット: ' + format + '。');
-  if(catalog) parts.push('型番: ' + catalog + '。');
-  if(author) parts.push('投稿者: ' + author + '。');
+  if(titleBase) {
+    if(currentLang === 'en') parts.push(titleBase + t.recordIntro);
+    else parts.push(titleBase + t.recordIntro);
+  }
+  if(genre) parts.push(t.seoGenre + genre + (currentLang === 'ja' ? '。' : '.'));
+  if(year) parts.push(t.seoYear + year + (currentLang === 'ja' ? '。' : '.'));
+  if(format) parts.push(t.seoFormat + format + (currentLang === 'ja' ? '。' : '.'));
+  if(catalog) parts.push(t.seoCatalog + catalog + (currentLang === 'ja' ? '。' : '.'));
+  if(author) parts.push(t.seoAuthor + author + (currentLang === 'ja' ? '。' : '.'));
   if(descRaw) parts.push(descRaw);
 
   var pageDescription = shortenText(
-    parts.join(' ') || 'CHAYNUPZINEのレコード紹介ページです。',
+    parts.join(' ') || t.defaultDescription,
     160
   );
 
@@ -712,7 +872,7 @@ function updateRecordSeo(rec, row){
     'name': track || titleBase || 'Record View',
     'url': shareUrl,
     'description': pageDescription,
-    'inLanguage':'ja',
+    'inLanguage': currentLang,
     'isPartOf':{
       '@type':'WebSite',
       'name':'CHAYNUPZINE',
@@ -738,6 +898,7 @@ function updateRecordSeo(rec, row){
 
 function render(rec){
   currentRecord = rec || {};
+  var t = L();
 
   document.getElementById('band').textContent  = currentRecord.band || '(Band)';
   document.getElementById('track').textContent = currentRecord.track || '(Track)';
@@ -761,8 +922,8 @@ function render(rec){
   document.getElementById('era').textContent = era || '-';
   document.getElementById('catalog').textContent = currentRecord.catalog_no || '-';
   document.getElementById('format').textContent  = currentRecord.format || '-';
-  document.getElementById('description').textContent = currentRecord.description || '';
-  document.getElementById('author').textContent = currentRecord.author ? (LABELS.by + currentRecord.author) : '';
+  document.getElementById('description').textContent = pickDescription(currentRecord);
+  document.getElementById('author').textContent = currentRecord.author ? (t.by + currentRecord.author) : '';
 
   setJacket(currentRecord.image_url || '');
   setYouTube(currentRecord.youtube_url || '');
@@ -797,7 +958,7 @@ function ensureClientId(){
 
 function buildShareUrl(row){
   var base = location.origin + location.pathname;
-  return base + '?row=' + encodeURIComponent(row);
+  return base + '?row=' + encodeURIComponent(row) + '&lang=' + encodeURIComponent(currentLang);
 }
 
 function buildShareTitle(){
@@ -819,7 +980,7 @@ function buildShareTitle(){
 
 function buildShareText(){
   var title = buildShareTitle();
-  var desc = currentRecord && currentRecord.description ? shortenText(currentRecord.description, 80) : '';
+  var desc = currentRecord ? shortenText(pickDescription(currentRecord), 80) : '';
   if(desc){
     return title + '\n' + desc;
   }
@@ -949,26 +1110,27 @@ async function postReportFallback(payload){
 }
 
 function reportThis(rowIndex){
-  var reason = prompt('通報理由を入力してください（例：権利侵害、スパム等）');
+  var t = L();
+  var reason = prompt(t.reportPrompt);
   if(!reason) return;
 
   var msg = document.getElementById('msg');
-  setAlertState(msg, '通報送信中…', true);
+  setAlertState(msg, t.sendingReport, true);
 
   function done(res){
     if(res && res.ok){
       if(res.autoHidden){
-        setAlertState(msg, '通報を受け付けました（累計閾値に達したため自動的に非表示になりました）。', true);
+        setAlertState(msg, t.reportAutoHidden, true);
       }else{
-        setAlertState(msg, '通報を受け付けました。ご協力ありがとうございます。', true);
+        setAlertState(msg, t.reportOk, true);
       }
     }else{
-      setAlertState(msg, '通報に失敗しました：' + (res && res.error || 'unknown'), false);
+      setAlertState(msg, t.reportFail + (res && res.error || 'unknown'), false);
     }
   }
 
   function fail(err){
-    setAlertState(msg, '通報に失敗しました：' + (err && err.message ? err.message : String(err)), false);
+    setAlertState(msg, t.reportFail + (err && err.message ? err.message : String(err)), false);
   }
 
   try{
@@ -1039,23 +1201,23 @@ async function callEditEntry(action, rowIndex, editKey, patch){
     }
 
     if(!res || !res.ok){
-      showEditMessage(LABELS.fail + (res && res.error ? ' : ' + res.error : ''), false);
+      showEditMessage(L().fail + (res && res.error ? ' : ' + res.error : ''), false);
       return;
     }
 
     await reloadAndRender(rowIndex);
 
     if(action === 'update'){
-      showEditMessage('保存して再読込しました。', true);
+      showEditMessage(L().savedReload, true);
     }else if(action === 'delete'){
-      showEditMessage('非表示にして再読込しました。', true);
+      showEditMessage(L().hiddenReload, true);
     }else if(action === 'restore'){
-      showEditMessage('再表示して再読込しました。', true);
+      showEditMessage(L().restoredReload, true);
     }else{
-      showEditMessage(LABELS.ok, true);
+      showEditMessage(L().ok, true);
     }
   }catch(e){
-    showEditMessage(LABELS.fail + ' : ' + (e && e.message ? e.message : String(e)), false);
+    showEditMessage(L().fail + ' : ' + (e && e.message ? e.message : String(e)), false);
   }
 }
 
@@ -1064,29 +1226,32 @@ function ensureEditPanel(force){
   if (!host) return;
   if (host.__ready && !force) return;
 
+  var t = L();
+
   host.innerHTML = ''
-    + '<div class="lab">' + LABELS.editGuide + '</div>'
+    + '<div class="lab">' + t.editGuide + '</div>'
     + '<div class="row2">'
     + '  <div><div class="lab">BAND</div><input id="e_band" class="in" type="text"></div>'
     + '  <div><div class="lab">TRACK</div><input id="e_track" class="in" type="text"></div>'
     + '</div>'
     + '<div class="row2">'
-    + '  <div><div class="lab">' + LABELS.genre + '</div><input id="e_genre" class="in" type="text" placeholder="Punk / Glam / ..."></div>'
+    + '  <div><div class="lab">' + t.genre + '</div><input id="e_genre" class="in" type="text" placeholder="Punk / Glam / ..."></div>'
     + '  <div><div class="lab">COUNTRY</div><input id="e_country" class="in" type="text" placeholder="Japan / USA / ..."></div>'
     + '</div>'
     + '<div class="row2">'
-    + '  <div><div class="lab">' + LABELS.era + '</div><input id="e_release_year" class="in" type="text" placeholder="YYYY"></div>'
-    + '  <div><div class="lab">' + LABELS.catalog + '</div><input id="e_catalog_no" class="in" type="text"></div>'
+    + '  <div><div class="lab">' + t.era + '</div><input id="e_release_year" class="in" type="text" placeholder="YYYY"></div>'
+    + '  <div><div class="lab">' + t.catalog + '</div><input id="e_catalog_no" class="in" type="text"></div>'
     + '</div>'
-    + '<div><div class="lab">' + LABELS.format + '</div><input id="e_format" class="in" type="text" placeholder="7&quot;EP / LP / CD / ..."></div>'
-    + '<div><div class="lab">DESCRIPTION</div><textarea id="e_description" class="in ta" maxlength="500"></textarea></div>'
+    + '<div><div class="lab">' + t.format + '</div><input id="e_format" class="in" type="text" placeholder="7&quot;EP / LP / CD / ..."></div>'
+    + '<div><div class="lab">' + t.descriptionLabel + '</div><textarea id="e_description" class="in ta" maxlength="500"></textarea></div>'
+    + '<div><div class="lab">' + t.descriptionEnLabel + '</div><textarea id="e_description_en" class="in ta" maxlength="800"></textarea></div>'
     + '<div class="row2">'
     + '  <div><div class="lab">IMAGE URL</div><input id="e_image_url" class="in" type="url" placeholder="https://..."></div>'
     + '  <div><div class="lab">YOUTUBE URL</div><input id="e_youtube_url" class="in" type="url" placeholder="https://youtu.be/..."></div>'
     + '</div>'
-    + '<div><div class="lab">' + LABELS.by + '</div><input id="e_author" class="in" type="text"></div>'
+    + '<div><div class="lab">' + t.by + '</div><input id="e_author" class="in" type="text"></div>'
     + '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'
-    + '  <button id="btnSave" class="btn secondary" type="button">' + LABELS.save + '</button>'
+    + '  <button id="btnSave" class="btn secondary" type="button">' + t.save + '</button>'
     + '</div>';
 
   var r = currentRecord || {};
@@ -1104,6 +1269,7 @@ function ensureEditPanel(force){
   setVal('e_catalog_no', r.catalog_no);
   setVal('e_format', r.format);
   setVal('e_description', r.description);
+  setVal('e_description_en', r.description_en);
   setVal('e_image_url', r.image_url);
   setVal('e_youtube_url', r.youtube_url);
   setVal('e_author', r.author);
@@ -1112,7 +1278,7 @@ function ensureEditPanel(force){
     var ek = (document.getElementById('editKey') || {}).value || '';
     ek = String(ek).trim();
     if(!ek){
-      alert(LABELS.needKey);
+      alert(L().needKey);
       return;
     }
 
@@ -1135,12 +1301,13 @@ function ensureEditPanel(force){
     pick('catalog_no', 'e_catalog_no');
     pick('format', 'e_format');
     pick('description', 'e_description');
+    pick('description_en', 'e_description_en');
     pick('image_url', 'e_image_url');
     pick('youtube_url', 'e_youtube_url');
     pick('author', 'e_author');
 
     if(Object.keys(patch).length === 0){
-      showEditMessage('変更はありません。', true);
+      showEditMessage(L().noChange, true);
       return;
     }
 
@@ -1159,12 +1326,12 @@ function attachPageHandlers(row){
       try{
         var ok = await copyTextToClipboard(url);
         if(ok){
-          setAlertState(document.getElementById('msg'), LABELS.copied, true);
+          setAlertState(document.getElementById('msg'), L().copied, true);
         }else{
-          setAlertState(document.getElementById('msg'), LABELS.copyFail + ' ' + url, false);
+          setAlertState(document.getElementById('msg'), L().copyFail + ' ' + url, false);
         }
       }catch(e){
-        setAlertState(document.getElementById('msg'), LABELS.copyFail + ' ' + url, false);
+        setAlertState(document.getElementById('msg'), L().copyFail + ' ' + url, false);
       }
     };
   }
@@ -1219,7 +1386,7 @@ function attachPageHandlers(row){
   document.getElementById('btnHide').onclick = function(){
     var ek = String((document.getElementById('editKey').value || '')).trim();
     if(!ek){
-      alert(LABELS.needKey);
+      alert(L().needKey);
       return;
     }
     callEditEntry('delete', row, ek);
@@ -1228,7 +1395,7 @@ function attachPageHandlers(row){
   document.getElementById('btnUnhide').onclick = function(){
     var ek = String((document.getElementById('editKey').value || '')).trim();
     if(!ek){
-      alert(LABELS.needKey);
+      alert(L().needKey);
       return;
     }
     callEditEntry('restore', row, ek);
@@ -1252,7 +1419,7 @@ function attachPageHandlers(row){
     currentRow = row;
 
     if(!row){
-      showError('レコードID（row）が指定されていません。');
+      showError(L().noRow);
       return;
     }
 
@@ -1275,14 +1442,14 @@ function attachPageHandlers(row){
         google.script.run
           .withSuccessHandler(function(res){
             if(!res || !res.ok){
-              showError('読み込みに失敗しました。');
+              showError(L().loadFail);
               return;
             }
             render(res.data || {});
             persistCurrentRecord(row);
           })
           .withFailureHandler(function(err){
-            showError('読み込みに失敗しました：' + (err && err.message ? err.message : String(err)));
+            showError(L().loadFail + '：' + (err && err.message ? err.message : String(err)));
           })
           .getRecordByRow({rowIndex:Number(row)});
         return;
@@ -1292,13 +1459,13 @@ function attachPageHandlers(row){
     try{
       var res = await fetchRecordByRow(row);
       if(!res || !res.ok){
-        showError('読み込みに失敗しました。');
+        showError(L().loadFail);
         return;
       }
       render(res.data || {});
       persistCurrentRecord(row);
     }catch(err){
-      showError('読み込みに失敗しました：' + (err && err.message ? err.message : 'Load failed'));
+      showError(L().loadFail + '：' + (err && err.message ? err.message : 'Load failed'));
     }
   }
 

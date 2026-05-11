@@ -151,7 +151,7 @@
         <div class="field">
           <label for="description">DESCRIPTION（紹介文）</label>
           <textarea id="description" name="description" maxlength="500" placeholder="テキストを入力"></textarea>
-          <div class="help" id="t-desc-help">※紹介文は500文字以内で入力してください</div>
+          <div class="help" id="t-desc-help">※紹介文は500文字以内で入力してください。投稿時に英語説明文も自動生成されます。</div>
           <div class="counter" id="descCounter">0 / 500</div>
         </div>
 
@@ -414,11 +414,23 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   }
 
   function T(v){ return (v||'').trim(); }
+  var descJa = T(f.description.value);
+
   var payload={
-    genre:T(f.genre.value), country:T(f.country.value), band:T(f.band.value), track:T(f.track.value),
-    release_year:T(f.release_year.value), catalog_no:T(f.catalog_no.value), format:T(f.format.value),
-    description:T(f.description.value), image_url:T(imgUrl),
-    youtube_url:T(ytUrl), author:T(f.author.value), edit_key:T(ek),
+    genre:T(f.genre.value),
+    country:T(f.country.value),
+    band:T(f.band.value),
+    track:T(f.track.value),
+    release_year:T(f.release_year.value),
+    catalog_no:T(f.catalog_no.value),
+    format:T(f.format.value),
+    description:descJa,
+    description_en:'',
+    translate_to_en:true,
+    image_url:T(imgUrl),
+    youtube_url:T(ytUrl),
+    author:T(f.author.value),
+    edit_key:T(ek),
     client_id:getClientId()
   };
 
@@ -429,11 +441,15 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     }
 
     btn.disabled=true;
+    msg.className='alert';
+    msg.style.display='block';
+    msg.textContent='投稿中…英語説明文も同時に保存します。';
+
     callSubmitRecords(
       payload,
       function(res){
         if(res && res.ok){
-          msg.className='alert ok'; msg.textContent='投稿しました。ありがとうございます！';
+          msg.className='alert ok'; msg.textContent='投稿しました。英語説明文も保存対象にしました。';
           f.reset(); refreshPv();
           document.getElementById('pvThumb').innerHTML='no image';
           document.getElementById('descCounter').textContent='0 / 500';
@@ -452,6 +468,7 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
   }catch(e){
     msg.className='alert err';
     msg.textContent='投稿に失敗しました: ' + (e && e.message ? e.message : String(e));
+    btn.disabled=false;
   }
 });
 

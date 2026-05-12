@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>CHAYNUPZINE — 投稿フォーム（レコード紹介）</title>
+<title>CHAYNUPZINE — Submit Record</title>
 <style>
   :root{ --panel:rgba(255,255,255,.92); --ink:#222; --chip:#eef1f5; }
   html,body{
@@ -36,8 +36,30 @@
   }
   .brand{display:inline-block; background:#111; color:#fff; border-radius:8px;
          padding:7px 12px; font-weight:800; letter-spacing:.4px;}
-  .titleline{display:flex; align-items:center; gap:12px}
+  .titleline{display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
   .sub{font-size:16px; color:#555; overflow-wrap:anywhere;}
+
+  .langbar{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .langbtn{
+    border:1px solid #ddd;
+    background:#fff;
+    color:#111;
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:14px;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .langbtn.active{
+    background:#111;
+    color:#fff;
+    border-color:#111;
+  }
 
   .formgrid{display:grid; gap:16px;}
   @media(min-width:980px){ .formgrid{grid-template-columns: 1fr 360px;} }
@@ -57,7 +79,7 @@
 
   .actions{display:flex; gap:12px; justify-content:flex-end; margin-top:10px; flex-wrap:wrap;}
   .btn{border:0; border-radius:14px; padding:12px 16px; font-size:18px;
-       font-weight:800; cursor:pointer;}
+       font-weight:800; cursor:pointer; text-decoration:none; display:inline-block;}
   .btn.primary{background:#111; color:#fff;}
   .btn.ghost{background:#fff; color:#111; border:1px solid #ddd;}
   .btn[disabled]{opacity:.6; cursor:progress;}
@@ -81,6 +103,11 @@
 
 <div class="wrap">
   <div class="panel">
+    <div class="langbar">
+      <button type="button" class="langbtn" id="lang-ja">JP</button>
+      <button type="button" class="langbtn" id="lang-en">EN</button>
+    </div>
+
     <div class="topbar">
       <div class="titleline">
         <span class="brand">CHAYNUPZINE</span>
@@ -95,9 +122,9 @@
     <div class="formgrid">
       <form id="postForm" novalidate>
         <div class="field">
-          <label for="genre">GENRE（ジャンル）</label>
+          <label for="genre" id="label-genre">GENRE（ジャンル）</label>
           <select id="genre" name="genre" required>
-            <option value="">選択してください</option>
+            <option value="" id="opt-select-genre">選択してください</option>
             <option>Punk</option><option>Hardcore</option><option>PowerPop</option>
             <option>Indie</option><option>Garage</option><option>Mods</option>
             <option>NeoMods</option><option>Metal</option><option>HardRock</option>
@@ -109,9 +136,9 @@
         </div>
 
         <div class="field">
-          <label for="country">COUNTRY（国名）</label>
+          <label for="country" id="label-country">COUNTRY（国名）</label>
           <select id="country" name="country" required>
-            <option value="">選択してください</option>
+            <option value="" id="opt-select-country">選択してください</option>
             <option>Japan</option><option>USA</option><option>UK</option><option>Germany</option>
             <option>France</option><option>Italy</option><option>Spain</option><option>Sweden</option>
             <option>Norway</option><option>Finland</option><option>Netherlands</option><option>Belgium</option>
@@ -123,61 +150,61 @@
         </div>
 
         <div class="field">
-          <label for="band">BAND（必須）</label>
+          <label for="band" id="label-band">BAND（必須）</label>
           <input id="band" name="band" class="input" placeholder="例: THE RYDERS" required />
         </div>
 
         <div class="field">
-          <label for="track">TRACK（必須）</label>
+          <label for="track" id="label-track">TRACK（必須）</label>
           <input id="track" name="track" class="input" placeholder="曲名を入力" required />
         </div>
 
         <div class="row2">
           <div class="field">
-            <label for="release_year">RELEASE YEAR（任意）</label>
+            <label for="release_year" id="label-release-year">RELEASE YEAR（任意）</label>
             <input id="release_year" name="release_year" class="input" placeholder="YYYY 例: 1983" inputmode="numeric" />
           </div>
           <div class="field">
-            <label for="catalog_no">CATALOG NO.（任意）</label>
+            <label for="catalog_no" id="label-catalog">CATALOG NO.（任意）</label>
             <input id="catalog_no" name="catalog_no" class="input" placeholder="例: XXX-001" />
           </div>
         </div>
 
         <div class="field">
-          <label for="format">FORMAT（任意）</label>
+          <label for="format" id="label-format">FORMAT（任意）</label>
           <input id="format" name="format" class="input" placeholder='例: 7"EP / LP / CD / Cassette' />
         </div>
 
         <div class="field">
-          <label for="description">DESCRIPTION（紹介文）</label>
+          <label for="description" id="label-description">DESCRIPTION（紹介文）</label>
           <textarea id="description" name="description" maxlength="500" placeholder="テキストを入力"></textarea>
           <div class="help" id="t-desc-help">※紹介文は500文字以内で入力してください。投稿時に英語説明文も自動生成されます。</div>
           <div class="counter" id="descCounter">0 / 500</div>
         </div>
 
         <div class="field">
-          <label for="image_url">JACKET IMAGE URL（任意）</label>
+          <label for="image_url" id="label-image">JACKET IMAGE URL（任意）</label>
           <input id="image_url" name="image_url" class="input" placeholder="https://drive.google.com/... or https://example.com/..." />
           <div class="help" id="t-img-help">Drive共有URL/直リンクどちらでも可。下のアップロードと併用OK（URLがあればURL優先）。</div>
         </div>
 
         <div class="field">
-          <label for="upload">UPLOAD IMAGE（jpg/png/webp 任意）</label>
+          <label for="upload" id="label-upload">UPLOAD IMAGE（jpg/png/webp 任意）</label>
           <input id="upload" name="upload" type="file" accept="image/*" class="input" />
         </div>
 
         <div class="field">
-          <label for="youtube_url">YOUTUBE URL（任意）</label>
+          <label for="youtube_url" id="label-youtube">YOUTUBE URL（任意）</label>
           <input id="youtube_url" name="youtube_url" class="input" placeholder="https://youtu.be/... または https://www.youtube.com/watch?v=xxxxx" />
         </div>
 
         <div class="row2">
           <div class="field">
-            <label for="author">AUTHOR（投稿者・任意）</label>
+            <label for="author" id="label-author">AUTHOR（投稿者・任意）</label>
             <input id="author" name="author" class="input" placeholder="your name" />
           </div>
           <div class="field">
-            <label for="edit_key">EDIT KEY（編集キー・必須）</label>
+            <label for="edit_key" id="label-edit-key">EDIT KEY（編集キー・必須）</label>
             <input id="edit_key" name="edit_key" class="input"
               placeholder="半角英数字 8〜32 文字。後の編集・削除時に必要"
               minlength="8" maxlength="32" pattern="[A-Za-z0-9]{8,32}" inputmode="latin" required />
@@ -213,6 +240,226 @@
 
 <script>
 const EXEC_URL = 'https://script.google.com/macros/s/AKfycbznOw5AqZl9NqA1JvCgZqVI5HmmlIXTWG59CTuRO81s47lwzijy7XDAFOk7SpTQl76HZw/exec';
+
+const TEXT = {
+  ja:{
+    title:'投稿フォーム（レコード紹介）',
+    help:'NGワードは自動検知。画像は <b>1枚 10MB以下 / 長辺 3000px以下</b> を推奨。Google Drive共有URLまたは画像直リンクでもOK。',
+    select:'選択してください',
+    labels:{
+      genre:'GENRE（ジャンル）',
+      country:'COUNTRY（国名）',
+      band:'BAND（必須）',
+      track:'TRACK（必須）',
+      releaseYear:'RELEASE YEAR（任意）',
+      catalog:'CATALOG NO.（任意）',
+      format:'FORMAT（任意）',
+      description:'DESCRIPTION（紹介文）',
+      image:'JACKET IMAGE URL（任意）',
+      upload:'UPLOAD IMAGE（jpg/png/webp 任意）',
+      youtube:'YOUTUBE URL（任意）',
+      author:'AUTHOR（投稿者・任意）',
+      editKey:'EDIT KEY（編集キー・必須）'
+    },
+    placeholders:{
+      band:'例: THE RYDERS',
+      track:'曲名を入力',
+      releaseYear:'YYYY 例: 1983',
+      catalog:'例: XXX-001',
+      format:'例: 7"EP / LP / CD / Cassette',
+      description:'テキストを入力',
+      image:'https://drive.google.com/... or https://example.com/...',
+      youtube:'https://youtu.be/... または https://www.youtube.com/watch?v=xxxxx',
+      author:'your name',
+      editKey:'半角英数字 8〜32 文字。後の編集・削除時に必要'
+    },
+    descHelp:'※紹介文は500文字以内で入力してください。投稿時に英語説明文も自動生成されます。',
+    imgHelp:'Drive共有URL/直リンクどちらでも可。下のアップロードと併用OK（URLがあればURL優先）。',
+    ekHelp:'編集キーは <b>半角英数字のみ・8〜32文字</b> を入力してください。',
+    disclaimer:'※免責事項：誹謗中傷・差別的表現・個人情報の投稿は禁止です。投稿内容は公開される可能性があります。運営は一切の責任を負いません。',
+    agree:'上記免責事項に同意します',
+    buttons:{
+      backSearch:'検索へ戻る',
+      home:'トップへ戻る',
+      submit:'投稿'
+    },
+    preview:{
+      noImage:'no image',
+      title:'Band / Track',
+      meta:'Country / Genre',
+      desc:'（紹介文がここに反映されます）'
+    },
+    msg:{
+      preparing:'送信準備中…',
+      needConsent:'免責事項に同意してください。',
+      missing:'未入力の必須項目があります。',
+      ng:'紹介文に禁止ワードが含まれています。',
+      badImage:'画像URLの形式が不正です（https必須／画像拡張子 or 許可ドメインのみ）。',
+      badYoutube:'YouTubeのURL形式のみ許可されています（youtu.be / youtube.com/watch / /shorts）。',
+      badEditKey:'編集キーは半角英数字のみ・8〜32文字で入力してください。',
+      sending:'投稿中…英語説明文も同時に保存します。',
+      success:'投稿しました。英語説明文も保存対象にしました。',
+      fail:'投稿に失敗しました: '
+    }
+  },
+  en:{
+    title:'Submit Record',
+    help:'NG words are checked automatically. For images, <b>under 10MB / long edge up to 3000px</b> is recommended. Google Drive sharing URLs and direct image links are accepted.',
+    select:'Select',
+    labels:{
+      genre:'GENRE',
+      country:'COUNTRY',
+      band:'BAND（required）',
+      track:'TRACK（required）',
+      releaseYear:'RELEASE YEAR（optional）',
+      catalog:'CATALOG NO.（optional）',
+      format:'FORMAT（optional）',
+      description:'DESCRIPTION',
+      image:'JACKET IMAGE URL（optional）',
+      upload:'UPLOAD IMAGE（jpg/png/webp optional）',
+      youtube:'YOUTUBE URL（optional）',
+      author:'AUTHOR（optional）',
+      editKey:'EDIT KEY（required）'
+    },
+    placeholders:{
+      band:'Example: THE RYDERS',
+      track:'Enter track title',
+      releaseYear:'YYYY e.g. 1983',
+      catalog:'Example: XXX-001',
+      format:'Example: 7"EP / LP / CD / Cassette',
+      description:'Enter text',
+      image:'https://drive.google.com/... or https://example.com/...',
+      youtube:'https://youtu.be/... or https://www.youtube.com/watch?v=xxxxx',
+      author:'your name',
+      editKey:'8–32 alphanumeric characters. Required for later editing or hiding.'
+    },
+    descHelp:'Please keep the description within 500 characters. An English description will also be generated when posting.',
+    imgHelp:'Drive sharing URLs and direct links are accepted. You may also upload an image below. URL takes priority if both are provided.',
+    ekHelp:'Edit key must be <b>8–32 half-width alphanumeric characters</b>.',
+    disclaimer:'Disclaimer: Defamation, discriminatory expressions, and personal information are prohibited. Submitted content may be published. The operator assumes no responsibility for posted content.',
+    agree:'I agree to the disclaimer above',
+    buttons:{
+      backSearch:'Back to search',
+      home:'Back to top',
+      submit:'Submit'
+    },
+    preview:{
+      noImage:'no image',
+      title:'Band / Track',
+      meta:'Country / Genre',
+      desc:'Your description will appear here.'
+    },
+    msg:{
+      preparing:'Preparing submission…',
+      needConsent:'Please agree to the disclaimer.',
+      missing:'Some required fields are missing.',
+      ng:'The description contains a prohibited word.',
+      badImage:'Invalid image URL. HTTPS is required, and only image extensions or approved domains are accepted.',
+      badYoutube:'Only YouTube URL formats are allowed: youtu.be, youtube.com/watch, or /shorts.',
+      badEditKey:'Edit key must be 8–32 alphanumeric characters.',
+      sending:'Submitting… The English description will also be saved.',
+      success:'Submitted. The English description has also been set for saving.',
+      fail:'Submission failed: '
+    }
+  }
+};
+
+let currentLang = 'ja';
+
+try{
+  const qsLang = new URLSearchParams(location.search).get('lang');
+  const saved = localStorage.getItem('cz_lang');
+  currentLang = (qsLang === 'en' || saved === 'en') ? 'en' : 'ja';
+}catch(_){
+  currentLang = 'ja';
+}
+
+function TX(){
+  return TEXT[currentLang] || TEXT.ja;
+}
+
+function saveLang(){
+  try{ localStorage.setItem('cz_lang', currentLang); }catch(_){}
+  try{ document.documentElement.lang = currentLang; }catch(_){}
+}
+
+function setLangButtons(){
+  const ja = document.getElementById('lang-ja');
+  const en = document.getElementById('lang-en');
+  if(ja) ja.classList.toggle('active', currentLang === 'ja');
+  if(en) en.classList.toggle('active', currentLang === 'en');
+}
+
+function setUI(){
+  const t = TX();
+  saveLang();
+  setLangButtons();
+
+  document.title = currentLang === 'en'
+    ? 'CHAYNUPZINE — Submit Record'
+    : 'CHAYNUPZINE — 投稿フォーム（レコード紹介）';
+
+  document.getElementById('t-form-title').textContent = t.title;
+  document.getElementById('t-help').innerHTML = t.help;
+
+  document.getElementById('label-genre').textContent = t.labels.genre;
+  document.getElementById('label-country').textContent = t.labels.country;
+  document.getElementById('label-band').textContent = t.labels.band;
+  document.getElementById('label-track').textContent = t.labels.track;
+  document.getElementById('label-release-year').textContent = t.labels.releaseYear;
+  document.getElementById('label-catalog').textContent = t.labels.catalog;
+  document.getElementById('label-format').textContent = t.labels.format;
+  document.getElementById('label-description').textContent = t.labels.description;
+  document.getElementById('label-image').textContent = t.labels.image;
+  document.getElementById('label-upload').textContent = t.labels.upload;
+  document.getElementById('label-youtube').textContent = t.labels.youtube;
+  document.getElementById('label-author').textContent = t.labels.author;
+  document.getElementById('label-edit-key').textContent = t.labels.editKey;
+
+  document.getElementById('opt-select-genre').textContent = t.select;
+  document.getElementById('opt-select-country').textContent = t.select;
+
+  document.getElementById('band').placeholder = t.placeholders.band;
+  document.getElementById('track').placeholder = t.placeholders.track;
+  document.getElementById('release_year').placeholder = t.placeholders.releaseYear;
+  document.getElementById('catalog_no').placeholder = t.placeholders.catalog;
+  document.getElementById('format').placeholder = t.placeholders.format;
+  document.getElementById('description').placeholder = t.placeholders.description;
+  document.getElementById('image_url').placeholder = t.placeholders.image;
+  document.getElementById('youtube_url').placeholder = t.placeholders.youtube;
+  document.getElementById('author').placeholder = t.placeholders.author;
+  document.getElementById('edit_key').placeholder = t.placeholders.editKey;
+
+  document.getElementById('t-desc-help').textContent = t.descHelp;
+  document.getElementById('t-img-help').textContent = t.imgHelp;
+  document.getElementById('t-ek-help').innerHTML = t.ekHelp;
+  document.getElementById('t-disclaimer').textContent = t.disclaimer;
+  document.getElementById('t-agree').textContent = t.agree;
+
+  document.getElementById('btn-back-search').textContent = t.buttons.backSearch;
+  document.getElementById('btn-home').textContent = t.buttons.home;
+  document.getElementById('submitBtn').textContent = t.buttons.submit;
+
+  document.getElementById('btn-back-search').href =
+    'https://etramone7-coder.github.io/chaynupzine/search_records.html?lang=' + encodeURIComponent(currentLang);
+
+  refreshPv();
+
+  const thumbText = document.getElementById('pvThumb').textContent;
+  if(thumbText === 'no image' || thumbText === 'No image' || thumbText === TEXT.ja.preview.noImage || thumbText === TEXT.en.preview.noImage){
+    document.getElementById('pvThumb').textContent = t.preview.noImage;
+  }
+}
+
+document.getElementById('lang-ja').addEventListener('click', function(){
+  currentLang = 'ja';
+  setUI();
+});
+
+document.getElementById('lang-en').addEventListener('click', function(){
+  currentLang = 'en';
+  setUI();
+});
 
 async function callSubmitRecords(payload, onOK, onNG){
   try{
@@ -312,13 +559,14 @@ function buildImageSources(url){
 function setPreviewImageByUrl(url){
   var box=document.getElementById('pvThumb'); box.innerHTML='';
   var sources=buildImageSources(url);
-  if(!sources.length){ box.textContent='no image'; return; }
+  if(!sources.length){ box.textContent=TX().preview.noImage; return; }
   var img=new Image(); img.loading='lazy';
-  var i=0; function next(){ if(i>=sources.length){ box.textContent='no image'; return; } img.src=sources[i++]; }
+  var i=0; function next(){ if(i>=sources.length){ box.textContent=TX().preview.noImage; return; } img.src=sources[i++]; }
   img.onerror=next; next(); box.appendChild(img);
 }
 
 function refreshPv(){
+  var t = TX();
   var band=document.getElementById('band')?.value|| '(Band)';
   var track=document.getElementById('track')?.value|| '(Track)';
   var country=document.getElementById('country')?.value||'-';
@@ -326,7 +574,7 @@ function refreshPv(){
   var desc =document.getElementById('description')?.value||'';
   document.getElementById('pvTitle').textContent = band + ' / ' + track;
   document.getElementById('pvMeta').textContent  = country + ' / ' + genre;
-  document.getElementById('pvDesc').textContent  = desc || '（紹介文がここに反映されます）';
+  document.getElementById('pvDesc').textContent  = desc || t.preview.desc;
 }
 ['band','track','country','genre','description'].forEach(function(id){
   var el=document.getElementById(id); if(el) el.addEventListener('input', refreshPv);
@@ -383,34 +631,37 @@ function toResizedDataURL(file, maxDim=1600){
 document.getElementById('submitBtn').addEventListener('click', async function(){
   var msg=document.getElementById('msg');
   var btn=document.getElementById('submitBtn');
-  msg.className='alert'; msg.textContent='送信準備中…';
+  var tx = TX().msg;
+  msg.className='alert';
+  msg.style.display='block';
+  msg.textContent=tx.preparing;
 
   var f=document.getElementById('postForm');
   if(!document.getElementById('consentCheck').checked){
-    msg.className='alert err'; msg.textContent='免責事項に同意してください。'; return;
+    msg.className='alert err'; msg.textContent=tx.needConsent; return;
   }
   if(!f.genre.value || !f.country.value || !f.band.value || !f.track.value || !f.edit_key.value){
-    msg.className='alert err'; msg.textContent='未入力の必須項目があります。'; return;
+    msg.className='alert err'; msg.textContent=tx.missing; return;
   }
   var text=(f.description.value||"").toLowerCase();
   for(var i=0;i<NG_TERMS.length;i++){
     if(text.indexOf(NG_TERMS[i])>=0){
-      msg.className='alert err'; msg.textContent='紹介文に禁止ワードが含まれています。'; return;
+      msg.className='alert err'; msg.textContent=tx.ng; return;
     }
   }
 
   var imgUrl = (f.image_url.value||'').trim();
   var ytUrl  = (f.youtube_url.value||'').trim();
   if(imgUrl && !isAllowedImageUrl(imgUrl)){
-    msg.className='alert err'; msg.textContent='画像URLの形式が不正です（https必須／画像拡張子 or 許可ドメインのみ）。'; return;
+    msg.className='alert err'; msg.textContent=tx.badImage; return;
   }
   if(ytUrl && !isAllowedYouTube(ytUrl)){
-    msg.className='alert err'; msg.textContent='YouTubeのURL形式のみ許可されています（youtu.be / youtube.com/watch / /shorts）。'; return;
+    msg.className='alert err'; msg.textContent=tx.badYoutube; return;
   }
 
   var ek = (f.edit_key.value||'').trim();
   if(ek.length < 8 || ek.length > 32 || !/^[A-Za-z0-9]{8,32}$/.test(ek)){
-    msg.className='alert err'; msg.textContent='編集キーは半角英数字のみ・8〜32文字で入力してください。'; return;
+    msg.className='alert err'; msg.textContent=tx.badEditKey; return;
   }
 
   function T(v){ return (v||'').trim(); }
@@ -443,35 +694,37 @@ document.getElementById('submitBtn').addEventListener('click', async function(){
     btn.disabled=true;
     msg.className='alert';
     msg.style.display='block';
-    msg.textContent='投稿中…英語説明文も同時に保存します。';
+    msg.textContent=tx.sending;
 
     callSubmitRecords(
       payload,
       function(res){
         if(res && res.ok){
-          msg.className='alert ok'; msg.textContent='投稿しました。英語説明文も保存対象にしました。';
+          msg.className='alert ok'; msg.textContent=tx.success;
           f.reset(); refreshPv();
-          document.getElementById('pvThumb').innerHTML='no image';
+          document.getElementById('pvThumb').innerHTML=TX().preview.noImage;
           document.getElementById('descCounter').textContent='0 / 500';
+          setUI();
         }else{
           msg.className='alert err';
-          msg.textContent='投稿に失敗しました: ' + (res && res.error || 'unknown');
+          msg.textContent=tx.fail + (res && res.error || 'unknown');
         }
         btn.disabled=false;
       },
       function(err){
         msg.className='alert err';
-        msg.textContent='投稿に失敗しました: ' + (err && err.message ? err.message : String(err));
+        msg.textContent=tx.fail + (err && err.message ? err.message : String(err));
         btn.disabled=false;
       }
     );
   }catch(e){
     msg.className='alert err';
-    msg.textContent='投稿に失敗しました: ' + (e && e.message ? e.message : String(e));
+    msg.textContent=tx.fail + (e && e.message ? e.message : String(e));
     btn.disabled=false;
   }
 });
 
+setUI();
 refreshPv();
 </script>
 </body>

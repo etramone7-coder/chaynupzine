@@ -37,6 +37,13 @@
     padding:20px;
   }
 
+  .langbar{display:flex; justify-content:flex-end; gap:8px; margin-bottom:8px}
+  .langbtn{
+    border:1px solid #ddd; background:#fff; color:#111; border-radius:999px;
+    padding:8px 12px; font-size:14px; font-weight:900; cursor:pointer;
+  }
+  .langbtn.active{background:#111; color:#fff; border-color:#111}
+
   .top{display:flex; justify-content:space-between; align-items:center; gap:12px}
   .brand{display:inline-block; background:var(--brand); color:#fff; border-radius:8px; padding:7px 12px; font-weight:800; letter-spacing:.4px}
 
@@ -66,38 +73,17 @@
   .sk-line{height:14px; margin:8px 0}
 
   .content{display:grid; grid-template-columns:1fr; gap:16px}
-  @media(max-width:780px){ .content{grid-template-columns:1fr} }
-
   .authorFooter{
-    margin-top:18px;
-    padding-top:14px;
-    border-top:1px dashed #cfd6df;
-    text-align:right;
-    font-size:15px;
-    font-weight:800;
-    color:#333;
+    margin-top:18px; padding-top:14px; border-top:1px dashed #cfd6df;
+    text-align:right; font-size:15px; font-weight:800; color:#333;
   }
-
-  .authorFooter span{
-    color:#666;
-    font-weight:700;
-    margin-right:6px;
-  }
+  .authorFooter span{color:#666; font-weight:700; margin-right:6px}
 
   .editbox{
-    margin-top:14px;
-    padding:14px;
-    border:1px dashed #b9c1cc;
-    border-radius:12px;
-    background:rgba(255,255,255,.72);
+    margin-top:14px; padding:14px; border:1px dashed #b9c1cc;
+    border-radius:12px; background:rgba(255,255,255,.72);
   }
-  .edithead{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
-  }
+  .edithead{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap}
   .edittitle{font-weight:800; font-size:16px}
   .editBody{display:none; margin-top:12px}
   .editBody.show{display:block}
@@ -130,11 +116,8 @@
   .smallnote{margin-top:6px; font-size:12px; color:#666}
 
   .sectionbox{
-    border:1px solid #e3e8ef;
-    border-radius:10px;
-    padding:10px;
-    background:#fff;
-    margin-top:12px;
+    border:1px solid #e3e8ef; border-radius:10px; padding:10px;
+    background:#fff; margin-top:12px;
   }
   .sectionttl{font-weight:800; margin-bottom:8px; font-size:14px}
 </style>
@@ -144,10 +127,13 @@
 
 <div class="wrap">
   <div class="panel">
+    <div class="langbar">
+      <button type="button" class="langbtn" id="lang-ja">JP</button>
+      <button type="button" class="langbtn" id="lang-en">EN</button>
+    </div>
+
     <div class="top">
-      <div>
-        <span class="brand">CHAYNUPZINE</span>
-      </div>
+      <div><span class="brand">CHAYNUPZINE</span></div>
     </div>
 
     <div class="tools" style="margin-top:6px">
@@ -176,8 +162,8 @@
     <div class="editbox">
       <div class="edithead">
         <div>
-          <div class="edittitle">投稿を編集 / 非表示 / 再表示</div>
-          <div class="smallnote">編集する場合のみ、右のボタンを押してください。</div>
+          <div class="edittitle" id="editTitleText">投稿を編集 / 非表示 / 再表示</div>
+          <div class="smallnote" id="editNoteText">編集する場合のみ、右のボタンを押してください。</div>
         </div>
         <button id="btnEditToggle" class="btn secondary" type="button">編集</button>
       </div>
@@ -185,11 +171,11 @@
       <div id="editBody" class="editBody">
         <div class="editrow">
           <div>
-            <div class="lab">editキー</div>
+            <div class="lab" id="label-edit-key">editキー</div>
             <input id="editKey" class="in" type="text" placeholder="投稿時に設定した編集キー">
           </div>
           <div>
-            <div class="lab">対象情報</div>
+            <div class="lab" id="label-target">対象情報</div>
             <input id="targetInfo" class="in" type="text" readonly placeholder="row / slug">
           </div>
         </div>
@@ -201,7 +187,7 @@
           <button id="btnCancelEdit" class="btn ghost" type="button">編集を閉じる</button>
         </div>
 
-        <div class="smallnote">※ この画面では画像は URL のみ編集します。ファイルアップロード差し替えは未対応です。</div>
+        <div class="smallnote" id="editImageNote">※ この画面では画像は URL のみ編集します。ファイルアップロード差し替えは未対応です。</div>
 
         <div id="editPanel" class="editpanel">
           <div class="editrow">
@@ -210,16 +196,23 @@
               <input id="e_title" class="in" type="text">
             </div>
             <div>
-              <div class="lab">AUTHOR</div>
-              <input id="e_author" class="in" type="text">
+              <div class="lab">TITLE EN</div>
+              <input id="e_title_en" class="in" type="text">
             </div>
           </div>
 
-          <div class="editrow3">
+          <div class="editrow">
+            <div>
+              <div class="lab">AUTHOR</div>
+              <input id="e_author" class="in" type="text">
+            </div>
             <div>
               <div class="lab">GENRE</div>
               <input id="e_genre" class="in" type="text">
             </div>
+          </div>
+
+          <div class="editrow">
             <div>
               <div class="lab">ERA</div>
               <input id="e_era" class="in" type="text">
@@ -263,21 +256,129 @@ document.getElementById('bg').style.backgroundImage =
 
 var GAS_EXEC_URL = 'https://script.google.com/macros/s/AKfycbzkQN0yd6DLoImgNdI0877buJU56w6G-ewWlNfZOVuVmKmRlEeGElI6p4QHnL5glSHK1A/exec';
 
-function qs(k){
-  var m = location.search.match(new RegExp('[?&]'+k+'=([^&]+)'));
-  return m ? decodeURIComponent(m[1]) : '';
-}
-
 var gFeature = null;
 var gRowIndex = 0;
 var gIsEditOpen = false;
 var gIsSaving = false;
 var gLastEditKey = '';
+var currentLang = 'ja';
+
+var TEXT = {
+  ja:{
+    top:'← トップへ戻る',
+    backList:'← 特集一覧へ戻る',
+    copy:'リンクをコピー',
+    shareX:'Xでシェア',
+    facebook:'Facebook',
+    line:'LINE',
+    copied:'投稿ページのリンクをコピーしました。',
+    copyFail:'コピーできませんでした。下記URLを手動でコピーしてください：',
+    noInfo:'投稿ページの情報を取得できていません。',
+    editTitle:'投稿を編集 / 非表示 / 再表示',
+    editNote:'編集する場合のみ、右のボタンを押してください。',
+    edit:'編集',
+    closeEdit:'編集を閉じる',
+    save:'保存',
+    saving:'保存中...',
+    hide:'非表示',
+    unhide:'再表示',
+    editKey:'editキー',
+    editKeyPh:'投稿時に設定した編集キー',
+    target:'対象情報',
+    imageNote:'※ この画面では画像は URL のみ編集します。ファイルアップロード差し替えは未対応です。',
+    body:'本文',
+    bodyEn:'本文 EN',
+    imageUrl:'画像URL ',
+    noBody:'—',
+    author:'Author:',
+    needTarget:'対象の特集が見つかりません。',
+    needKey:'editキーを入力してください。',
+    needRow:'rowIndex を取得できません。',
+    saved:'保存しました。',
+    hidden:'非表示にしました。',
+    restored:'再表示しました。',
+    failed:'処理に失敗しました。',
+    private:'この特集は非公開です。',
+    badJson:'JSONではない応答です: ',
+    badImg:'画像URLは https のみ対応です: ',
+    badYoutube:'YouTube URL が無効です: ',
+    slug:'slug',
+    row:'row'
+  },
+  en:{
+    top:'← Back to top',
+    backList:'← Back to features list',
+    copy:'Copy link',
+    shareX:'Share on X',
+    facebook:'Facebook',
+    line:'LINE',
+    copied:'The link to this feature page has been copied.',
+    copyFail:'Could not copy the link. Please copy this URL manually:',
+    noInfo:'Feature page information has not been loaded.',
+    editTitle:'Edit / hide / unhide this post',
+    editNote:'Press the edit button only when you need to edit this post.',
+    edit:'Edit',
+    closeEdit:'Close edit',
+    save:'Save',
+    saving:'Saving...',
+    hide:'Hide',
+    unhide:'Unhide',
+    editKey:'Edit key',
+    editKeyPh:'Edit key set when posting',
+    target:'Target',
+    imageNote:'Images can be edited by URL only on this page. File upload replacement is not supported.',
+    body:'Body',
+    bodyEn:'Body EN',
+    imageUrl:'Image URL ',
+    noBody:'—',
+    author:'Author:',
+    needTarget:'The target feature was not found.',
+    needKey:'Please enter the edit key.',
+    needRow:'Could not get rowIndex.',
+    saved:'Saved.',
+    hidden:'Hidden.',
+    restored:'Unhidden.',
+    failed:'Operation failed.',
+    private:'This feature is private.',
+    badJson:'Non-JSON response: ',
+    badImg:'Image URLs must use https only: ',
+    badYoutube:'Invalid YouTube URL: ',
+    slug:'slug',
+    row:'row'
+  }
+};
+
+function L(){ return TEXT[currentLang] || TEXT.ja; }
+
+function saveLang(){
+  try{ localStorage.setItem('cz_lang', currentLang); }catch(_){}
+  try{ document.documentElement.lang = currentLang; }catch(_){}
+}
+
+function setLangButtons(){
+  var ja = document.getElementById('lang-ja');
+  var en = document.getElementById('lang-en');
+  if(ja) ja.classList.toggle('active', currentLang === 'ja');
+  if(en) en.classList.toggle('active', currentLang === 'en');
+}
+
+function qs(k){
+  var m = location.search.match(new RegExp('[?&]'+k+'=([^&]+)'));
+  return m ? decodeURIComponent(m[1]) : '';
+}
 
 function esc(s){
   return String(s||'').replace(/[&<>"']/g, function(c){
     return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
   });
+}
+
+function pickLang(data, key){
+  data = data || {};
+  if(currentLang === 'en'){
+    return String(data[key + '_en'] || data[key] || '').trim();
+  }
+  return String(data[key] || data[key + '_en'] || '').trim();
 }
 
 function normalizeHttps(u){
@@ -362,20 +463,21 @@ function resolveExecUrl(){
 
 function buildShareUrl(){
   var base = location.origin + location.pathname;
+  var suffix = '&lang=' + encodeURIComponent(currentLang);
 
   if(gFeature && gFeature.slug){
-    return base + '?slug=' + encodeURIComponent(gFeature.slug);
+    return base + '?slug=' + encodeURIComponent(gFeature.slug) + suffix;
   }
 
   if(gRowIndex){
-    return base + '?row=' + encodeURIComponent(gRowIndex);
+    return base + '?row=' + encodeURIComponent(gRowIndex) + suffix;
   }
 
   return location.href;
 }
 
 function buildShareTitle(){
-  var title = gFeature && gFeature.title ? String(gFeature.title).trim() : '';
+  var title = gFeature ? pickLang(gFeature, 'title') : '';
   var genre = gFeature && gFeature.genre ? String(gFeature.genre).trim() : '';
   var era = gFeature && gFeature.era ? String(gFeature.era).trim() : '';
   var region = gFeature && gFeature.region ? String(gFeature.region).trim() : '';
@@ -414,11 +516,7 @@ async function copyTextToClipboard(text){
   ta.select();
 
   var ok = false;
-  try{
-    ok = document.execCommand('copy');
-  }catch(_){
-    ok = false;
-  }
+  try{ ok = document.execCommand('copy'); }catch(_){ ok = false; }
 
   document.body.removeChild(ta);
   return ok;
@@ -430,7 +528,7 @@ function setupCopyButton(){
 
   btn.onclick = async function(){
     if(!gRowIndex && !(gFeature && gFeature.slug)){
-      showErrorText('投稿ページの情報を取得できていません。');
+      showErrorText(L().noInfo);
       return;
     }
 
@@ -438,13 +536,10 @@ function setupCopyButton(){
 
     try{
       var ok = await copyTextToClipboard(url);
-      if(ok){
-        showOkText('投稿ページのリンクをコピーしました。');
-      }else{
-        showErrorText('コピーできませんでした。下記URLを手動でコピーしてください：' + url);
-      }
+      if(ok) showOkText(L().copied);
+      else showErrorText(L().copyFail + url);
     }catch(_){
-      showErrorText('コピーできませんでした。下記URLを手動でコピーしてください：' + url);
+      showErrorText(L().copyFail + url);
     }
   };
 }
@@ -457,51 +552,30 @@ function setupSnsShareButtons(){
   if(xBtn){
     xBtn.onclick = function(){
       if(!gRowIndex && !(gFeature && gFeature.slug)){
-        showErrorText('投稿ページの情報を取得できていません。');
+        showErrorText(L().noInfo);
         return;
       }
-
-      var url = buildShareUrl();
-      var title = buildShareTitle();
-
-      openShareWindow(
-        'https://twitter.com/intent/tweet?text=' +
-        encodeURIComponent(title) +
-        '&url=' +
-        encodeURIComponent(url)
-      );
+      openShareWindow('https://twitter.com/intent/tweet?text=' + encodeURIComponent(buildShareTitle()) + '&url=' + encodeURIComponent(buildShareUrl()));
     };
   }
 
   if(fbBtn){
     fbBtn.onclick = function(){
       if(!gRowIndex && !(gFeature && gFeature.slug)){
-        showErrorText('投稿ページの情報を取得できていません。');
+        showErrorText(L().noInfo);
         return;
       }
-
-      var url = buildShareUrl();
-
-      openShareWindow(
-        'https://www.facebook.com/sharer/sharer.php?u=' +
-        encodeURIComponent(url)
-      );
+      openShareWindow('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(buildShareUrl()));
     };
   }
 
   if(lineBtn){
     lineBtn.onclick = function(){
       if(!gRowIndex && !(gFeature && gFeature.slug)){
-        showErrorText('投稿ページの情報を取得できていません。');
+        showErrorText(L().noInfo);
         return;
       }
-
-      var url = buildShareUrl();
-
-      openShareWindow(
-        'https://social-plugins.line.me/lineit/share?url=' +
-        encodeURIComponent(url)
-      );
+      openShareWindow('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(buildShareUrl()));
     };
   }
 }
@@ -512,7 +586,7 @@ function renderHeader(data){
 
   var title = document.createElement('div');
   title.className='title';
-  title.innerHTML = esc(data.title || '(No title)');
+  title.innerHTML = esc(pickLang(data, 'title') || '(No title)');
   head.appendChild(title);
 
   var meta = document.createElement('div');
@@ -540,7 +614,7 @@ function renderAuthorFooter(data){
   }
 
   box.style.display = 'block';
-  box.innerHTML = '<span>Author:</span>' + esc(author);
+  box.innerHTML = '<span>' + L().author + '</span>' + esc(author);
 }
 
 function renderBody(data){
@@ -549,7 +623,7 @@ function renderBody(data){
 
   var any=false;
   for(var i=1;i<=5;i++){
-    var text = data['para'+i+'_text'] || '';
+    var text = pickLang(data, 'para'+i+'_text');
     var yt   = data['youtube'+i] || '';
     var imgs = [];
     for(var j=1;j<=3;j++){
@@ -611,7 +685,7 @@ function renderBody(data){
   }
 
   if(!any){
-    body.innerHTML = '<div class="ptext" style="color:#888">—</div>';
+    body.innerHTML = '<div class="ptext" style="color:#888">' + esc(L().noBody) + '</div>';
   }
 }
 
@@ -649,7 +723,7 @@ function buildEditSections(data){
 
     var textLab = document.createElement('div');
     textLab.className = 'lab';
-    textLab.textContent = '本文';
+    textLab.textContent = L().body;
     box.appendChild(textLab);
 
     var ta = document.createElement('textarea');
@@ -657,6 +731,18 @@ function buildEditSections(data){
     ta.id = 'e_para' + i + '_text';
     ta.value = data['para'+i+'_text'] || '';
     box.appendChild(ta);
+
+    var textEnLab = document.createElement('div');
+    textEnLab.className = 'lab';
+    textEnLab.style.marginTop = '10px';
+    textEnLab.textContent = L().bodyEn;
+    box.appendChild(textEnLab);
+
+    var taEn = document.createElement('textarea');
+    taEn.className = 'ta';
+    taEn.id = 'e_para' + i + '_text_en';
+    taEn.value = data['para'+i+'_text_en'] || '';
+    box.appendChild(taEn);
 
     var ytLab = document.createElement('div');
     ytLab.className = 'lab';
@@ -675,7 +761,7 @@ function buildEditSections(data){
       var il = document.createElement('div');
       il.className = 'lab';
       il.style.marginTop = '10px';
-      il.textContent = '画像URL ' + j;
+      il.textContent = L().imageUrl + j;
       box.appendChild(il);
 
       var inp = document.createElement('input');
@@ -692,6 +778,7 @@ function buildEditSections(data){
 
 function fillEditForm(data){
   document.getElementById('e_title').value = data.title || '';
+  document.getElementById('e_title_en').value = data.title_en || '';
   document.getElementById('e_author').value = data.author || '';
   document.getElementById('e_genre').value = data.genre || '';
   document.getElementById('e_era').value = data.era || '';
@@ -701,6 +788,7 @@ function fillEditForm(data){
 
 function clearEditForm(){
   document.getElementById('e_title').value = '';
+  document.getElementById('e_title_en').value = '';
   document.getElementById('e_author').value = '';
   document.getElementById('e_genre').value = '';
   document.getElementById('e_era').value = '';
@@ -710,13 +798,13 @@ function clearEditForm(){
 
 function openEditBox(){
   if(!gFeature){
-    showErrorText('対象の特集が見つかりません。');
+    showErrorText(L().needTarget);
     return;
   }
 
   gIsEditOpen = true;
   document.getElementById('editBody').classList.add('show');
-  document.getElementById('btnEditToggle').textContent = '編集を閉じる';
+  document.getElementById('btnEditToggle').textContent = L().closeEdit;
   fillEditForm(gFeature);
   refreshTargetInfo();
 
@@ -730,7 +818,7 @@ function openEditBox(){
 function closeEditBox(){
   gIsEditOpen = false;
   document.getElementById('editBody').classList.remove('show');
-  document.getElementById('btnEditToggle').textContent = '編集';
+  document.getElementById('btnEditToggle').textContent = L().edit;
   clearEditForm();
   clearBanners();
 }
@@ -738,6 +826,7 @@ function closeEditBox(){
 function collectPatch(){
   var patch = {
     title: (document.getElementById('e_title').value || '').trim(),
+    title_en: (document.getElementById('e_title_en').value || '').trim(),
     author: (document.getElementById('e_author').value || '').trim(),
     genre: (document.getElementById('e_genre').value || '').trim(),
     era: (document.getElementById('e_era').value || '').trim(),
@@ -754,6 +843,7 @@ function collectPatch(){
 
   for(var i=1;i<=5;i++){
     patch['para'+i+'_text'] = ((document.getElementById('e_para'+i+'_text') || {}).value || '').trim();
+    patch['para'+i+'_text_en'] = ((document.getElementById('e_para'+i+'_text_en') || {}).value || '').trim();
     patch['youtube'+i] = ((document.getElementById('e_youtube'+i) || {}).value || '').trim();
     for(var j=1;j<=3;j++){
       patch['p'+i+'_img'+j+'_url'] = ((document.getElementById('e_p'+i+'_img'+j+'_url') || {}).value || '').trim();
@@ -767,12 +857,12 @@ function validatePatch(patch){
   Object.keys(patch).forEach(function(k){
     if(/^p\d+_img\d+_url$/.test(k) && patch[k]){
       if(!/^https:\/\//i.test(String(patch[k]).trim())){
-        throw new Error('画像URLは https のみ対応です: ' + k);
+        throw new Error(L().badImg + k);
       }
     }
     if(/^youtube\d+$/.test(k) && patch[k]){
       if(!isAllowedYouTube(String(patch[k]).trim())){
-        throw new Error('YouTube URL が無効です: ' + k);
+        throw new Error(L().badYoutube + k);
       }
     }
   });
@@ -780,7 +870,7 @@ function validatePatch(patch){
 
 function refreshTargetInfo(){
   var target = document.getElementById('targetInfo');
-  target.value = gRowIndex ? ('row=' + gRowIndex + (gFeature && gFeature.slug ? ' / slug=' + gFeature.slug : '')) : '';
+  target.value = gRowIndex ? (L().row + '=' + gRowIndex + (gFeature && gFeature.slug ? ' / ' + L().slug + '=' + gFeature.slug : '')) : '';
 }
 
 async function postApi(fn, payload){
@@ -804,7 +894,7 @@ async function postApi(fn, payload){
   try{
     j = JSON.parse(text);
   }catch(_){
-    throw new Error('JSONではない応答です: ' + text.slice(0,120));
+    throw new Error(L().badJson + text.slice(0,120));
   }
 
   if(!r.ok || !j || !j.ok){
@@ -875,8 +965,8 @@ function applyFeatureToScreen(data){
 
   var idhint = document.getElementById('idhint');
   idhint.textContent = gFeature.slug
-    ? ('slug: '+gFeature.slug+' / row: '+(gRowIndex||''))
-    : ('row: '+(gRowIndex||''));
+    ? (L().slug + ': '+gFeature.slug+' / ' + L().row + ': '+(gRowIndex||''))
+    : (L().row + ': '+(gRowIndex||''));
 
   refreshTargetInfo();
 
@@ -885,17 +975,63 @@ function applyFeatureToScreen(data){
   }
 }
 
+function setStaticUI(){
+  saveLang();
+  setLangButtons();
+
+  document.getElementById('btn-top').textContent = L().top;
+  document.getElementById('backlink').textContent = L().backList;
+  document.getElementById('backlink').href = './search_features.html?lang=' + encodeURIComponent(currentLang);
+
+  document.getElementById('copyLinkBtn').textContent = L().copy;
+  document.getElementById('shareXBtn').textContent = L().shareX;
+  document.getElementById('shareFacebookBtn').textContent = L().facebook;
+  document.getElementById('shareLineBtn').textContent = L().line;
+
+  document.getElementById('editTitleText').textContent = L().editTitle;
+  document.getElementById('editNoteText').textContent = L().editNote;
+  document.getElementById('btnEditToggle').textContent = gIsEditOpen ? L().closeEdit : L().edit;
+  document.getElementById('label-edit-key').textContent = L().editKey;
+  document.getElementById('editKey').placeholder = L().editKeyPh;
+  document.getElementById('label-target').textContent = L().target;
+  document.getElementById('btnSave').textContent = L().save;
+  document.getElementById('btnHide').textContent = L().hide;
+  document.getElementById('btnUnhide').textContent = L().unhide;
+  document.getElementById('btnCancelEdit').textContent = L().closeEdit;
+  document.getElementById('editImageNote').textContent = L().imageNote;
+
+  if(gFeature){
+    applyFeatureToScreen(gFeature);
+  }
+}
+
 (function init(){
+  try{
+    var qsLang = qs('lang');
+    var savedLang = localStorage.getItem('cz_lang');
+    currentLang = (qsLang === 'en' || savedLang === 'en') ? 'en' : 'ja';
+  }catch(_){
+    currentLang = 'ja';
+  }
+
   resolveExecUrl();
+  setStaticUI();
   setupCopyButton();
   setupSnsShareButtons();
 
+  document.getElementById('lang-ja').addEventListener('click', function(){
+    currentLang = 'ja';
+    setStaticUI();
+  });
+
+  document.getElementById('lang-en').addEventListener('click', function(){
+    currentLang = 'en';
+    setStaticUI();
+  });
+
   document.getElementById('btnEditToggle').onclick = function(){
-    if(gIsEditOpen){
-      closeEditBox();
-    }else{
-      openEditBox();
-    }
+    if(gIsEditOpen) closeEditBox();
+    else openEditBox();
   };
 
   document.getElementById('btnCancelEdit').onclick = function(){
@@ -909,14 +1045,14 @@ function applyFeatureToScreen(data){
 
     var key = (document.getElementById('editKey').value || '').trim();
     if(!key){
-      showErrorText('editキーを入力してください。');
+      showErrorText(L().needKey);
       return;
     }
 
     gLastEditKey = key;
 
     if(!gRowIndex){
-      showErrorText('rowIndex を取得できません。');
+      showErrorText(L().needRow);
       return;
     }
 
@@ -932,7 +1068,7 @@ function applyFeatureToScreen(data){
       var btn = document.getElementById('btnSave');
       gIsSaving = true;
       btn.disabled = true;
-      btn.textContent = '保存中...';
+      btn.textContent = L().saving;
 
       callEditEntry({
         sheetName:'Features',
@@ -942,11 +1078,11 @@ function applyFeatureToScreen(data){
         patch:patch
       }, async function(res){
         btn.disabled = false;
-        btn.textContent = '保存';
+        btn.textContent = L().save;
         gIsSaving = false;
 
         if(!res || !res.ok){
-          showErrorText((res && res.error) ? res.error : '処理に失敗しました。');
+          showErrorText((res && res.error) ? res.error : L().failed);
           return;
         }
 
@@ -955,7 +1091,7 @@ function applyFeatureToScreen(data){
         if(gLastEditKey){
           document.getElementById('editKey').value = gLastEditKey;
         }
-        showOkText('保存しました。');
+        showOkText(L().saved);
 
         var fresh = await hydrateFeature();
         if(fresh){
@@ -964,20 +1100,20 @@ function applyFeatureToScreen(data){
           if(gLastEditKey){
             document.getElementById('editKey').value = gLastEditKey;
           }
-          showOkText('保存しました。');
+          showOkText(L().saved);
         }
       }, function(err){
         btn.disabled = false;
-        btn.textContent = '保存';
+        btn.textContent = L().save;
         gIsSaving = false;
-        showErrorText(err && err.message ? err.message : '処理に失敗しました。');
+        showErrorText(err && err.message ? err.message : L().failed);
       });
     }catch(e){
       gIsSaving = false;
       var btn2 = document.getElementById('btnSave');
       btn2.disabled = false;
-      btn2.textContent = '保存';
-      showErrorText(e && e.message ? e.message : '処理に失敗しました。');
+      btn2.textContent = L().save;
+      showErrorText(e && e.message ? e.message : L().failed);
     }
   };
 
@@ -985,14 +1121,14 @@ function applyFeatureToScreen(data){
     clearBanners();
     var key = (document.getElementById('editKey').value || '').trim();
     if(!key){
-      showErrorText('editキーを入力してください。');
+      showErrorText(L().needKey);
       return;
     }
 
     gLastEditKey = key;
 
     if(!gRowIndex){
-      showErrorText('rowIndex を取得できません。');
+      showErrorText(L().needRow);
       return;
     }
 
@@ -1003,13 +1139,13 @@ function applyFeatureToScreen(data){
       action:'delete'
     }, function(res){
       if(!res || !res.ok){
-        showErrorText((res && res.error) ? res.error : '処理に失敗しました。');
+        showErrorText((res && res.error) ? res.error : L().failed);
         return;
       }
       if(gFeature) gFeature.is_hidden = true;
-      showOkText('非表示にしました。');
+      showOkText(L().hidden);
     }, function(err){
-      showErrorText(err && err.message ? err.message : '処理に失敗しました。');
+      showErrorText(err && err.message ? err.message : L().failed);
     });
   };
 
@@ -1017,14 +1153,14 @@ function applyFeatureToScreen(data){
     clearBanners();
     var key = (document.getElementById('editKey').value || '').trim();
     if(!key){
-      showErrorText('editキーを入力してください。');
+      showErrorText(L().needKey);
       return;
     }
 
     gLastEditKey = key;
 
     if(!gRowIndex){
-      showErrorText('rowIndex を取得できません。');
+      showErrorText(L().needRow);
       return;
     }
 
@@ -1035,13 +1171,13 @@ function applyFeatureToScreen(data){
       action:'restore'
     }, function(res){
       if(!res || !res.ok){
-        showErrorText((res && res.error) ? res.error : '処理に失敗しました。');
+        showErrorText((res && res.error) ? res.error : L().failed);
         return;
       }
       if(gFeature) gFeature.is_hidden = false;
-      showOkText('再表示しました。');
+      showOkText(L().restored);
     }, function(err){
-      showErrorText(err && err.message ? err.message : '処理に失敗しました。');
+      showErrorText(err && err.message ? err.message : L().failed);
     });
   };
 
@@ -1053,7 +1189,7 @@ function applyFeatureToScreen(data){
     function(res){
       try{
         if(!res || !res.ok || !res.data){
-          showErrorText('対象の特集が見つかりません。');
+          showErrorText(L().needTarget);
           return;
         }
 
@@ -1063,16 +1199,16 @@ function applyFeatureToScreen(data){
 
         var st = String(d.status||'').toLowerCase();
         if(st && st!=='published'){
-          showErrorText('この特集は非公開です。');
+          showErrorText(L().private);
         }
 
         applyFeatureToScreen(d);
       }catch(_){
-        showErrorText('対象の特集が見つかりません。');
+        showErrorText(L().needTarget);
       }
     },
     function(){
-      showErrorText('対象の特集が見つかりません。');
+      showErrorText(L().needTarget);
     }
   );
 })();

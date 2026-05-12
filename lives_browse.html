@@ -49,6 +49,30 @@
     z-index:1;
   }
 
+  .langbar{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin:0 0 8px;
+  }
+
+  .langbtn{
+    border:1px solid var(--line);
+    background:#0e121a;
+    color:#fff;
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:13px;
+    font-weight:900;
+    cursor:pointer;
+  }
+
+  .langbtn.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+
   .titlebar{
     display:flex;
     align-items:flex-start;
@@ -404,6 +428,11 @@
 <div class="bg"></div>
 
 <div class="wrap">
+  <div class="langbar">
+    <button type="button" class="langbtn" id="lang-ja">JP</button>
+    <button type="button" class="langbtn" id="lang-en">EN</button>
+  </div>
+
   <div class="titlebar">
     <div>
       <div class="brand">CHAYNUPZINE</div>
@@ -450,42 +479,199 @@
   let isEditOpen = false;
   let lastEditKey = '';
   let saveRevision = 0;
+  let currentLang = 'ja';
 
   var GAS_EXEC_URL = 'https://script.google.com/macros/s/AKfycbzkQN0yd6DLoImgNdI0877buJU56w6G-ewWlNfZOVuVmKmRlEeGElI6p4QHnL5glSHK1A/exec';
 
-  var LABELS = {
-    top:'トップへ戻る',
-    toForm:'ライブ投稿フォームへ',
-    copyLink:'リンクをコピー',
-    copied:'投稿ページのリンクをコピーしました。',
-    copyFail:'コピーできませんでした。下記URLを手動でコピーしてください：',
-    shareX:'Xでシェア',
-    shareFacebook:'Facebook',
-    shareLine:'LINE',
-    editCap:'投稿を編集/削除',
-    more:'もっと見る',
-    edit:'編集',
-    closeEdit:'編集を閉じる',
-    hide:'非表示',
-    unhide:'再表示',
-    save:'保存',
-    saving:'保存中...',
-    keyPh:'編集キー',
-    needKey:'編集キーを入力してください',
-    cond:'条件に合致するライブを表示します。',
-    nodata:'データを取得できませんでした。検索ページからもう一度お試しください。',
-    ok:'完了しました',
-    fail:'失敗しました',
-    saved:'保存しました',
-    noRow:'行番号が取得できませんでした',
-    noChange:'変更がありません'
+  var TEXT = {
+    ja:{
+      pageTitle:'Lives browse',
+      top:'トップへ戻る',
+      toForm:'ライブ投稿フォームへ',
+      copyLink:'リンクをコピー',
+      copied:'投稿ページのリンクをコピーしました。',
+      copyFail:'コピーできませんでした。下記URLを手動でコピーしてください：',
+      shareX:'Xでシェア',
+      shareFacebook:'Facebook',
+      shareLine:'LINE',
+      editCap:'投稿を編集/削除',
+      more:'もっと見る',
+      edit:'編集',
+      closeEdit:'編集を閉じる',
+      hide:'非表示',
+      unhide:'再表示',
+      save:'保存',
+      saving:'保存中...',
+      keyPh:'編集キー',
+      needKey:'編集キーを入力してください',
+      cond:'条件に合致するライブを表示します。',
+      nodata:'データを取得できませんでした。検索ページからもう一度お試しください。',
+      ok:'完了しました',
+      fail:'失敗しました',
+      saved:'保存しました',
+      noRow:'行番号が取得できませんでした',
+      noChange:'変更がありません',
+      hidden:'非表示にしました。',
+      restored:'再表示しました。',
+      badJson:'JSONではない応答です: ',
+      flyer:'flyer',
+      open:'OPEN ',
+      start:'START ',
+      at:'@ ',
+      editLabels:{
+        title:'TITLE',
+        title_en:'TITLE EN',
+        artist:'ARTIST',
+        genre:'GENRE',
+        venue:'VENUE',
+        venue_en:'VENUE EN',
+        region:'REGION',
+        region_en:'REGION EN',
+        prefecture:'PREFECTURE',
+        prefecture_en:'PREFECTURE EN',
+        price:'PRICE',
+        price_en:'PRICE EN',
+        status:'STATUS',
+        date:'DATE',
+        open_time:'OPEN TIME',
+        start_time:'START TIME',
+        author:'AUTHOR',
+        youtube_url:'YOUTUBE URL',
+        image_url:'IMAGE URL',
+        description:'DESCRIPTION',
+        description_en:'DESCRIPTION EN'
+      },
+      status:{scheduled:'開催予定',canceled:'中止',done:'終了'},
+      regions:{
+        '北海道・東北':'北海道・東北',
+        '関東':'関東',
+        '中部':'中部',
+        '近畿':'近畿',
+        '中国':'中国',
+        '四国':'四国',
+        '九州・沖縄':'九州・沖縄'
+      },
+      prefs:null
+    },
+    en:{
+      pageTitle:'Lives browse',
+      top:'Back to top',
+      toForm:'Submit live',
+      copyLink:'Copy link',
+      copied:'The link to this live page has been copied.',
+      copyFail:'Could not copy the link. Please copy this URL manually:',
+      shareX:'Share on X',
+      shareFacebook:'Facebook',
+      shareLine:'LINE',
+      editCap:'Edit / hide this post',
+      more:'Show more',
+      edit:'Edit',
+      closeEdit:'Close edit',
+      hide:'Hide',
+      unhide:'Unhide',
+      save:'Save',
+      saving:'Saving...',
+      keyPh:'Edit key',
+      needKey:'Please enter the edit key.',
+      cond:'Showing the selected live post.',
+      nodata:'Could not load data. Please try again from the search page.',
+      ok:'Done',
+      fail:'Failed',
+      saved:'Saved',
+      noRow:'Could not get the row number.',
+      noChange:'No changes.',
+      hidden:'Hidden.',
+      restored:'Unhidden.',
+      badJson:'Non-JSON response: ',
+      flyer:'flyer',
+      open:'OPEN ',
+      start:'START ',
+      at:'@ ',
+      editLabels:{
+        title:'TITLE',
+        title_en:'TITLE EN',
+        artist:'ARTIST',
+        genre:'GENRE',
+        venue:'VENUE',
+        venue_en:'VENUE EN',
+        region:'REGION',
+        region_en:'REGION EN',
+        prefecture:'PREFECTURE',
+        prefecture_en:'PREFECTURE EN',
+        price:'PRICE',
+        price_en:'PRICE EN',
+        status:'STATUS',
+        date:'DATE',
+        open_time:'OPEN TIME',
+        start_time:'START TIME',
+        author:'AUTHOR',
+        youtube_url:'YOUTUBE URL',
+        image_url:'IMAGE URL',
+        description:'DESCRIPTION',
+        description_en:'DESCRIPTION EN'
+      },
+      status:{scheduled:'Scheduled',canceled:'Canceled',done:'Done'},
+      regions:{
+        '北海道・東北':'Hokkaido / Tohoku',
+        '関東':'Kanto',
+        '中部':'Chubu',
+        '近畿':'Kinki',
+        '中国':'Chugoku',
+        '四国':'Shikoku',
+        '九州・沖縄':'Kyushu / Okinawa'
+      },
+      prefs:{
+        '北海道':'Hokkaido','青森県':'Aomori','岩手県':'Iwate','宮城県':'Miyagi','秋田県':'Akita','山形県':'Yamagata','福島県':'Fukushima',
+        '茨城県':'Ibaraki','栃木県':'Tochigi','群馬県':'Gunma','埼玉県':'Saitama','千葉県':'Chiba','東京都':'Tokyo','神奈川県':'Kanagawa',
+        '新潟県':'Niigata','富山県':'Toyama','石川県':'Ishikawa','福井県':'Fukui','山梨県':'Yamanashi','長野県':'Nagano','岐阜県':'Gifu','静岡県':'Shizuoka','愛知県':'Aichi',
+        '三重県':'Mie','滋賀県':'Shiga','京都府':'Kyoto','大阪府':'Osaka','兵庫県':'Hyogo','奈良県':'Nara','和歌山県':'Wakayama',
+        '鳥取県':'Tottori','島根県':'Shimane','岡山県':'Okayama','広島県':'Hiroshima','山口県':'Yamaguchi',
+        '徳島県':'Tokushima','香川県':'Kagawa','愛媛県':'Ehime','高知県':'Kochi',
+        '福岡県':'Fukuoka','佐賀県':'Saga','長崎県':'Nagasaki','熊本県':'Kumamoto','大分県':'Oita','宮崎県':'Miyazaki','鹿児島県':'Kagoshima','沖縄県':'Okinawa'
+      }
+    }
   };
 
-  var STATUS_LABELS = {
-    scheduled:'開催予定',
-    canceled:'中止',
-    done:'終了'
-  };
+  function L(){
+    return TEXT[currentLang] || TEXT.ja;
+  }
+
+  function saveLang(){
+    try{ localStorage.setItem('cz_lang', currentLang); }catch(_){}
+    try{ document.documentElement.lang = currentLang; }catch(_){}
+  }
+
+  function setLangButtons(){
+    var ja = document.getElementById('lang-ja');
+    var en = document.getElementById('lang-en');
+    if(ja) ja.classList.toggle('active', currentLang === 'ja');
+    if(en) en.classList.toggle('active', currentLang === 'en');
+  }
+
+  function labelRegion(v){
+    if(!v) return '';
+    return L().regions[v] || v;
+  }
+
+  function labelPref(v){
+    if(!v) return '';
+    if(currentLang === 'en' && L().prefs && L().prefs[v]) return L().prefs[v];
+    return v;
+  }
+
+  function pickLang(item, key){
+    item = item || {};
+    if(currentLang === 'en'){
+      return String(item[key + '_en'] || item[key] || '').trim();
+    }
+    return String(item[key] || item[key + '_en'] || '').trim();
+  }
+
+  function pickDisplay(item, key){
+    if(key === 'region') return pickLang(item, 'region') || labelRegion(item.region || '');
+    if(key === 'prefecture') return pickLang(item, 'prefecture') || labelPref(item.prefecture || '');
+    return pickLang(item, key);
+  }
 
   function setMsg(text, cls){
     var m = document.getElementById('editMsg');
@@ -495,20 +681,29 @@
   }
 
   function setUI(){
-    document.getElementById('pageTitle').textContent = 'Lives browse';
-    document.getElementById('btn-top').textContent = LABELS.top;
-    document.getElementById('btn-form').textContent = LABELS.toForm;
-    document.getElementById('copyLinkBtn').textContent = LABELS.copyLink;
-    document.getElementById('shareXBtn').textContent = LABELS.shareX;
-    document.getElementById('shareFacebookBtn').textContent = LABELS.shareFacebook;
-    document.getElementById('shareLineBtn').textContent = LABELS.shareLine;
-    document.getElementById('tool-cap').textContent = LABELS.editCap;
-    document.getElementById('moreBtn').textContent = LABELS.more;
-    document.getElementById('summary').textContent = LABELS.cond;
-    document.getElementById('btnEdit').textContent = LABELS.edit;
-    document.getElementById('btnHide').textContent = LABELS.hide;
-    document.getElementById('btnUnhide').textContent = LABELS.unhide;
-    document.getElementById('editKey').placeholder = LABELS.keyPh;
+    saveLang();
+    setLangButtons();
+
+    document.title = currentLang === 'en' ? 'CHAYNUPZINE — Lives browse' : 'CHAYNUPZINE — ライブ詳細';
+    document.getElementById('pageTitle').textContent = L().pageTitle;
+    document.getElementById('btn-top').textContent = L().top;
+    document.getElementById('btn-form').textContent = L().toForm;
+    document.getElementById('copyLinkBtn').textContent = L().copyLink;
+    document.getElementById('shareXBtn').textContent = L().shareX;
+    document.getElementById('shareFacebookBtn').textContent = L().shareFacebook;
+    document.getElementById('shareLineBtn').textContent = L().shareLine;
+    document.getElementById('tool-cap').textContent = L().editCap;
+    document.getElementById('moreBtn').textContent = L().more;
+    document.getElementById('summary').textContent = L().cond;
+    document.getElementById('btnEdit').textContent = isEditOpen ? L().closeEdit : L().edit;
+    document.getElementById('btnHide').textContent = L().hide;
+    document.getElementById('btnUnhide').textContent = L().unhide;
+    document.getElementById('editKey').placeholder = L().keyPh;
+    document.getElementById('btn-form').href = 'https://etramone7-coder.github.io/chaynupzine/submit_live.html?lang=' + encodeURIComponent(currentLang);
+
+    if(current){
+      renderLive(current);
+    }
   }
 
   function el(tag, attrs){
@@ -532,7 +727,7 @@
 
   function toStatus(v){
     var key = String(v || 'scheduled').toLowerCase();
-    return STATUS_LABELS[key] || STATUS_LABELS.scheduled;
+    return L().status[key] || L().status.scheduled;
   }
 
   function firstUrlFromCell(s){
@@ -667,19 +862,19 @@
     list = list.filter(Boolean);
 
     if(!list.length){
-      return el('div',{className:'ph',textContent:'flyer'});
+      return el('div',{className:'ph',textContent:L().flyer});
     }
 
     var img = document.createElement('img');
     img.className = 'cover';
-    img.alt = 'flyer';
+    img.alt = L().flyer;
 
     var idx = 0;
     function tryNext(){
       if(idx >= list.length){
         var ph = document.createElement('div');
         ph.className = 'ph';
-        ph.textContent = 'flyer';
+        ph.textContent = L().flyer;
         if(img.parentNode){
           img.parentNode.replaceChild(ph, img);
         }
@@ -810,14 +1005,14 @@
 
   function buildShareUrl(row){
     var base = location.origin + location.pathname;
-    return base + '?row=' + encodeURIComponent(row);
+    return base + '?row=' + encodeURIComponent(row) + '&lang=' + encodeURIComponent(currentLang);
   }
 
   function buildShareTitle(){
     var artist = current && current.artist ? String(current.artist).trim() : '';
-    var title = current && current.title ? String(current.title).trim() : '';
+    var title = current ? pickDisplay(current, 'title') : '';
     var date = current && current.date ? formatDate(current.date) : '';
-    var venue = current && current.venue ? String(current.venue).trim() : '';
+    var venue = current ? pickDisplay(current, 'venue') : '';
 
     var main = [artist, title].filter(Boolean).join(' - ');
     var sub = [date, venue].filter(Boolean).join(' / ');
@@ -869,7 +1064,7 @@
     btn.onclick = async function(){
       var row = current && current.rowIndex;
       if(!row){
-        setMsg(LABELS.noRow, 'err');
+        setMsg(L().noRow, 'err');
         return;
       }
 
@@ -878,12 +1073,12 @@
       try{
         var ok = await copyTextToClipboard(url);
         if(ok){
-          setMsg(LABELS.copied, 'ok');
+          setMsg(L().copied, 'ok');
         }else{
-          setMsg(LABELS.copyFail + ' ' + url, 'err');
+          setMsg(L().copyFail + ' ' + url, 'err');
         }
       }catch(_){
-        setMsg(LABELS.copyFail + ' ' + url, 'err');
+        setMsg(L().copyFail + ' ' + url, 'err');
       }
     };
   }
@@ -897,7 +1092,7 @@
       xBtn.onclick = function(){
         var row = current && current.rowIndex;
         if(!row){
-          setMsg(LABELS.noRow, 'err');
+          setMsg(L().noRow, 'err');
           return;
         }
 
@@ -917,7 +1112,7 @@
       fbBtn.onclick = function(){
         var row = current && current.rowIndex;
         if(!row){
-          setMsg(LABELS.noRow, 'err');
+          setMsg(L().noRow, 'err');
           return;
         }
 
@@ -934,7 +1129,7 @@
       lineBtn.onclick = function(){
         var row = current && current.rowIndex;
         if(!row){
-          setMsg(LABELS.noRow, 'err');
+          setMsg(L().noRow, 'err');
           return;
         }
 
@@ -959,20 +1154,25 @@
   }
 
   function makeEditField(label, key, it, type){
-    var wrap = el('div',{className:'editField' + (key === 'description' || key === 'image_url' || key === 'youtube_url' ? ' full' : '')});
+    var wrap = el('div',{className:'editField' + (
+      key === 'description' ||
+      key === 'description_en' ||
+      key === 'image_url' ||
+      key === 'youtube_url' ? ' full' : ''
+    )});
     wrap.appendChild(el('label',{className:'editLabel',textContent:label}));
 
     var input;
 
-    if(key === 'description'){
+    if(key === 'description' || key === 'description_en'){
       input = el('textarea',{className:'editTextarea'});
       input.value = fieldValue(it,key);
     }else if(key === 'status'){
       input = el('select',{className:'editSelect'});
       [
-        ['scheduled','開催予定'],
-        ['canceled','中止'],
-        ['done','終了']
+        ['scheduled',L().status.scheduled],
+        ['canceled',L().status.canceled],
+        ['done',L().status.done]
       ].forEach(function(pair){
         var opt = el('option',{value:pair[0],textContent:pair[1]});
         input.appendChild(opt);
@@ -1035,7 +1235,7 @@
     root.innerHTML = '';
 
     if(!it){
-      root.appendChild(el('div',{className:'small',textContent:LABELS.nodata}));
+      root.appendChild(el('div',{className:'small',textContent:L().nodata}));
       return;
     }
 
@@ -1050,7 +1250,7 @@
     if(imageCandidates.length){
       flyerBox.appendChild(createImgWithFallback(imageCandidates));
     }else{
-      flyerBox.appendChild(el('div',{className:'ph',textContent:'flyer'}));
+      flyerBox.appendChild(el('div',{className:'ph',textContent:L().flyer}));
     }
 
     flyerWrap.appendChild(flyerBox);
@@ -1060,8 +1260,8 @@
 
     var row1 = el('div',{className:'row'});
     var statusBadge = el('span',{className:'badge st',textContent:'［' + toStatus(it.status) + '］'});
-    var regionLabel = it.region || '';
-    var prefLabel = it.prefecture || '';
+    var regionLabel = pickDisplay(it, 'region');
+    var prefLabel = pickDisplay(it, 'prefecture');
     var rp = el('span',{className:'badge',textContent:[regionLabel,prefLabel].filter(Boolean).join(' / ')});
     row1.appendChild(statusBadge);
     if(rp.textContent) row1.appendChild(rp);
@@ -1069,8 +1269,9 @@
 
     infoWrap.appendChild(el('div',{className:'artist',textContent:it.artist || '—'}));
 
-    if(it.title){
-      infoWrap.appendChild(el('div',{className:'titleLive',textContent:it.title}));
+    var titleText = pickDisplay(it, 'title');
+    if(titleText){
+      infoWrap.appendChild(el('div',{className:'titleLive',textContent:titleText}));
     }
 
     var metaParts = [];
@@ -1078,53 +1279,62 @@
 
     if(it.open_time){
       var ot = formatTime(it.open_time);
-      if(ot) metaParts.push('OPEN ' + ot);
+      if(ot) metaParts.push(L().open + ot);
     }
 
     if(it.start_time){
       var stt = formatTime(it.start_time);
-      if(stt) metaParts.push('START ' + stt);
+      if(stt) metaParts.push(L().start + stt);
     }
 
-    if(it.venue) metaParts.push('@ ' + it.venue);
+    var venueText = pickDisplay(it, 'venue');
+    if(venueText) metaParts.push(L().at + venueText);
 
     if(metaParts.length){
       infoWrap.appendChild(el('div',{className:'meta',textContent:metaParts.join('  ')}));
     }
 
-    if(it.price){
-      infoWrap.appendChild(el('div',{className:'price',textContent:it.price}));
+    var priceText = pickDisplay(it, 'price');
+    if(priceText){
+      infoWrap.appendChild(el('div',{className:'price',textContent:priceText}));
     }
 
-    if(it.description){
-      infoWrap.appendChild(el('div',{className:'desc',textContent:it.description}));
+    var descText = pickDisplay(it, 'description');
+    if(descText){
+      infoWrap.appendChild(el('div',{className:'desc',textContent:descText}));
     }
 
     var editBox = el('div',{className:'editGrid'});
     editBox.style.display = isEditOpen ? 'grid' : 'none';
 
     [
-      ['TITLE','title'],
-      ['ARTIST','artist'],
-      ['GENRE','genre'],
-      ['VENUE','venue'],
-      ['REGION','region'],
-      ['PREFECTURE','prefecture'],
-      ['PRICE','price'],
-      ['STATUS','status'],
-      ['DATE','date'],
-      ['OPEN TIME','open_time'],
-      ['START TIME','start_time'],
-      ['AUTHOR','author'],
-      ['YOUTUBE URL','youtube_url'],
-      ['IMAGE URL','image_url'],
-      ['DESCRIPTION','description']
+      [L().editLabels.title,'title'],
+      [L().editLabels.title_en,'title_en'],
+      [L().editLabels.artist,'artist'],
+      [L().editLabels.genre,'genre'],
+      [L().editLabels.venue,'venue'],
+      [L().editLabels.venue_en,'venue_en'],
+      [L().editLabels.region,'region'],
+      [L().editLabels.region_en,'region_en'],
+      [L().editLabels.prefecture,'prefecture'],
+      [L().editLabels.prefecture_en,'prefecture_en'],
+      [L().editLabels.price,'price'],
+      [L().editLabels.price_en,'price_en'],
+      [L().editLabels.status,'status'],
+      [L().editLabels.date,'date'],
+      [L().editLabels.open_time,'open_time'],
+      [L().editLabels.start_time,'start_time'],
+      [L().editLabels.author,'author'],
+      [L().editLabels.youtube_url,'youtube_url'],
+      [L().editLabels.image_url,'image_url'],
+      [L().editLabels.description,'description'],
+      [L().editLabels.description_en,'description_en']
     ].forEach(function(pair){
       editBox.appendChild(makeEditField(pair[0], pair[1], it));
     });
 
     var editActions = el('div',{className:'editActions full'});
-    var saveBtn = el('button',{className:'btn',type:'button',textContent:LABELS.save});
+    var saveBtn = el('button',{className:'btn',type:'button',textContent:L().save});
     editActions.appendChild(saveBtn);
     editBox.appendChild(editActions);
 
@@ -1133,7 +1343,7 @@
 
       var key = document.getElementById('editKey').value.trim();
       if(!key){
-        setMsg(LABELS.needKey, 'err');
+        setMsg(L().needKey, 'err');
         return;
       }
 
@@ -1141,25 +1351,25 @@
 
       var row = current && current.rowIndex;
       if(!row){
-        setMsg(LABELS.noRow, 'err');
+        setMsg(L().noRow, 'err');
         return;
       }
 
       var patch = collectPatch(editBox, current);
       if(!Object.keys(patch).length){
-        setMsg(LABELS.noChange, '');
+        setMsg(L().noChange, '');
         return;
       }
 
       isSaving = true;
       saveBtn.disabled = true;
-      saveBtn.textContent = LABELS.saving;
+      saveBtn.textContent = L().saving;
 
       await updateLive(row, patch, key);
 
       isSaving = false;
       saveBtn.disabled = false;
-      saveBtn.textContent = LABELS.save;
+      saveBtn.textContent = L().save;
     };
 
     infoWrap.appendChild(editBox);
@@ -1186,7 +1396,7 @@
 
       ec.style.display = isEditOpen ? 'inline-flex' : 'none';
       editBox.style.display = isEditOpen ? 'grid' : 'none';
-      btn.textContent = isEditOpen ? LABELS.closeEdit : LABELS.edit;
+      btn.textContent = isEditOpen ? L().closeEdit : L().edit;
 
       if(lastEditKey){
         document.getElementById('editKey').value = lastEditKey;
@@ -1196,7 +1406,7 @@
     };
 
     document.getElementById('editControls').style.display = isEditOpen ? 'inline-flex' : 'none';
-    document.getElementById('btnEdit').textContent = isEditOpen ? LABELS.closeEdit : LABELS.edit;
+    document.getElementById('btnEdit').textContent = isEditOpen ? L().closeEdit : L().edit;
 
     if(lastEditKey){
       document.getElementById('editKey').value = lastEditKey;
@@ -1308,7 +1518,7 @@
     try{
       j = JSON.parse(text);
     }catch(_){
-      throw new Error('JSONではない応答です: ' + text.slice(0,120));
+      throw new Error(L().badJson + text.slice(0,120));
     }
 
     if(!r.ok || !j || !j.ok){
@@ -1350,7 +1560,7 @@
       current = mergePreferPatch(baseBeforeSave, null, patch);
       current.rowIndex = rowIndex;
 
-      setMsg(LABELS.saved, 'ok');
+      setMsg(L().saved, 'ok');
       renderLive(current);
 
       hydrateFromNetwork(rowIndex).then(function(fetched){
@@ -1362,12 +1572,12 @@
           current = mergePreferPatch(current, fetched, patch);
           current.rowIndex = rowIndex;
           renderLive(current);
-          setMsg(LABELS.saved, 'ok');
+          setMsg(L().saved, 'ok');
         }
       });
     }catch(e){
       if(myRevision === saveRevision){
-        setMsg(LABELS.fail + '：' + (e && e.message ? e.message : ''), 'err');
+        setMsg(L().fail + '：' + (e && e.message ? e.message : ''), 'err');
       }
     }
   }
@@ -1390,7 +1600,7 @@
       }
 
       current = Object.assign({}, current || {}, {is_hidden:hide});
-      setMsg(hide ? '非表示にしました。' : '再表示しました。', 'ok');
+      setMsg(hide ? L().hidden : L().restored, 'ok');
 
       var fetched = await hydrateFromNetwork(rowIndex);
       if(myRevision !== saveRevision){
@@ -1404,22 +1614,43 @@
       }
     }catch(e){
       if(myRevision === saveRevision){
-        setMsg(LABELS.fail + '：' + (e && e.message ? e.message : ''), 'err');
+        setMsg(L().fail + '：' + (e && e.message ? e.message : ''), 'err');
       }
     }
   }
 
+  function initLang(){
+    try{
+      var qsLang = qs('lang');
+      var savedLang = localStorage.getItem('cz_lang');
+      currentLang = (qsLang === 'en' || savedLang === 'en') ? 'en' : 'ja';
+    }catch(_){
+      currentLang = 'ja';
+    }
+  }
+
+  initLang();
   setUI();
   resolveExecUrl();
   setupCopyButton();
   setupSnsShareButtons();
+
+  document.getElementById('lang-ja').addEventListener('click', function(){
+    currentLang = 'ja';
+    setUI();
+  });
+
+  document.getElementById('lang-en').addEventListener('click', function(){
+    currentLang = 'en';
+    setUI();
+  });
 
   document.getElementById('moreBtn').style.display = 'none';
 
   document.getElementById('btnHide').onclick = function(){
     var key = document.getElementById('editKey').value.trim();
     if(!key){
-      setMsg(LABELS.needKey, 'err');
+      setMsg(L().needKey, 'err');
       return;
     }
 
@@ -1427,7 +1658,7 @@
 
     var row = current && current.rowIndex;
     if(!row){
-      setMsg(LABELS.noRow, 'err');
+      setMsg(L().noRow, 'err');
       return;
     }
 
@@ -1437,7 +1668,7 @@
   document.getElementById('btnUnhide').onclick = function(){
     var key = document.getElementById('editKey').value.trim();
     if(!key){
-      setMsg(LABELS.needKey, 'err');
+      setMsg(L().needKey, 'err');
       return;
     }
 
@@ -1445,7 +1676,7 @@
 
     var row = current && current.rowIndex;
     if(!row){
-      setMsg(LABELS.noRow, 'err');
+      setMsg(L().noRow, 'err');
       return;
     }
 

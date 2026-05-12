@@ -50,6 +50,30 @@
     min-height:720px;
   }
 
+  .langbar{
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+    margin-bottom:8px;
+  }
+
+  .langbtn{
+    border:1px solid #ddd;
+    background:#fff;
+    color:#111;
+    border-radius:999px;
+    padding:8px 12px;
+    font-size:14px;
+    font-weight:900;
+    cursor:pointer;
+  }
+
+  .langbtn.active{
+    background:#111;
+    color:#fff;
+    border-color:#111;
+  }
+
   .topbar{
     display:flex;
     justify-content:space-between;
@@ -63,6 +87,7 @@
     display:flex;
     align-items:center;
     gap:12px;
+    flex-wrap:wrap;
   }
 
   .brand{
@@ -148,6 +173,8 @@
     font-weight:800;
     cursor:pointer;
     font-size:18px;
+    text-decoration:none;
+    display:inline-block;
   }
 
   .btn.ghost{
@@ -239,6 +266,11 @@
 
 <div class="wrap">
   <div class="panel">
+    <div class="langbar">
+      <button type="button" class="langbtn" id="lang-ja">JP</button>
+      <button type="button" class="langbtn" id="lang-en">EN</button>
+    </div>
+
     <div class="topbar">
       <h1>
         <span class="brand">CHAYNUPZINE</span>
@@ -250,6 +282,7 @@
 
     <div class="actions" style="justify-content:flex-start">
       <a class="btn ghost" id="btn-top" href="https://etramone7-coder.github.io/chaynupzine/">トップへ戻る</a>
+      <a class="btn ghost" id="btn-form" href="https://etramone7-coder.github.io/chaynupzine/submit_feature.html">特集投稿フォームへ</a>
     </div>
 
     <div class="row">
@@ -340,33 +373,99 @@ async function callListFeatures(payload, onOK, onNG){
   }
 }
 
+var currentLang = 'ja';
+
 var UI = {
-  sub: '特集 — 検索 & 一覧',
-  help: 'ジャンル / 年代 / 地域 で絞り込みできます（複数可）。どれか1つ選べば検索できます。',
-  genre: 'ジャンル',
-  era: '年代',
-  region: '地域',
-  other: 'その他',
-  otherPh: '地域名を入力',
-  reset: 'リセット',
-  search: '検索',
-  none: '該当する特集がありません。',
-  by: 'by',
-  read: '続きを読む →',
-  top:'トップへ戻る',
-  all:'指定なし'
+  ja:{
+    sub: '特集 — 検索 & 一覧',
+    help: 'ジャンル / 年代 / 地域 で絞り込みできます（複数可）。どれか1つ選べば検索できます。',
+    genre: 'ジャンル',
+    era: '年代',
+    region: '地域',
+    other: 'その他',
+    otherPh: '地域名を入力',
+    reset: 'リセット',
+    search: '検索',
+    none: '該当する特集がありません。',
+    error: 'Error: ',
+    loading:'Loading…',
+    by: 'by',
+    read: '続きを読む →',
+    top:'トップへ戻る',
+    toForm:'特集投稿フォームへ',
+    all:'指定なし',
+    docTitle:'CHAYNUPZINE — 特集検索',
+    genreLabels:{
+      band:'BAND（バンド）',
+      label:'LABEL（レーベル）',
+      region:'REGION（国・地域）',
+      designer:'DESIGNER（デザイナー）',
+      person:'PERSON（有名人）',
+      venue:'VENUE（ライブ会場）',
+      movie:'MOVIE（映画）',
+      fanzine:'FANZINE（ファンジン）',
+      other:'OTHER（その他）'
+    }
+  },
+  en:{
+    sub: 'Features — Search & List',
+    help: 'Filter by genre, era, and region. You can search with any one selected filter.',
+    genre: 'Genre',
+    era: 'Era',
+    region: 'Region',
+    other: 'Other',
+    otherPh: 'Enter region name',
+    reset: 'Reset',
+    search: 'Search',
+    none: 'No matching features found.',
+    error: 'Error: ',
+    loading:'Loading…',
+    by: 'by',
+    read: 'Read more →',
+    top:'Back to top',
+    toForm:'Submit feature',
+    all:'None',
+    docTitle:'CHAYNUPZINE — Features search',
+    genreLabels:{
+      band:'BAND',
+      label:'LABEL',
+      region:'REGION',
+      designer:'DESIGNER',
+      person:'PERSON',
+      venue:'VENUE',
+      movie:'MOVIE',
+      fanzine:'FANZINE',
+      other:'OTHER'
+    }
+  }
 };
 
+function T(){
+  return UI[currentLang] || UI.ja;
+}
+
+function saveLang(){
+  try{ localStorage.setItem('cz_lang', currentLang); }catch(_){}
+  try{ document.documentElement.lang = currentLang; }catch(_){}
+}
+
+function setLangButtons(){
+  var ja = document.getElementById('lang-ja');
+  var en = document.getElementById('lang-en');
+  if(ja) ja.classList.toggle('active', currentLang === 'ja');
+  if(en) en.classList.toggle('active', currentLang === 'en');
+}
+
 var GENRES = [
-  {code:'band',    label:'BAND（バンド）'},
-  {code:'label',   label:'LABEL（レーベル）'},
-  {code:'region',  label:'REGION（国・地域）'},
-  {code:'designer',label:'DESIGNER（デザイナー）'},
-  {code:'person',  label:'PERSON（有名人）'},
-  {code:'venue',   label:'VENUE（ライブ会場）'},
-  {code:'movie',   label:'MOVIE（映画）'},
-  {code:'fanzine', label:'FANZINE（ファンジン）'},
-  {code:'other',   label:'OTHER（その他）'}
+  {code:'band'},
+  {code:'label'},
+  {code:'region'},
+  {code:'designer'},
+  {code:'person'},
+  {code:'venue'},
+  {code:'movie'},
+  {code:'fanzine'},
+  {code:'other'}
 ];
 
 var ERAS = ['1950s','1960s','1970s','1980s','1990s','2000s','2010s','2020s'];
@@ -384,6 +483,8 @@ var state = {
   regionOtherActive:false,
   regionOtherText:''
 };
+
+var lastItems = [];
 
 function chip(label, active, onClick){
   var el = document.createElement('div');
@@ -405,8 +506,9 @@ function drawGenres(){
   var wrap = document.getElementById('chips-genre');
   wrap.innerHTML = '';
   GENRES.forEach(function(g){
+    var label = T().genreLabels[g.code] || g.code;
     var active = state.genres.indexOf(g.code) >= 0;
-    wrap.appendChild(chip(g.label, active, function(){
+    wrap.appendChild(chip(label, active, function(){
       var i = state.genres.indexOf(g.code);
       if(i>=0) state.genres.splice(i,1);
       else state.genres.push(g.code);
@@ -416,7 +518,7 @@ function drawGenres(){
     }));
   });
   document.getElementById('sel-genre').textContent =
-    UI.genre + ': ' + (state.genres.length ? state.genres.join(', ') : UI.all);
+    T().genre + ': ' + (state.genres.length ? state.genres.map(function(code){ return T().genreLabels[code] || code; }).join(', ') : T().all);
 }
 
 function drawEras(){
@@ -434,7 +536,7 @@ function drawEras(){
     }));
   });
   document.getElementById('sel-era').textContent =
-    UI.era + ': ' + (state.eras.length ? state.eras.join(', ') : UI.all);
+    T().era + ': ' + (state.eras.length ? state.eras.join(', ') : T().all);
 }
 
 function drawRegions(){
@@ -443,7 +545,7 @@ function drawRegions(){
 
   REGIONS.forEach(function(r){
     var isOther = (r === 'Other…');
-    var label = isOther ? UI.other : r;
+    var label = isOther ? T().other : r;
     var active = isOther ? state.regionOtherActive : (state.regions.indexOf(r) >= 0);
 
     wrap.appendChild(chip(label, active, function(){
@@ -466,14 +568,14 @@ function drawRegions(){
   });
 
   document.getElementById('sel-region').textContent =
-    UI.region + ': ' + (
+    T().region + ': ' + (
       (state.regions.length ? state.regions.join(', ') : '') +
       (state.regionOtherActive && state.regionOtherText.trim() ? (state.regions.length ? ', ' : '') + state.regionOtherText.trim() : '')
-      || UI.all
+      || T().all
     );
 
-  document.getElementById('i-otherlabel').textContent = UI.other + ':';
-  document.getElementById('region-other').placeholder = UI.otherPh;
+  document.getElementById('i-otherlabel').textContent = T().other + ':';
+  document.getElementById('region-other').placeholder = T().otherPh;
   document.getElementById('otherbox').style.display = state.regionOtherActive ? '' : 'none';
 }
 
@@ -505,14 +607,34 @@ document.getElementById('btn-reset').onclick = function(){
   document.getElementById('results').innerHTML = '';
   document.getElementById('alert').className = 'alert';
   document.getElementById('alert').textContent = '';
+  lastItems = [];
 };
+
+function pickLang(it, key){
+  it = it || {};
+  if(currentLang === 'en'){
+    return String(it[key + '_en'] || it[key] || '').trim();
+  }
+  return String(it[key] || it[key + '_en'] || '').trim();
+}
+
+function pickFeatureBlurb(it){
+  return (
+    pickLang(it, 'para1_text') ||
+    pickLang(it, 'para2_text') ||
+    pickLang(it, 'para3_text') ||
+    pickLang(it, 'para4_text') ||
+    pickLang(it, 'para5_text') ||
+    ''
+  );
+}
 
 function renderResultCards(items){
   var resultBox = document.getElementById('results');
   resultBox.innerHTML = '';
 
   if(!items || !items.length){
-    resultBox.innerHTML = '<div class="card">' + UI.none + '</div>';
+    resultBox.innerHTML = '<div class="card">' + escapeHtml(T().none) + '</div>';
     return;
   }
 
@@ -520,20 +642,23 @@ function renderResultCards(items){
     var card = document.createElement('div');
     card.className = 'card';
 
-    var title = String(it.title || '(No title)');
+    var title = String(pickLang(it, 'title') || '(No title)');
     var author = String(it.author || '');
-    var g = String(it.genre || '');
+    var gCode = String(it.genre || '');
+    var g = T().genreLabels[gCode] || gCode;
     var e = String(it.era || '');
     var r = String(it.region || '');
-    var blurb = String(it.para1_text || it.para2_text || it.para3_text || '').slice(0,160);
+    var blurb = String(pickFeatureBlurb(it)).slice(0,160);
 
-    var viewUrl = './features_browse.html?row=' + encodeURIComponent(String(it.rowIndex || ''));
+    var viewUrl = './features_browse.html?row='
+      + encodeURIComponent(String(it.rowIndex || ''))
+      + '&lang=' + encodeURIComponent(currentLang);
 
     card.innerHTML =
       '<div class="title">'+escapeHtml(title)+'</div>'+
-      '<div class="meta">'+escapeHtml([g,e,r].filter(Boolean).join(' • '))+' '+UI.by+' '+escapeHtml(author)+'</div>'+
+      '<div class="meta">'+escapeHtml([g,e,r].filter(Boolean).join(' • '))+' '+T().by+' '+escapeHtml(author)+'</div>'+
       '<div class="desc">'+escapeHtml(blurb)+'</div>'+
-      '<div class="more"><a href="'+viewUrl+'" target="_top" rel="noopener">'+UI.read+'</a></div>';
+      '<div class="more"><a href="'+viewUrl+'" target="_top" rel="noopener">'+T().read+'</a></div>';
 
     resultBox.appendChild(card);
   });
@@ -544,7 +669,7 @@ document.getElementById('btn-search').onclick = function(){
   var resultBox = document.getElementById('results');
   alertBox.className = 'alert';
   alertBox.textContent = '';
-  resultBox.innerHTML = 'Loading…';
+  resultBox.innerHTML = T().loading;
 
   var cond = {
     genres: state.genres.slice(),
@@ -577,15 +702,16 @@ document.getElementById('btn-search').onclick = function(){
         return true;
       });
 
+      lastItems = out.slice();
       renderResultCards(out);
     }catch(e){
       alertBox.className = 'alert show';
-      alertBox.textContent = 'Error: ' + e.message;
+      alertBox.textContent = T().error + e.message;
       resultBox.innerHTML = '';
     }
   }, function(err){
     alertBox.className = 'alert show';
-    alertBox.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+    alertBox.textContent = T().error + (err && err.message ? err.message : String(err));
     resultBox.innerHTML = '';
   });
 };
@@ -596,17 +722,50 @@ function escapeHtml(s){
   });
 }
 
-(function init(){
-  document.getElementById('i-sub').textContent = UI.sub;
-  document.getElementById('i-help').textContent = UI.help;
-  document.getElementById('btn-reset').textContent = UI.reset;
-  document.getElementById('btn-search').textContent = UI.search;
-  document.getElementById('btn-top').textContent = UI.top;
+function setUI(){
+  saveLang();
+  setLangButtons();
+
+  document.title = T().docTitle;
+  document.getElementById('i-sub').textContent = T().sub;
+  document.getElementById('i-help').textContent = T().help;
+  document.getElementById('btn-reset').textContent = T().reset;
+  document.getElementById('btn-search').textContent = T().search;
+  document.getElementById('btn-top').textContent = T().top;
+  document.getElementById('btn-form').textContent = T().toForm;
+  document.getElementById('btn-form').href =
+    'https://etramone7-coder.github.io/chaynupzine/submit_feature.html?lang=' + encodeURIComponent(currentLang);
 
   drawGenres();
   drawEras();
   drawRegions();
   updateButtons();
+
+  if(lastItems && lastItems.length){
+    renderResultCards(lastItems);
+  }
+}
+
+document.getElementById('lang-ja').addEventListener('click', function(){
+  currentLang = 'ja';
+  setUI();
+});
+
+document.getElementById('lang-en').addEventListener('click', function(){
+  currentLang = 'en';
+  setUI();
+});
+
+(function init(){
+  try{
+    var qsLang = new URLSearchParams(location.search).get('lang');
+    var savedLang = localStorage.getItem('cz_lang');
+    currentLang = (qsLang === 'en' || savedLang === 'en') ? 'en' : 'ja';
+  }catch(_){
+    currentLang = 'ja';
+  }
+
+  setUI();
 })();
 </script>
 </body>
